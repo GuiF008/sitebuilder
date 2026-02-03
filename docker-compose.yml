@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: sitebuilder-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/sitebuilder.db
+      - NODE_ENV=production
+    volumes:
+      - sitebuilder-data:/app/data
+      - sitebuilder-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  sitebuilder-data:
+    driver: local
+  sitebuilder-uploads:
+    driver: local

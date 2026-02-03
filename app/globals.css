@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Variables for theme */
+:root {
+  --theme-primary: #000E9C;
+  --theme-secondary: #0050D7;
+  --theme-accent: #00D4AA;
+  --theme-background: #FFFFFF;
+  --theme-text: #212529;
+  --theme-muted: #6C757D;
+  --theme-heading-font: 'Source Sans Pro', system-ui, sans-serif;
+  --theme-body-font: 'Source Sans Pro', system-ui, sans-serif;
+  --theme-border-radius: 8px;
+}
+
+/* Base styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--theme-body-font);
+  color: var(--theme-text);
+  background-color: var(--theme-background);
+}
+
+/* Theme-aware utilities */
+.bg-theme-primary {
+  background-color: var(--theme-primary);
+}
+
+.bg-theme-secondary {
+  background-color: var(--theme-secondary);
+}
+
+.bg-theme-accent {
+  background-color: var(--theme-accent);
+}
+
+.bg-theme-background {
+  background-color: var(--theme-background);
+}
+
+.text-theme-primary {
+  color: var(--theme-primary);
+}
+
+.text-theme-text {
+  color: var(--theme-text);
+}
+
+.text-theme-muted {
+  color: var(--theme-muted);
+}
+
+.font-theme-heading {
+  font-family: var(--theme-heading-font);
+}
+
+.font-theme-body {
+  font-family: var(--theme-body-font);
+}
+
+.rounded-theme {
+  border-radius: var(--theme-border-radius);
+}
+
+/* ContentEditable styles */
+[contenteditable="true"] {
+  outline: none;
+  cursor: text;
+}
+
+[contenteditable="true"]:hover {
+  outline: 2px dashed var(--theme-primary);
+  outline-offset: 2px;
+}
+
+[contenteditable="true"]:focus {
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 2px;
+}
+
+/* Drag overlay animation */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce 1.5s ease-in-out infinite;
+}
+
+/* Settings modal transition */
+.settings-modal-enter {
+  transform: translateX(-100%);
+}
+
+.settings-modal-enter-active {
+  transform: translateX(0);
+  transition: transform 300ms ease-out;
+}
+
+.settings-modal-exit {
+  transform: translateX(0);
+}
+
+.settings-modal-exit-active {
+  transform: translateX(-100%);
+  transition: transform 300ms ease-in;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
