@@ -5,7 +5,9 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { computeTheme, generateThemeStyles } from '@/lib/themes'
-import { ComputedTheme } from '@/lib/types'
+import { ComputedTheme, SectionStyles } from '@/lib/types'
+import { safeJsonParse } from '@/lib/utils'
+import { BlockRenderer } from '@/components/shared/BlockRenderer'
 
 interface Snapshot {
   name: string
@@ -210,73 +212,113 @@ function PublicSection({
   section: { id: string; type: string; dataJson: string }
   theme: ComputedTheme
 }) {
-  const data = JSON.parse(section.dataJson)
+  const data = safeJsonParse<Record<string, unknown>>(section.dataJson, {}) || {}
+  
+  // Helper pour accéder aux propriétés de data de manière sécurisée
+  const getDataValue = (key: string): string => {
+    return (data[key] as string) || ''
+  }
+  
+  // Styles personnalisés de la section ou thème par défaut
+  const sectionStyles: SectionStyles = (data.sectionStyles as SectionStyles) || {
+    backgroundColor: theme.colors.background,
+    headingFont: theme.fonts.heading,
+    bodyFont: theme.fonts.body,
+    headingColor: theme.colors.text,
+    textColor: theme.colors.text,
+    buttonStyle: theme.buttonStyle,
+  }
+
+  // Si la section a des blocs de contenu, les afficher
+  if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0) {
+    return (
+      <section className="py-8 mb-4 px-4 rounded-lg" style={{ backgroundColor: sectionStyles.backgroundColor }}>
+        <BlockRenderer 
+          blocks={data.blocks as Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>} 
+          sectionStyles={sectionStyles} 
+          theme={theme}
+          isPublic={true}
+        />
+      </section>
+    )
+  }
 
   switch (section.type) {
     case 'hero':
       return (
         <section
           className="py-20 text-center mb-8 rounded-lg"
-          style={{ backgroundColor: theme.colors.primary }}
+          style={{ backgroundColor: sectionStyles.backgroundColor || theme.colors.primary }}
         >
           <h1
             className="text-4xl font-bold mb-4 text-white"
-            style={{ fontFamily: theme.fonts.heading }}
+            style={{ fontFamily: sectionStyles.headingFont }}
           >
-            {data.title}
+            {getDataValue('title')}
           </h1>
-          <p className="text-xl text-white/80 mb-8">{data.subtitle}</p>
-          {data.ctaText && (
+          <p 
+            className="text-xl text-white/80 mb-8"
+            style={{ fontFamily: sectionStyles.bodyFont }}
+          >
+            {getDataValue('subtitle')}
+          </p>
+          {getDataValue('ctaText') && (
             <a
-              href={data.ctaLink || '#'}
+              href={(data.ctaLink as string) || '#'}
               className="inline-block px-6 py-3 font-semibold text-white transition-transform hover:scale-105"
               style={{
                 backgroundColor: theme.colors.accent,
                 borderRadius:
-                  theme.buttonStyle === 'pill'
+                  sectionStyles.buttonStyle === 'pill'
                     ? '9999px'
-                    : theme.buttonStyle === 'square'
+                    : sectionStyles.buttonStyle === 'square'
                       ? '0'
                       : theme.borderRadius,
               }}
-            >
-              {data.ctaText}
-            </a>
+              >
+                {getDataValue('ctaText')}
+              </a>
           )}
         </section>
       )
 
     case 'about':
       return (
-        <section className="py-12 mb-8">
+        <section 
+          className="py-12 mb-8 rounded-lg"
+          style={{ backgroundColor: sectionStyles.backgroundColor }}
+        >
           <h2
             className="text-3xl font-bold mb-6"
-            style={{ fontFamily: theme.fonts.heading, color: theme.colors.text }}
+            style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
           >
-            {data.title}
+            {getDataValue('title')}
           </h2>
           <p
             className="text-lg leading-relaxed"
-            style={{ color: theme.colors.muted }}
+            style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}
           >
-            {data.content}
+            {getDataValue('content')}
           </p>
         </section>
       )
 
     case 'services':
       return (
-        <section className="py-12 mb-8">
+        <section 
+          className="py-12 mb-8 rounded-lg"
+          style={{ backgroundColor: sectionStyles.backgroundColor }}
+        >
           <h2
             className="text-3xl font-bold mb-8 text-center"
-            style={{ fontFamily: theme.fonts.heading, color: theme.colors.text }}
+            style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
           >
-            {data.title}
+            {getDataValue('title')}
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
-            {data.services?.map(
+            {((data.services as Array<{ icon?: string; iconSrc?: string; title: string; description: string }>) || []).map(
               (
-                service: { icon: string; title: string; description: string },
+                service,
                 i: number
               ) => (
                 <div
@@ -284,14 +326,26 @@ function PublicSection({
                   className="p-6 rounded-lg text-center"
                   style={{ backgroundColor: `${theme.colors.primary}10` }}
                 >
-                  <div className="text-4xl mb-4">{service.icon}</div>
+                  {service.iconSrc ? (
+                    <div className="flex justify-center mb-4">
+                      <Image
+                        src={service.iconSrc}
+                        alt={service.title}
+                        width={48}
+                        height={48}
+                        className="w-12 h-12 object-contain"
+                      />
+                    </div>
+                  ) : service.icon ? (
+                    <div className="text-4xl mb-4">{service.icon}</div>
+                  ) : null}
                   <h3
                     className="font-bold text-lg mb-2"
-                    style={{ color: theme.colors.text }}
+                    style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
                   >
                     {service.title}
                   </h3>
-                  <p style={{ color: theme.colors.muted }}>{service.description}</p>
+                  <p style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}>{service.description}</p>
                 </div>
               )
             )}
@@ -301,16 +355,19 @@ function PublicSection({
 
     case 'gallery':
       return (
-        <section className="py-12 mb-8">
+        <section 
+          className="py-12 mb-8 rounded-lg"
+          style={{ backgroundColor: sectionStyles.backgroundColor }}
+        >
           <h2
             className="text-3xl font-bold mb-8 text-center"
-            style={{ fontFamily: theme.fonts.heading, color: theme.colors.text }}
+            style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
           >
-            {data.title}
+            {getDataValue('title')}
           </h2>
-          {data.images?.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {data.images.map((img: { url: string; alt: string }, i: number) => (
+            {((data.images as Array<{ url: string; alt: string }>) || []).length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {((data.images as Array<{ url: string; alt: string }>) || []).map((img, i: number) => (
                 <img
                   key={i}
                   src={img.url}
@@ -320,7 +377,7 @@ function PublicSection({
               ))}
             </div>
           ) : (
-            <p className="text-center" style={{ color: theme.colors.muted }}>
+            <p className="text-center" style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}>
               Aucune image
             </p>
           )}
@@ -329,17 +386,20 @@ function PublicSection({
 
     case 'testimonials':
       return (
-        <section className="py-12 mb-8">
+        <section 
+          className="py-12 mb-8 rounded-lg"
+          style={{ backgroundColor: sectionStyles.backgroundColor }}
+        >
           <h2
             className="text-3xl font-bold mb-8 text-center"
-            style={{ fontFamily: theme.fonts.heading, color: theme.colors.text }}
+            style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
           >
-            {data.title}
+            {getDataValue('title')}
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
-            {data.testimonials?.map(
+            {((data.testimonials as Array<{ name: string; role: string; content: string }>) || []).map(
               (
-                t: { name: string; role: string; content: string },
+                t,
                 i: number
               ) => (
                 <div
@@ -349,16 +409,16 @@ function PublicSection({
                 >
                   <p
                     className="italic mb-4"
-                    style={{ color: theme.colors.text }}
+                    style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}
                   >
                     "{t.content}"
                   </p>
                   <div>
-                    <span className="font-semibold" style={{ color: theme.colors.text }}>
+                    <span className="font-semibold" style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}>
                       {t.name}
                     </span>
                     {t.role && (
-                      <span className="ml-2" style={{ color: theme.colors.muted }}>
+                      <span className="ml-2" style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}>
                         — {t.role}
                       </span>
                     )}
@@ -372,34 +432,37 @@ function PublicSection({
 
     case 'contact':
       return (
-        <section className="py-12 mb-8">
+        <section 
+          className="py-12 mb-8 rounded-lg"
+          style={{ backgroundColor: sectionStyles.backgroundColor }}
+        >
           <h2
             className="text-3xl font-bold mb-8 text-center"
-            style={{ fontFamily: theme.fonts.heading, color: theme.colors.text }}
+            style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
           >
-            {data.title}
+            {getDataValue('title')}
           </h2>
           <div className="max-w-md mx-auto text-center">
-            {data.email && (
-              <p style={{ color: theme.colors.muted }}>
+            {getDataValue('email') && (
+              <p style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}>
                 Email :{' '}
                 <a
-                  href={`mailto:${data.email}`}
+                  href={`mailto:${getDataValue('email')}`}
                   style={{ color: theme.colors.primary }}
                   className="hover:underline"
                 >
-                  {data.email}
+                  {getDataValue('email')}
                 </a>
               </p>
             )}
-            {data.phone && (
-              <p className="mt-2" style={{ color: theme.colors.muted }}>
-                Téléphone : {data.phone}
+            {getDataValue('phone') && (
+              <p className="mt-2" style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}>
+                Téléphone : {getDataValue('phone')}
               </p>
             )}
-            {data.address && (
-              <p className="mt-2" style={{ color: theme.colors.muted }}>
-                Adresse : {data.address}
+            {getDataValue('address') && (
+              <p className="mt-2" style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}>
+                Adresse : {getDataValue('address')}
               </p>
             )}
           </div>
@@ -416,7 +479,7 @@ function PublicSection({
             className="text-center text-sm"
             style={{ color: theme.colors.muted }}
           >
-            {data.copyright}
+            {getDataValue('copyright')}
           </p>
         </footer>
       )
@@ -425,3 +488,5 @@ function PublicSection({
       return null
   }
 }
+
+// PublicBlockRenderer est maintenant remplacé par BlockRenderer partagé

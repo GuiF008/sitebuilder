@@ -7,8 +7,10 @@ import Image from 'next/image'
 import { Button } from '@/components/ui'
 import { SettingsModal } from '@/components/editor'
 import { SectionEditorModal } from '@/components/editor/SectionEditorModal'
-import { SiteWithRelations, PageWithSections, ComputedTheme } from '@/lib/types'
+import { SiteWithRelations, PageWithSections, ComputedTheme, SectionStyles } from '@/lib/types'
 import { computeTheme, generateThemeStyles } from '@/lib/themes'
+import { safeJsonParse } from '@/lib/utils'
+import { BlockRenderer } from '@/components/shared/BlockRenderer'
 
 export default function EditorPage() {
   const params = useParams()
@@ -315,7 +317,7 @@ export default function EditorPage() {
     for (const page of site.pages) {
       const section = page.sections.find(s => s.id === sectionId)
       if (section) {
-        currentData = JSON.parse(section.dataJson)
+        currentData = safeJsonParse<Record<string, unknown>>(section.dataJson, {}) || {}
         break
       }
     }
@@ -601,6 +603,7 @@ export default function EditorPage() {
             site={site}
             theme={theme}
             onUpdate={handleSectionUpdate}
+            settingsModalOpen={settingsOpen}
           />
         )}
 
@@ -609,7 +612,7 @@ export default function EditorPage() {
           className={`
             flex-1 transition-all duration-300 flex flex-col
             ${settingsOpen ? 'ml-[420px]' : 'ml-0'}
-            ${selectedSectionId ? 'mr-[420px]' : 'mr-0'}
+            ${selectedSectionId && settingsOpen ? 'mr-[840px]' : selectedSectionId ? 'mr-[420px]' : 'mr-0'}
           `}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -632,7 +635,7 @@ export default function EditorPage() {
                     backgroundColor: currentPageIndex === index ? theme.colors.primary : undefined,
                   }}
                 >
-                  {page.isHome && '🏠 '}{page.title}
+                  {page.title}
                 </button>
               ))}
             </div>
@@ -780,98 +783,7 @@ export default function EditorPage() {
   )
 }
 
-// Composant pour afficher les blocs de contenu
-function BlockRenderer({ 
-  blocks, 
-  theme 
-}: { 
-  blocks: Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>
-  theme: ComputedTheme 
-}) {
-  const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order)
-  
-  return (
-    <div className="space-y-4">
-      {sortedBlocks.map((block) => {
-        switch (block.type) {
-          case 'title':
-            return (
-              <h2 
-                key={block.id}
-                className="text-3xl font-bold"
-                style={{ fontFamily: theme.fonts.heading, color: theme.colors.text }}
-              >
-                {block.content}
-              </h2>
-            )
-          case 'subtitle':
-            return (
-              <h3 
-                key={block.id}
-                className="text-xl"
-                style={{ color: theme.colors.muted }}
-              >
-                {block.content}
-              </h3>
-            )
-          case 'text':
-            return (
-              <p 
-                key={block.id}
-                className="text-base leading-relaxed whitespace-pre-wrap"
-                style={{ color: theme.colors.text }}
-              >
-                {block.content}
-              </p>
-            )
-          case 'image':
-            return block.content ? (
-              <img 
-                key={block.id}
-                src={block.content} 
-                alt="Image" 
-                className="w-full h-auto rounded-ovh object-cover"
-              />
-            ) : null
-          case 'video':
-            return block.content ? (
-              <video 
-                key={block.id}
-                src={block.content} 
-                controls 
-                className="w-full rounded-ovh"
-              />
-            ) : null
-          case 'audio':
-            return block.content ? (
-              <audio 
-                key={block.id}
-                src={block.content} 
-                controls 
-                className="w-full"
-              />
-            ) : null
-          case 'button':
-            return (
-              <a 
-                key={block.id}
-                href={(block.settings?.link as string) || '#'}
-                className="inline-block px-6 py-3 font-semibold text-white"
-                style={{ 
-                  backgroundColor: theme.colors.primary,
-                  borderRadius: theme.buttonStyle === 'pill' ? '9999px' : theme.buttonStyle === 'square' ? '0' : theme.borderRadius,
-                }}
-              >
-                {block.content}
-              </a>
-            )
-          default:
-            return null
-        }
-      })}
-    </div>
-  )
-}
+// BlockRenderer est maintenant importé depuis components/shared/BlockRenderer
 
 // Section preview component
 function SectionPreview({ 
@@ -887,7 +799,7 @@ function SectionPreview({
   onSectionUpdate: (sectionId: string, updates: Record<string, unknown>) => void
   onMediaSelect: (url: string) => void
 }) {
-  const data = JSON.parse(section.dataJson)
+  const data = safeJsonParse<Record<string, unknown>>(section.dataJson, {}) || {}
   const [showMediaPicker, setShowMediaPicker] = useState(false)
 
   const handleImageClick = () => {
@@ -899,11 +811,31 @@ function SectionPreview({
     setShowMediaPicker(false)
   }
 
+  // Helper pour accéder aux propriétés de data de manière sécurisée
+  const getDataValue = (key: string): string => {
+    return (data[key] as string) || ''
+  }
+
+  // Styles personnalisés de la section ou thème par défaut
+  const sectionStyles: SectionStyles = (data.sectionStyles as SectionStyles) || {
+    backgroundColor: theme.colors.background,
+    headingFont: theme.fonts.heading,
+    bodyFont: theme.fonts.body,
+    headingColor: theme.colors.text,
+    textColor: theme.colors.text,
+    buttonStyle: theme.buttonStyle,
+  }
+
   // Si la section a des blocs de contenu, les afficher
   if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0) {
     return (
-      <section className="py-8 mb-4 px-4 rounded-ovh" style={{ backgroundColor: theme.colors.background }}>
-        <BlockRenderer blocks={data.blocks} theme={theme} />
+      <section className="py-8 mb-4 px-4 rounded-ovh" style={{ backgroundColor: sectionStyles.backgroundColor }}>
+        <BlockRenderer 
+          blocks={(data.blocks || []) as Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>} 
+          sectionStyles={sectionStyles} 
+          theme={theme}
+          isPublic={false}
+        />
       </section>
     )
   }
@@ -912,49 +844,56 @@ function SectionPreview({
   switch (section.type) {
     case 'hero':
       return (
-        <section className="py-20 text-center mb-8 rounded-ovh-lg" style={{ backgroundColor: theme.colors.primary }}>
+        <section 
+          className="py-20 text-center mb-8 rounded-ovh-lg" 
+          style={{ backgroundColor: sectionStyles.backgroundColor || theme.colors.primary }}
+        >
           <h1 
             className="text-4xl font-bold mb-4 text-white"
-            style={{ fontFamily: theme.fonts.heading }}
+            style={{ fontFamily: sectionStyles.headingFont }}
             contentEditable
             suppressContentEditableWarning
           >
-            {data.title}
+            {getDataValue('title')}
           </h1>
           <p 
             className="text-xl text-white/80 mb-8"
+            style={{ fontFamily: sectionStyles.bodyFont }}
             contentEditable
             suppressContentEditableWarning
           >
-            {data.subtitle}
+            {getDataValue('subtitle')}
           </p>
           <button
             className="px-6 py-3 font-semibold text-white"
             style={{ 
               backgroundColor: theme.colors.accent,
-              borderRadius: theme.buttonStyle === 'pill' ? '9999px' : theme.buttonStyle === 'square' ? '0' : theme.borderRadius,
+              borderRadius: sectionStyles.buttonStyle === 'pill' ? '9999px' : sectionStyles.buttonStyle === 'square' ? '0' : theme.borderRadius,
             }}
           >
-            {data.ctaText}
+            {getDataValue('ctaText')}
           </button>
         </section>
       )
 
     case 'about':
       return (
-        <section className="py-12 mb-8">
+        <section 
+          className="py-12 mb-8 rounded-ovh"
+          style={{ backgroundColor: sectionStyles.backgroundColor }}
+        >
           <h2 
             className="text-3xl font-bold mb-6"
-            style={{ fontFamily: theme.fonts.heading, color: theme.colors.text }}
+            style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
             contentEditable
             suppressContentEditableWarning
             onBlur={(e) => onSectionUpdate(section.id, { title: e.currentTarget.textContent || '' })}
           >
-            {data.title}
+            {getDataValue('title')}
           </h2>
           {data.image ? (
             <div className="mb-6 relative group">
-              <img src={data.image} alt={data.title} className="w-full h-64 object-cover rounded-ovh" />
+              <img src={data.image as string} alt={getDataValue('title')} className="w-full h-64 object-cover rounded-ovh" />
               <button
                 onClick={() => handleImageClick()}
                 className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white rounded-ovh"
@@ -977,12 +916,12 @@ function SectionPreview({
           )}
           <p 
             className="text-lg leading-relaxed"
-            style={{ color: theme.colors.muted }}
+            style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}
             contentEditable
             suppressContentEditableWarning
             onBlur={(e) => onSectionUpdate(section.id, { content: e.currentTarget.textContent || '' })}
           >
-            {data.content}
+            {getDataValue('content')}
           </p>
           {showMediaPicker && (
             <MediaPickerModal
@@ -996,33 +935,48 @@ function SectionPreview({
 
     case 'services':
       return (
-        <section className="py-12 mb-8">
+        <section 
+          className="py-12 mb-8 rounded-ovh"
+          style={{ backgroundColor: sectionStyles.backgroundColor }}
+        >
           <h2 
             className="text-3xl font-bold mb-8 text-center"
-            style={{ fontFamily: theme.fonts.heading, color: theme.colors.text }}
+            style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
             contentEditable
             suppressContentEditableWarning
           >
-            {data.title}
+            {getDataValue('title')}
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
-            {data.services?.map((service: { icon: string; title: string; description: string }, i: number) => (
+            {(data.services as Array<{ icon?: string; iconSrc?: string; title: string; description: string }>)?.map((service, i: number) => (
               <div 
                 key={i} 
                 className="p-6 rounded-ovh-lg text-center"
                 style={{ backgroundColor: `${theme.colors.primary}10` }}
               >
-                <div className="text-4xl mb-4">{service.icon}</div>
+                {service.iconSrc ? (
+                  <div className="flex justify-center mb-4">
+                    <Image
+                      src={service.iconSrc}
+                      alt={service.title}
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 object-contain"
+                    />
+                  </div>
+                ) : service.icon ? (
+                  <div className="text-4xl mb-4">{service.icon}</div>
+                ) : null}
                 <h3 
                   className="font-bold text-lg mb-2"
-                  style={{ color: theme.colors.text }}
+                  style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
                   contentEditable
                   suppressContentEditableWarning
                 >
                   {service.title}
                 </h3>
                 <p 
-                  style={{ color: theme.colors.muted }}
+                  style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}
                   contentEditable
                   suppressContentEditableWarning
                 >
@@ -1043,11 +997,11 @@ function SectionPreview({
             contentEditable
             suppressContentEditableWarning
           >
-            {data.title}
+            {getDataValue('title')}
           </h2>
           <div className="max-w-md mx-auto text-center">
             <p style={{ color: theme.colors.muted }}>
-              Email : <span contentEditable suppressContentEditableWarning>{data.email}</span>
+              Email : <span contentEditable suppressContentEditableWarning>{getDataValue('email')}</span>
             </p>
           </div>
         </section>
@@ -1062,7 +1016,7 @@ function SectionPreview({
             contentEditable
             suppressContentEditableWarning
           >
-            {data.copyright}
+            {getDataValue('copyright')}
           </p>
         </footer>
       )

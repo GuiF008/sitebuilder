@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -36,6 +38,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Return snapshot data for public site
+    let snapshot = null
+    if (site.publishState.snapshotJson) {
+      try {
+        snapshot = JSON.parse(site.publishState.snapshotJson)
+      } catch (error) {
+        console.error('Error parsing snapshot JSON:', error)
+        // Continue avec snapshot null si le JSON est invalide
+      }
+    }
+
     return NextResponse.json({
       site: {
         name: site.name,
@@ -44,9 +56,7 @@ export async function GET(request: NextRequest) {
         isPremium: site.isPremium,
         siteTheme: site.siteTheme,
       },
-      snapshot: site.publishState.snapshotJson
-        ? JSON.parse(site.publishState.snapshotJson)
-        : null,
+      snapshot,
     })
   } catch (error) {
     console.error('Error fetching site by slug:', error)

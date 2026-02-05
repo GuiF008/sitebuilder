@@ -1,21 +1,54 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generateToken, hashToken, generateSlug } from '@/lib/token'
 import { generateStarterSections } from '@/lib/starter'
 import { getThemePreset, getDefaultTheme } from '@/lib/themes/presets'
+import { apiHandler, ApiError, validateBody } from '@/lib/api-helpers'
+import { createSiteSchema } from '@/lib/validations'
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { name, contactEmail, goal, themeFamily, sections, needs } = body
+  return apiHandler(async () => {
+    let body
+    try {
+      body = await request.json()
+    } catch (error) {
+      throw new ApiError(400, 'Body JSON invalide')
+    }
+
+    const validated = validateBody(
+      body,
+      createSiteSchema
+    )
+    
+    const { 
+      name, 
+      contactEmail, 
+      goal, 
+      themeFamily, 
+      sections = [], 
+      needs = [] 
+    } = validated
 
     // Generate unique slug and token
     const slug = generateSlug(name)
     const token = generateToken()
     const tokenHash = hashToken(token)
 
-    // Get theme preset
+    // Get theme preset avec vérification
     const preset = getThemePreset(themeFamily) || getDefaultTheme()
+    
+    if (!preset) {
+      throw new ApiError(400, `Thème "${themeFamily}" non trouvé`)
+    }
+
+    // Générer les sections starter avec gestion d'erreur
+    let starterSections
+    try {
+      starterSections = generateStarterSections(name, themeFamily, sections)
+    } catch (error) {
+      console.error('Erreur lors de la génération des sections:', error)
+      throw new ApiError(500, 'Erreur lors de la génération du contenu initial')
+    }
 
     // Create site with all related data
     const site = await prisma.site.create({
@@ -56,7 +89,7 @@ export async function POST(request: NextRequest) {
             isHome: true,
             showInMenu: true,
             sections: {
-              create: generateStarterSections(name, themeFamily, sections),
+              create: starterSections,
             },
           },
         },
@@ -74,16 +107,10 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({
+    return {
       site,
       token, // Return plain token to user (only time it's shown)
       editUrl: `/edit/${token}`,
-    })
-  } catch (error) {
-    console.error('Error creating site:', error)
-    return NextResponse.json(
-      { error: 'Failed to create site' },
-      { status: 500 }
-    )
-  }
+    }
+  })
 }

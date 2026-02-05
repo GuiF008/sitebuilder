@@ -15,7 +15,11 @@ export function ProgressSteps({ steps, currentStep }: ProgressStepsProps) {
         <div className="absolute top-4 left-0 right-0 h-0.5 bg-ovh-gray-200">
           <div
             className="absolute top-0 left-0 h-full bg-ovh-primary transition-all duration-500"
-            style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+            style={{ 
+              width: steps.length > 1 
+                ? `${(currentStep / (steps.length - 1)) * 100}%` 
+                : '0%' 
+            }}
           />
         </div>
 

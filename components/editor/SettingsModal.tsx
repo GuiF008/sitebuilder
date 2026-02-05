@@ -56,7 +56,7 @@ export function SettingsModal({
   onMediaUpload,
   onMediaDelete,
 }: SettingsModalProps) {
-  const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set(['pages']))
+  const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set<SectionId>(['pages']))
 
   const toggleSection = (sectionId: SectionId) => {
     setOpenSections(prev => {
