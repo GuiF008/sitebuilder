@@ -121,10 +121,6 @@ export function PagesPanel({
                 className="flex items-center gap-2 flex-1 cursor-pointer"
                 onClick={() => onPageSelect(index)}
               >
-                {page.isHome && (
-                  <span className="text-lg" title="Page d'accueil">🏠</span>
-                )}
-                
                 {editingPageId === page.id ? (
                   <input
                     type="text"

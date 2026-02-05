@@ -48,7 +48,7 @@ function SuccessContent() {
         </div>
 
         <h1 className="text-2xl font-bold text-ovh-gray-900 mb-2">
-          Félicitations ! 🎉
+          Félicitations !
         </h1>
         <p className="text-ovh-gray-600 mb-8">
           Votre site a été créé avec succès

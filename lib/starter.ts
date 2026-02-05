@@ -28,17 +28,17 @@ function getDefaultSectionData(type: string, siteName: string): object {
         title: 'Nos services',
         services: [
           {
-            icon: '🎯',
+            iconSrc: '/pictos/trophy.png',
             title: 'Conseil',
             description: 'Un accompagnement personnalisé pour vos projets',
           },
           {
-            icon: '⚡',
+            iconSrc: '/pictos/speed.png',
             title: 'Réactivité',
             description: 'Une équipe disponible et réactive',
           },
           {
-            icon: '✨',
+            iconSrc: '/pictos/star.png',
             title: 'Qualité',
             description: 'Un travail soigné et des finitions parfaites',
           },

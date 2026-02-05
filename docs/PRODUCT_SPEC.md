@@ -65,6 +65,13 @@ Site public (/s/<slug>) — Menu navigation si multipage
 
 ### 4.1 Onboarding (5 étapes)
 
+#### Header de l'onboarding
+- **Logo OVHcloud** : Affiché en haut à droite du header
+- **Position** : Aligné à droite, visible sur toutes les étapes
+- **Style** : Logo officiel OVHcloud conforme à la charte graphique (https://zeroheight.com/6fc8a63f7/p/394306-welcome-to-the-brand-hub)
+- **Lien** : Logo cliquable vers https://www.ovhcloud.com
+- **Composants** : Cercle bleu (#000E9C) avec cercle blanc intérieur + texte "OVHcloud"
+
 #### Étape 1 : Identité
 - **Champs** : Nom du site, email de contact
 - **Message** : "Donnez un nom à votre site. Vous pourrez le changer plus tard."
@@ -187,6 +194,31 @@ Site public (/s/<slug>) — Menu navigation si multipage
 
 **IMPORTANT** : Toutes les modifications sont **temps réel** (pas de bouton Sauvegarder)
 
+#### Section 📝 Sections & Contenu
+
+| Fonction | Description | UX |
+|----------|-------------|-----|
+| Liste des sections | Toutes les sections de la page active | Liste verticale avec drag reorder |
+| Créer une section | Nouvelle section sur la page | Bouton + sélection type |
+| Types de sections | Hero, Texte, Image+Texte, Galerie, etc. | Menu déroulant |
+| Réordonner | Changer l'ordre des sections | Flèches haut/bas ou drag |
+| Supprimer | Retirer une section | Icône poubelle avec confirmation |
+
+**Types de sections disponibles** :
+- **Hero** : Titre, Sous-titre, Image, Bouton CTA
+- **Texte** : Titre, Sous-titre, Texte
+- **Image + Texte** : Image, Titre, Sous-titre, Texte
+- **Galerie** : Titre, Images (grille)
+- **À propos** : Titre, Texte, Image
+- **Services** : Titre, Liste services
+- **Contact** : Titre, Email, Texte
+
+**Édition d'une section** :
+- **Titre** : Texte éditable directement (contentEditable)
+- **Sous-titre** : Texte éditable directement
+- **Média** : Sélection depuis médiathèque OU drag & drop direct
+- **Texte** : Zone de texte éditable directement
+
 #### Section 🖼️ Médiathèque
 
 | Fonction | Description |
@@ -194,20 +226,58 @@ Site public (/s/<slug>) — Menu navigation si multipage
 | Zone upload | Drag & drop ou bouton parcourir |
 | Filtres | Tous / Images / Vidéos / Sons |
 | Galerie | Grille avec preview |
-| Actions | Copier URL, Supprimer |
+| Actions | **Ajouter à une section**, Copier URL, Supprimer |
+
+**Nouvelle fonctionnalité** : Clic sur une image → Menu "Ajouter à une section" → Sélection section → Ajout
 
 ---
 
-### 4.3 Drag & Drop global
+### 4.3 Drag & Drop global (comportement type Wix)
 
-L'utilisateur peut glisser des images depuis son ordinateur **n'importe où** sur la zone d'édition.
+#### Objectif
+Permettre à l'utilisateur d'ajouter des images par simple glisser-déposer, sans configuration ni compréhension technique.
 
-#### Comportement
-1. **Survol avec fichier** : Overlay bleu couvrant l'écran
-2. **Message** : "Déposez vos images ici"
-3. **Sous-message** : "Elles seront ajoutées à votre médiathèque"
-4. **Animation** : Icône image qui bounce
-5. **Drop** : Upload automatique, notification succès
+#### Déclencheur
+- L'utilisateur glisse une ou plusieurs images depuis son ordinateur
+- Le curseur entre dans la zone d'édition
+
+#### Comportement UX
+
+| Étape | Action | Résultat |
+|-------|--------|----------|
+| 1. Drag enter | Fichier glissé sur la zone | Overlay bleu semi-transparent couvre l'écran |
+| 2. Message principal | - | **"Déposez vos images ici"** |
+| 3. Sous-message | - | *"Elles seront ajoutées à votre médiathèque"* |
+| 4. Animation | - | Icône image centrale avec effet bounce/pulse |
+| 5. Drop | Fichier déposé | Overlay disparaît, upload automatique |
+
+#### Comportement intelligent
+- Drop sur zone d'édition générale → Ajout à la médiathèque uniquement
+- Drop sur zone média d'une section → Ajout direct dans la section + médiathèque
+- Clic sur image médiathèque → Menu "Ajouter à une section" → Sélection section → Ajout
+
+#### Feedback
+- Toast discret : ✅ *"X images ajoutées à votre médiathèque"*
+- Toast : ✅ *"Image ajoutée à la section [nom]"* (si ajout direct dans section)
+
+#### Règles
+- Drop possible **partout** sur le canvas
+- Drop sur zone média de section → Ajout direct dans section
+- Multi-images supporté
+- Validation automatique (type / taille)
+- Aucun réglage demandé à l'utilisateur
+
+#### Hors périmètre
+- ❌ Pas de popup bloquante
+- ❌ Pas de choix de dossier
+- ❌ Pas de notions techniques exposées
+
+#### Critères d'acceptance
+- [ ] Overlay visible au drag
+- [ ] Message + sous-message affichés
+- [ ] Animation active
+- [ ] Upload déclenché au drop
+- [ ] Notification de succès affichée
 
 ---
 
