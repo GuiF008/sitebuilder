@@ -2,16 +2,16 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button, Input, Card, ProgressSteps } from '@/components/ui'
-import { themePresets } from '@/lib/themes/presets'
 
-const STEPS = ['Identité', 'Objectif', 'Modèle', 'Contenu', 'Besoins']
+const STEPS = ['Identité', 'Objectif', 'Contenu', 'Besoins']
 
 const GOALS = [
-  { id: 'vitrine', icon: '🏢', label: 'Vitrine', description: 'Présenter mon activité' },
-  { id: 'portfolio', icon: '🖼️', label: 'Portfolio', description: 'Montrer mes créations' },
-  { id: 'blog', icon: '📝', label: 'Blog', description: 'Partager mes actualités' },
-  { id: 'ecommerce', icon: '🛒', label: 'Boutique', description: 'Vendre en ligne' },
+  { id: 'vitrine', iconSrc: '/pictos/house.png', label: 'Vitrine', description: 'Présenter mon activité' },
+  { id: 'portfolio', iconSrc: '/pictos/camera.png', label: 'Portfolio', description: 'Montrer mes créations' },
+  { id: 'blog', iconSrc: '/pictos/book.png', label: 'Blog', description: 'Partager mes actualités' },
+  { id: 'ecommerce', iconSrc: '/pictos/cart.png', label: 'Boutique', description: 'Vendre en ligne' },
 ]
 
 const SECTIONS = [
@@ -51,7 +51,7 @@ export default function OnboardingPage() {
   const validateStep = () => {
     const newErrors: Record<string, string> = {}
 
-    if (currentStep === 0) {
+    if (currentStep === 1) {
       if (!name.trim()) newErrors.name = 'Le nom du site est requis'
       if (!email.trim()) newErrors.email = "L'email est requis"
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -59,7 +59,7 @@ export default function OnboardingPage() {
       }
     }
 
-    if (currentStep === 1 && !goal) {
+    if (currentStep === 2 && !goal) {
       newErrors.goal = 'Veuillez sélectionner un objectif'
     }
 
@@ -70,7 +70,11 @@ export default function OnboardingPage() {
   const handleNext = () => {
     if (!validateStep()) return
 
-    if (currentStep < STEPS.length - 1) {
+    // currentStep 0 = hero, donc on commence à 1
+    // STEPS.length = 4 (Identité, Objectif, Contenu, Besoins)
+    // Donc les étapes sont : 1, 2, 3, 4
+    const maxStep = STEPS.length // 4
+    if (currentStep < maxStep) {
       setCurrentStep(currentStep + 1)
     } else {
       handleSubmit()
@@ -78,8 +82,10 @@ export default function OnboardingPage() {
   }
 
   const handleBack = () => {
-    if (currentStep > 0) {
+    if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
+    } else {
+      setCurrentStep(0) // Retour au hero
     }
   }
 
@@ -129,30 +135,86 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-ovh-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="bg-white border-b border-ovh-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-ovh-primary rounded-ovh flex items-center justify-center">
-              <span className="text-white font-bold text-sm">O</span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/logo/ovhcloud-logo.svg"
+                alt="OVHcloud"
+                width={120}
+                height={40}
+                className="h-8 w-auto"
+              />
+              <span className="text-ovh-gray-300">|</span>
+              <span className="font-semibold text-lg">Site Builder</span>
             </div>
-            <span className="font-bold text-lg">Site Builder</span>
+            <a
+              href="https://www.ovhcloud.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-ovh-gray-500 hover:text-ovh-primary transition-colors"
+            >
+              ovhcloud.com
+            </a>
           </div>
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Progress */}
-        <div className="mb-10">
-          <ProgressSteps steps={STEPS} currentStep={currentStep} />
+      {/* Hero Section */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Image à gauche */}
+          <div className="order-2 lg:order-1">
+            <Image
+              src="/hosting-hero.webp"
+              alt="Créer votre site web"
+              width={600}
+              height={600}
+              className="w-full h-auto rounded-lg"
+              priority
+            />
+          </div>
+
+          {/* Contenu à droite */}
+          <div className="order-1 lg:order-2 space-y-8">
+            <div>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-ovh-gray-900 mb-4">
+                Créez votre site web
+                <span className="text-ovh-primary"> en quelques minutes</span>
+              </h1>
+              <p className="text-xl text-ovh-gray-600">
+                Sans aucune connaissance technique. Sans compte à créer. 
+                Choisissez un modèle, personnalisez et publiez.
+              </p>
+            </div>
+
+            <div>
+              <Button 
+                size="lg" 
+                onClick={() => setCurrentStep(1)}
+                className="w-full sm:w-auto"
+              >
+                Créer mon site
+              </Button>
+            </div>
+          </div>
         </div>
 
+        {/* Progress */}
+        {currentStep > 0 && (
+          <div className="mt-12 mb-8">
+            <ProgressSteps steps={STEPS} currentStep={currentStep - 1} />
+          </div>
+        )}
+
         {/* Step content */}
-        <div className="bg-white rounded-ovh-lg shadow-sm border border-ovh-gray-200 p-8">
+        {currentStep > 0 && (
+          <div className="bg-white rounded-ovh-lg shadow-sm border border-ovh-gray-200 p-8 max-w-4xl mx-auto">
           {/* Step 1: Identity */}
-          {currentStep === 0 && (
+          {currentStep === 1 && (
             <div className="space-y-6">
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-ovh-gray-900">
@@ -184,7 +246,7 @@ export default function OnboardingPage() {
           )}
 
           {/* Step 2: Goal */}
-          {currentStep === 1 && (
+          {currentStep === 2 && (
             <div className="space-y-6">
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-ovh-gray-900">
@@ -204,7 +266,13 @@ export default function OnboardingPage() {
                     className="p-5"
                   >
                     <div className="flex items-center gap-4">
-                      <span className="text-3xl">{g.icon}</span>
+                      <Image
+                        src={g.iconSrc}
+                        alt={g.label}
+                        width={48}
+                        height={48}
+                        className="w-12 h-12 object-contain"
+                      />
                       <div>
                         <div className="font-semibold text-ovh-gray-900">{g.label}</div>
                         <div className="text-sm text-ovh-gray-500">{g.description}</div>
@@ -219,91 +287,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 3: Theme */}
-          {currentStep === 2 && (
-            <div className="space-y-6">
-              <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold text-ovh-gray-900">
-                  Choisissez un modèle
-                </h1>
-                <p className="text-ovh-gray-600 mt-2">
-                  Vous pourrez le personnaliser à votre goût
-                </p>
-              </div>
-
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {themePresets.map((preset) => (
-                  <Card
-                    key={preset.id}
-                    selected={themeFamily === preset.id}
-                    onClick={() => setThemeFamily(preset.id)}
-                    className="overflow-hidden theme-card"
-                  >
-                    {/* Preview */}
-                    <div
-                      className="h-32 relative"
-                      style={{ backgroundColor: preset.colors.background }}
-                    >
-                      {/* Selected indicator */}
-                      {themeFamily === preset.id && (
-                        <div className="absolute top-2 right-2 w-6 h-6 bg-ovh-primary rounded-full flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                      )}
-                      
-                      {/* Simulated header */}
-                      <div
-                        className="absolute top-0 left-0 right-0 h-8"
-                        style={{ backgroundColor: preset.colors.primary }}
-                      />
-                      
-                      {/* Simulated content */}
-                      <div className="absolute top-12 left-4 right-4">
-                        <div
-                          className="h-3 rounded-full mb-2"
-                          style={{ backgroundColor: preset.colors.primary, width: '60%' }}
-                        />
-                        <div
-                          className="h-2 rounded-full mb-1"
-                          style={{ backgroundColor: preset.colors.muted, width: '80%' }}
-                        />
-                        <div
-                          className="h-2 rounded-full"
-                          style={{ backgroundColor: preset.colors.muted, width: '50%' }}
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* Info */}
-                    <div className="p-4">
-                      <div className="font-semibold text-ovh-gray-900">{preset.name}</div>
-                      <div className="text-sm text-ovh-gray-500 mb-3">{preset.description}</div>
-                      
-                      {/* Color palette */}
-                      <div className="flex gap-1.5">
-                        <div
-                          className="w-5 h-5 rounded-full border border-ovh-gray-200"
-                          style={{ backgroundColor: preset.colors.primary }}
-                        />
-                        <div
-                          className="w-5 h-5 rounded-full border border-ovh-gray-200"
-                          style={{ backgroundColor: preset.colors.secondary }}
-                        />
-                        <div
-                          className="w-5 h-5 rounded-full border border-ovh-gray-200"
-                          style={{ backgroundColor: preset.colors.accent }}
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Sections */}
+          {/* Step 3: Sections */}
           {currentStep === 3 && (
             <div className="space-y-6">
               <div className="text-center mb-8">
@@ -340,7 +324,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 5: Needs */}
+          {/* Step 4: Needs */}
           {currentStep === 4 && (
             <div className="space-y-6">
               <div className="text-center mb-8">
@@ -396,7 +380,7 @@ export default function OnboardingPage() {
             <Button
               variant="ghost"
               onClick={handleBack}
-              disabled={currentStep === 0}
+              disabled={currentStep === 1}
             >
               Retour
             </Button>
@@ -404,12 +388,12 @@ export default function OnboardingPage() {
             <Button onClick={handleNext} disabled={isLoading}>
               {isLoading
                 ? 'Création en cours...'
-                : currentStep === STEPS.length - 1
+                : currentStep === STEPS.length
                   ? 'Créer mon site'
                   : 'Continuer'}
             </Button>
           </div>
-        </div>
+        )}
       </main>
     </div>
   )

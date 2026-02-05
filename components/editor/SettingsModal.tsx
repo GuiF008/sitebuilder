@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { PagesPanel } from './PagesPanel'
+import { SectionsPanel } from './SectionsPanel'
 import { DesignPanel } from './DesignPanel'
 import { MediaPanel } from './MediaPanel'
 import { SiteWithRelations, PageWithSections } from '@/lib/types'
@@ -19,12 +21,18 @@ interface SettingsModalProps {
   onPageUpdate: (pageId: string, data: Partial<PageWithSections>) => Promise<void>
   onPageDelete: (pageId: string) => Promise<void>
   onPageReorder: (pageId: string, direction: 'up' | 'down') => Promise<void>
+  onSectionCreate: (pageId: string, type: string) => Promise<void>
+  onSectionUpdate: (sectionId: string, data: Record<string, unknown>) => Promise<void>
+  onSectionDelete: (sectionId: string) => Promise<void>
+  onSectionReorder: (sectionId: string, direction: 'up' | 'down') => Promise<void>
+  onSectionDragReorder?: (draggedId: string, targetId: string) => Promise<void>
+  onSectionSelect?: (sectionId: string) => void
   onThemeChange: (updates: Record<string, string>) => void
   onMediaUpload: (file: File) => Promise<void>
   onMediaDelete: (mediaId: string) => Promise<void>
 }
 
-type SectionId = 'pages' | 'design' | 'media'
+type SectionId = 'pages' | 'sections' | 'design' | 'media'
 
 export function SettingsModal({
   isOpen,
@@ -38,6 +46,12 @@ export function SettingsModal({
   onPageUpdate,
   onPageDelete,
   onPageReorder,
+  onSectionCreate,
+  onSectionUpdate,
+  onSectionDelete,
+  onSectionReorder,
+  onSectionDragReorder,
+  onSectionSelect,
   onThemeChange,
   onMediaUpload,
   onMediaDelete,
@@ -56,22 +70,30 @@ export function SettingsModal({
     })
   }
 
+  const currentPage = site.pages[currentPageIndex] || null
+
   const sections = [
     {
       id: 'pages' as SectionId,
-      icon: '📄',
+      iconSrc: '/pictos/book.png',
       label: 'Pages & Menu',
       subtitle: 'Gérer les pages et la navigation',
     },
     {
+      id: 'sections' as SectionId,
+      iconSrc: '/pictos/settings.png',
+      label: 'Sections & Contenu',
+      subtitle: 'Créer et gérer les sections de la page',
+    },
+    {
       id: 'design' as SectionId,
-      icon: '🎨',
+      iconSrc: '/pictos/brush.png',
       label: 'Design du site',
       subtitle: 'Couleurs, polices et styles',
     },
     {
       id: 'media' as SectionId,
-      icon: '🖼️',
+      iconSrc: '/pictos/camera.png',
       label: 'Médiathèque',
       subtitle: 'Images, vidéos et fichiers',
     },
@@ -129,7 +151,13 @@ export function SettingsModal({
                 `}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{section.icon}</span>
+                  <Image
+                    src={section.iconSrc}
+                    alt={section.label}
+                    width={28}
+                    height={28}
+                    className="w-7 h-7 object-contain"
+                  />
                   <div>
                     <div className="font-semibold text-ovh-gray-800">{section.label}</div>
                     <div className="text-sm text-ovh-gray-500">{section.subtitle}</div>
@@ -166,6 +194,17 @@ export function SettingsModal({
                       onPageReorder={onPageReorder}
                     />
                   )}
+                  {section.id === 'sections' && currentPage && (
+                    <SectionsPanel
+                      currentPage={currentPage}
+                      onSectionCreate={(type) => onSectionCreate(currentPage.id, type)}
+                      onSectionUpdate={onSectionUpdate}
+                      onSectionDelete={onSectionDelete}
+                      onSectionReorder={onSectionReorder}
+                      onSectionDragReorder={onSectionDragReorder}
+                      onSectionSelect={onSectionSelect}
+                    />
+                  )}
                   {section.id === 'design' && (
                     <DesignPanel
                       site={site}
@@ -188,9 +227,18 @@ export function SettingsModal({
 
         {/* Footer */}
         <div className="px-5 py-3 bg-white border-t border-ovh-gray-200 flex-shrink-0">
-          <p className="text-xs text-ovh-gray-500 text-center">
-            ✓ Les modifications sont appliquées en temps réel
-          </p>
+          <div className="flex items-center justify-center gap-2">
+            <Image
+              src="/pictos/check.png"
+              alt="Validé"
+              width={16}
+              height={16}
+              className="w-4 h-4 object-contain"
+            />
+            <p className="text-xs text-ovh-gray-500">
+              Les modifications sont appliquées en temps réel
+            </p>
+          </div>
         </div>
       </aside>
     </>

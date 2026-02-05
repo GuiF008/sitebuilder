@@ -3,8 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui'
 import { SettingsModal } from '@/components/editor'
+import { SectionEditorModal } from '@/components/editor/SectionEditorModal'
 import { SiteWithRelations, PageWithSections, ComputedTheme } from '@/lib/types'
 import { computeTheme, generateThemeStyles } from '@/lib/themes'
 
@@ -20,7 +22,9 @@ export default function EditorPage() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [isDraggingFile, setIsDraggingFile] = useState(false)
+  const [uploadToast, setUploadToast] = useState<number>(0) // Nombre d'images uploadées
   const [isSaving, setIsSaving] = useState(false)
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [isPublishing, setIsPublishing] = useState(false)
 
@@ -277,6 +281,144 @@ export default function EditorPage() {
     }
   }
 
+  const handleSectionCreate = async (pageId: string, type: string) => {
+    if (!site) return
+
+    try {
+      const response = await fetch(`/api/pages/${pageId}/sections`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type }),
+      })
+      const data = await response.json()
+
+      setSite((prev) => prev ? {
+        ...prev,
+        pages: prev.pages.map((p) =>
+          p.id === pageId
+            ? { ...p, sections: [...p.sections, data.section] }
+            : p
+        ),
+      } : null)
+
+      showSaveStatus()
+    } catch (err) {
+      console.error('Failed to create section:', err)
+    }
+  }
+
+  const handleSectionUpdate = async (sectionId: string, updates: Record<string, unknown>) => {
+    if (!site) return
+
+    // Trouver la section actuelle pour fusionner les données
+    let currentData: Record<string, unknown> = {}
+    for (const page of site.pages) {
+      const section = page.sections.find(s => s.id === sectionId)
+      if (section) {
+        currentData = JSON.parse(section.dataJson)
+        break
+      }
+    }
+
+    const mergedData = { ...currentData, ...updates }
+
+    // Optimistic update
+    setSite((prev) => prev ? {
+      ...prev,
+      pages: prev.pages.map((p) => ({
+        ...p,
+        sections: p.sections.map((s) =>
+          s.id === sectionId
+            ? { ...s, dataJson: JSON.stringify(mergedData) }
+            : s
+        ),
+      })),
+    } : null)
+
+    showSaveStatus()
+
+    try {
+      await fetch(`/api/sections/${sectionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataJson: JSON.stringify(mergedData) }),
+      })
+    } catch (err) {
+      console.error('Failed to update section:', err)
+    }
+  }
+
+  const handleSectionDelete = async (sectionId: string) => {
+    if (!site) return
+
+    setSite((prev) => prev ? {
+      ...prev,
+      pages: prev.pages.map((p) => ({
+        ...p,
+        sections: p.sections.filter((s) => s.id !== sectionId),
+      })),
+    } : null)
+
+    showSaveStatus()
+
+    try {
+      await fetch(`/api/sections/${sectionId}`, { method: 'DELETE' })
+    } catch (err) {
+      console.error('Failed to delete section:', err)
+    }
+  }
+
+  const handleSectionReorder = async (sectionId: string, direction: 'up' | 'down') => {
+    if (!site || !currentPage) return
+
+    try {
+      await fetch(`/api/pages/${currentPage.id}/sections`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionId, direction }),
+      })
+
+      // Recharger le site pour avoir les sections réordonnées
+      const response = await fetch(`/api/sites/by-token?token=${token}`)
+      if (response.ok) {
+        const data = await response.json()
+        setSite(data.site)
+      }
+    } catch (err) {
+      console.error('Failed to reorder sections:', err)
+    }
+  }
+
+  const handleSectionDragReorder = async (draggedId: string, targetId: string) => {
+    if (!site || !currentPage) return
+
+    const sections = [...currentPage.sections].sort((a, b) => a.order - b.order)
+    const draggedIndex = sections.findIndex(s => s.id === draggedId)
+    const targetIndex = sections.findIndex(s => s.id === targetId)
+
+    if (draggedIndex === -1 || targetIndex === -1) return
+
+    // Calculer la nouvelle position
+    const direction = draggedIndex < targetIndex ? 'down' : 'up'
+    const steps = Math.abs(targetIndex - draggedIndex)
+
+    // Effectuer les réordonnements nécessaires
+    for (let i = 0; i < steps; i++) {
+      await fetch(`/api/pages/${currentPage.id}/sections`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionId: draggedId, direction }),
+      })
+    }
+
+    // Recharger le site
+    const response = await fetch(`/api/sites/by-token?token=${token}`)
+    if (response.ok) {
+      const data = await response.json()
+      setSite(data.site)
+    }
+  }
+
   const handlePublish = async () => {
     if (!site) return
 
@@ -328,9 +470,15 @@ export default function EditorPage() {
       (f) => f.type.startsWith('image/') || f.type.startsWith('video/') || f.type.startsWith('audio/')
     )
 
-    for (const file of files) {
-      await handleMediaUpload(file)
-    }
+    if (files.length === 0) return
+
+    // Upload parallèle
+    const uploads = files.map((file) => handleMediaUpload(file))
+    await Promise.all(uploads)
+
+    // Afficher le toast de succès
+    setUploadToast(files.length)
+    setTimeout(() => setUploadToast(0), 3000)
   }, [site])
 
   // Loading state
@@ -433,16 +581,35 @@ export default function EditorPage() {
           onPageUpdate={handlePageUpdate}
           onPageDelete={handlePageDelete}
           onPageReorder={handlePageReorder}
+          onSectionCreate={handleSectionCreate}
+          onSectionUpdate={handleSectionUpdate}
+          onSectionDelete={handleSectionDelete}
+          onSectionReorder={handleSectionReorder}
+          onSectionDragReorder={handleSectionDragReorder}
+          onSectionSelect={setSelectedSectionId}
           onThemeChange={handleThemeChange}
           onMediaUpload={handleMediaUpload}
           onMediaDelete={handleMediaDelete}
         />
+
+        {/* Section Editor Modal */}
+        {selectedSectionId && currentPage && (
+          <SectionEditorModal
+            isOpen={!!selectedSectionId}
+            onClose={() => setSelectedSectionId(null)}
+            section={currentPage.sections.find(s => s.id === selectedSectionId) || null}
+            site={site}
+            theme={theme}
+            onUpdate={handleSectionUpdate}
+          />
+        )}
 
         {/* Editor area */}
         <main 
           className={`
             flex-1 transition-all duration-300 flex flex-col
             ${settingsOpen ? 'ml-[420px]' : 'ml-0'}
+            ${selectedSectionId ? 'mr-[420px]' : 'mr-0'}
           `}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -508,11 +675,22 @@ export default function EditorPage() {
                 {currentPage.sections
                   .sort((a, b) => a.order - b.order)
                   .map((section) => (
-                    <SectionPreview
-                      key={section.id}
-                      section={section}
-                      theme={theme}
-                    />
+                    <div
+                      onClick={() => setSelectedSectionId(section.id)}
+                      className="cursor-pointer hover:outline hover:outline-2 hover:outline-ovh-primary hover:outline-offset-2 rounded-ovh transition-all"
+                    >
+                      <SectionPreview
+                        key={section.id}
+                        section={section}
+                        theme={theme}
+                        site={site}
+                        onSectionUpdate={handleSectionUpdate}
+                        onMediaSelect={(mediaUrl) => {
+                          // Trouver la section et ajouter l'image
+                          handleSectionUpdate(section.id, { image: mediaUrl })
+                        }}
+                      />
+                    </div>
                   ))}
                 
                 {currentPage.sections.length === 0 && (
@@ -540,11 +718,25 @@ export default function EditorPage() {
             onDrop={handleDrop}
           >
             <div className="text-white text-center">
-              <svg className="w-20 h-20 mx-auto mb-4 animate-bounce-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-20 h-20 mx-auto mb-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <p className="text-2xl font-bold mb-2">Déposez vos images ici</p>
               <p className="text-white/80">Elles seront ajoutées à votre médiathèque</p>
+            </div>
+          </div>
+        )}
+
+        {/* Toast de succès upload */}
+        {uploadToast > 0 && (
+          <div className="fixed bottom-20 right-4 z-50 bg-green-600 text-white px-4 py-3 rounded-ovh shadow-lg animate-fade-in">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>
+                {uploadToast} image{uploadToast > 1 ? 's' : ''} ajoutée{uploadToast > 1 ? 's' : ''} à votre médiathèque
+              </span>
             </div>
           </div>
         )}
@@ -568,7 +760,16 @@ export default function EditorPage() {
             </>
           )}
           {saveStatus === 'idle' && (
-            <span className="text-ovh-gray-400">✓ Modifications en temps réel</span>
+            <span className="text-ovh-gray-400 flex items-center gap-1">
+              <Image
+                src="/pictos/check.png"
+                alt=""
+                width={14}
+                height={14}
+                className="w-3.5 h-3.5 object-contain opacity-60"
+              />
+              Modifications en temps réel
+            </span>
           )}
         </div>
         <div className="text-sm text-ovh-gray-500">
@@ -579,16 +780,135 @@ export default function EditorPage() {
   )
 }
 
+// Composant pour afficher les blocs de contenu
+function BlockRenderer({ 
+  blocks, 
+  theme 
+}: { 
+  blocks: Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>
+  theme: ComputedTheme 
+}) {
+  const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order)
+  
+  return (
+    <div className="space-y-4">
+      {sortedBlocks.map((block) => {
+        switch (block.type) {
+          case 'title':
+            return (
+              <h2 
+                key={block.id}
+                className="text-3xl font-bold"
+                style={{ fontFamily: theme.fonts.heading, color: theme.colors.text }}
+              >
+                {block.content}
+              </h2>
+            )
+          case 'subtitle':
+            return (
+              <h3 
+                key={block.id}
+                className="text-xl"
+                style={{ color: theme.colors.muted }}
+              >
+                {block.content}
+              </h3>
+            )
+          case 'text':
+            return (
+              <p 
+                key={block.id}
+                className="text-base leading-relaxed whitespace-pre-wrap"
+                style={{ color: theme.colors.text }}
+              >
+                {block.content}
+              </p>
+            )
+          case 'image':
+            return block.content ? (
+              <img 
+                key={block.id}
+                src={block.content} 
+                alt="Image" 
+                className="w-full h-auto rounded-ovh object-cover"
+              />
+            ) : null
+          case 'video':
+            return block.content ? (
+              <video 
+                key={block.id}
+                src={block.content} 
+                controls 
+                className="w-full rounded-ovh"
+              />
+            ) : null
+          case 'audio':
+            return block.content ? (
+              <audio 
+                key={block.id}
+                src={block.content} 
+                controls 
+                className="w-full"
+              />
+            ) : null
+          case 'button':
+            return (
+              <a 
+                key={block.id}
+                href={(block.settings?.link as string) || '#'}
+                className="inline-block px-6 py-3 font-semibold text-white"
+                style={{ 
+                  backgroundColor: theme.colors.primary,
+                  borderRadius: theme.buttonStyle === 'pill' ? '9999px' : theme.buttonStyle === 'square' ? '0' : theme.borderRadius,
+                }}
+              >
+                {block.content}
+              </a>
+            )
+          default:
+            return null
+        }
+      })}
+    </div>
+  )
+}
+
 // Section preview component
 function SectionPreview({ 
   section, 
-  theme 
+  theme,
+  site,
+  onSectionUpdate,
+  onMediaSelect,
 }: { 
   section: { id: string; type: string; dataJson: string }
-  theme: ComputedTheme 
+  theme: ComputedTheme
+  site: SiteWithRelations
+  onSectionUpdate: (sectionId: string, updates: Record<string, unknown>) => void
+  onMediaSelect: (url: string) => void
 }) {
   const data = JSON.parse(section.dataJson)
+  const [showMediaPicker, setShowMediaPicker] = useState(false)
 
+  const handleImageClick = () => {
+    setShowMediaPicker(true)
+  }
+
+  const handleImageSelect = (mediaUrl: string) => {
+    onSectionUpdate(section.id, { image: mediaUrl })
+    setShowMediaPicker(false)
+  }
+
+  // Si la section a des blocs de contenu, les afficher
+  if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0) {
+    return (
+      <section className="py-8 mb-4 px-4 rounded-ovh" style={{ backgroundColor: theme.colors.background }}>
+        <BlockRenderer blocks={data.blocks} theme={theme} />
+      </section>
+    )
+  }
+
+  // Sinon, afficher le rendu par défaut selon le type
   switch (section.type) {
     case 'hero':
       return (
@@ -628,17 +948,49 @@ function SectionPreview({
             style={{ fontFamily: theme.fonts.heading, color: theme.colors.text }}
             contentEditable
             suppressContentEditableWarning
+            onBlur={(e) => onSectionUpdate(section.id, { title: e.currentTarget.textContent || '' })}
           >
             {data.title}
           </h2>
+          {data.image ? (
+            <div className="mb-6 relative group">
+              <img src={data.image} alt={data.title} className="w-full h-64 object-cover rounded-ovh" />
+              <button
+                onClick={() => handleImageClick()}
+                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white rounded-ovh"
+              >
+                <span className="text-sm">Changer l'image</span>
+              </button>
+            </div>
+          ) : (
+            <div
+              onClick={handleImageClick}
+              className="mb-6 h-64 border-2 border-dashed border-ovh-gray-300 rounded-ovh flex items-center justify-center cursor-pointer hover:border-ovh-primary transition-colors"
+            >
+              <div className="text-center">
+                <svg className="w-12 h-12 mx-auto mb-2 text-ovh-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-sm text-ovh-gray-500">Cliquez pour ajouter une image</p>
+              </div>
+            </div>
+          )}
           <p 
             className="text-lg leading-relaxed"
             style={{ color: theme.colors.muted }}
             contentEditable
             suppressContentEditableWarning
+            onBlur={(e) => onSectionUpdate(section.id, { content: e.currentTarget.textContent || '' })}
           >
             {data.content}
           </p>
+          {showMediaPicker && (
+            <MediaPickerModal
+              media={site.media.filter(m => m.type === 'image')}
+              onSelect={handleImageSelect}
+              onClose={() => setShowMediaPicker(false)}
+            />
+          )}
         </section>
       )
 
@@ -722,4 +1074,53 @@ function SectionPreview({
         </div>
       )
   }
+}
+
+// Composant pour sélectionner une image depuis la médiathèque
+function MediaPickerModal({
+  media,
+  onSelect,
+  onClose,
+}: {
+  media: Array<{ id: string; url: string; filename: string }>
+  onSelect: (url: string) => void
+  onClose: () => void
+}) {
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/50 z-50" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-ovh-lg max-w-4xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+          <div className="px-6 py-4 border-b flex items-center justify-between">
+            <h3 className="font-bold text-lg">Sélectionner une image</h3>
+            <button onClick={onClose} className="p-2 hover:bg-ovh-gray-100 rounded-ovh">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            {media.length === 0 ? (
+              <div className="text-center py-12 text-ovh-gray-500">
+                <p>Aucune image dans la médiathèque</p>
+                <p className="text-sm mt-2">Ajoutez des images via la médiathèque</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                {media.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => onSelect(item.url)}
+                    className="aspect-square rounded-ovh overflow-hidden border-2 border-ovh-gray-200 hover:border-ovh-primary transition-colors"
+                  >
+                    <img src={item.url} alt={item.filename} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  )
 }

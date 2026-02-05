@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { computeTheme, generateThemeStyles } from '@/lib/themes'
 import { ComputedTheme } from '@/lib/types'
 
@@ -186,10 +187,15 @@ export default function PublicSitePage() {
       {!siteInfo?.isPremium && (
         <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg px-4 py-2 border border-gray-200">
           <Link href="/" className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
-            <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center">
-              <span className="text-white font-bold text-xs">O</span>
-            </div>
-            Créé avec OVHcloud Site Builder
+            <Image
+              src="/logo/ovhcloud-logo.svg"
+              alt="OVHcloud"
+              width={80}
+              height={24}
+              className="h-5 w-auto"
+            />
+            <span className="text-gray-400">|</span>
+            <span>Site Builder</span>
           </Link>
         </div>
       )}
