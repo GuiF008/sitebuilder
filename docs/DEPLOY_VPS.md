@@ -81,23 +81,28 @@ curl http://localhost:3000/api/health
 
 ## 3. Configuration Caddy (Reverse Proxy + SSL)
 
-### Installation
+Sur un **VPS neuf**, Caddy n’est pas installé : il faut l’installer puis créer le fichier de configuration.
+
+### Installation de Caddy
 
 ```bash
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
 sudo apt update
-sudo apt install caddy
+sudo apt install -y caddy
 ```
 
-### Configuration
+### Création du Caddyfile
+
+Le fichier `/etc/caddy/Caddyfile` est créé à l’installation. S’il n’existe pas ou est vide :
 
 ```bash
+sudo mkdir -p /etc/caddy
 sudo nano /etc/caddy/Caddyfile
 ```
 
-Contenu :
+Collez le contenu ci-dessous en **remplaçant `sitebuilder.votre-domaine.com`** par votre domaine (ou sous-domaine) pointant vers l’IP du VPS :
 
 ```
 sitebuilder.votre-domaine.com {
@@ -113,14 +118,21 @@ sitebuilder.votre-domaine.com {
 }
 ```
 
-### Activation
+### Démarrage et activation
 
 ```bash
-sudo systemctl reload caddy
+sudo systemctl enable caddy
+sudo systemctl start caddy
 sudo systemctl status caddy
 ```
 
-Le SSL sera automatiquement provisionné par Caddy.
+Pour recharger après une modification du Caddyfile :
+
+```bash
+sudo systemctl reload caddy
+```
+
+Le SSL (HTTPS) est provisionné automatiquement par Caddy via Let’s Encrypt.
 
 ## 4. Commandes de maintenance
 
