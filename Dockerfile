@@ -7,6 +7,7 @@ FROM base AS deps
 WORKDIR /app
 
 COPY package*.json ./
+COPY prisma ./prisma
 RUN npm ci
 
 # Build
@@ -50,4 +51,4 @@ ENV HOSTNAME="0.0.0.0"
 ENV DATABASE_URL="file:/app/data/sitebuilder.db"
 
 # Run migrations and start server
-CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
+CMD ["sh", "-c", "npx prisma db push && node server.js"]

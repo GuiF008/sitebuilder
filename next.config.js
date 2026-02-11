@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // output: 'standalone', // Uncomment for production build only
+  output: 'standalone',
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client'],
   },
