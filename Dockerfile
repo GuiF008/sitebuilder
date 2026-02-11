@@ -58,4 +58,4 @@ ENV HOSTNAME="0.0.0.0"
 ENV DATABASE_URL="file:/app/data/sitebuilder.db"
 
 # Run migrations and start server
-CMD ["sh", "-c", "prisma db push && node server.js"]
+CMD ["sh", "-c", "prisma db push --skip-generate && node server.js"]
