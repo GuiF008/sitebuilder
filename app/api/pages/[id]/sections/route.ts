@@ -23,10 +23,22 @@ export async function POST(
       )
     }
 
-    // Déterminer l'ordre (dernier + 1)
+    // Déterminer l'ordre (au début = 0, puis remonter tous les autres)
     const maxOrder = page.sections.length > 0
       ? Math.max(...page.sections.map(s => s.order))
       : -1
+
+    // Incrementer l'ordre de toutes les sections existantes
+    if (page.sections.length > 0) {
+      await prisma.section.updateMany({
+        where: { pageId },
+        data: {
+          order: {
+            increment: 1,
+          },
+        },
+      })
+    }
 
     // Données par défaut selon le type
     const defaultData: Record<string, unknown> = {
@@ -71,7 +83,7 @@ export async function POST(
       data: {
         pageId,
         type,
-        order: maxOrder + 1,
+        order: 0, // Nouvelles sections en début
         dataJson: JSON.stringify(defaultData[type] || {}),
       },
     })

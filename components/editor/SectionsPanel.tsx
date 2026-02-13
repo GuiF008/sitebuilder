@@ -33,7 +33,7 @@ export function SectionsPanel({
   onSectionDragReorder,
   onSectionSelect,
 }: SectionsPanelProps) {
-  const [showAddMenu, setShowAddMenu] = useState(false)
+  const [showTypeModal, setShowTypeModal] = useState(false)
   const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null)
 
   if (!currentPage) {
@@ -48,7 +48,7 @@ export function SectionsPanel({
 
   const handleCreate = async (type: string) => {
     await onSectionCreate(type)
-    setShowAddMenu(false)
+    setShowTypeModal(false)
   }
 
   return (
@@ -178,7 +178,7 @@ export function SectionsPanel({
       {/* Bouton ajouter */}
       <div className="relative">
         <button
-          onClick={() => setShowAddMenu(!showAddMenu)}
+          onClick={() => setShowTypeModal(true)}
           className="w-full px-4 py-2 bg-ovh-primary text-white rounded-ovh font-medium hover:bg-ovh-primary-hover transition-colors flex items-center justify-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,33 +187,50 @@ export function SectionsPanel({
           Ajouter une section
         </button>
 
-        {/* Menu déroulant */}
-        {showAddMenu && (
+        {/* Modal de sélection du type */}
+        {showTypeModal && (
           <>
             <div
-              className="fixed inset-0 z-10"
-              onClick={() => setShowAddMenu(false)}
+              className="fixed inset-0 z-40 bg-black/50"
+              onClick={() => setShowTypeModal(false)}
             />
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-ovh-gray-200 rounded-ovh shadow-lg z-20 max-h-64 overflow-y-auto">
-              {SECTION_TYPES.map((type) => (
-                <button
-                  key={type.id}
-                  onClick={() => handleCreate(type.id)}
-                  className="w-full px-4 py-3 text-left hover:bg-ovh-gray-50 transition-colors flex items-center gap-3 border-b border-ovh-gray-100 last:border-b-0"
-                >
-                  <Image
-                    src={type.iconSrc}
-                    alt={type.label}
-                    width={24}
-                    height={24}
-                    className="w-6 h-6 object-contain"
-                  />
-                  <div>
-                    <div className="font-medium text-ovh-gray-800">{type.label}</div>
-                    <div className="text-xs text-ovh-gray-500">{type.description}</div>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-ovh shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white border-b border-ovh-gray-200 p-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-ovh-gray-900">Choisir un type de section</h2>
+                    <button
+                      onClick={() => setShowTypeModal(false)}
+                      className="p-1 hover:bg-ovh-gray-100 rounded transition-colors"
+                    >
+                      <svg className="w-6 h-6 text-ovh-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
-                </button>
-              ))}
+                </div>
+                <div className="grid grid-cols-2 gap-3 p-4">
+                  {SECTION_TYPES.map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => handleCreate(type.id)}
+                      className="p-4 text-left hover:bg-ovh-gray-50 transition-colors flex flex-col gap-2 border border-ovh-gray-200 rounded-ovh hover:border-ovh-primary"
+                    >
+                      <Image
+                        src={type.iconSrc}
+                        alt={type.label}
+                        width={24}
+                        height={24}
+                        className="w-6 h-6 object-contain"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium text-ovh-gray-800 text-sm">{type.label}</div>
+                        <div className="text-xs text-ovh-gray-500">{type.description}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </>
         )}

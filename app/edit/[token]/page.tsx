@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui'
 import { SettingsModal } from '@/components/editor'
 import { SectionEditorModal } from '@/components/editor/SectionEditorModal'
+import { Header } from '@/components/shared/Header'
 import { SiteWithRelations, PageWithSections, ComputedTheme, SectionStyles } from '@/lib/types'
 import { computeTheme, generateThemeStyles } from '@/lib/themes'
 import { safeJsonParse } from '@/lib/utils'
@@ -302,6 +303,9 @@ export default function EditorPage() {
             : p
         ),
       } : null)
+
+      // Sélectionner automatiquement la nouvelle section
+      setSelectedSectionId(data.section.id)
 
       showSaveStatus()
     } catch (err) {
@@ -643,29 +647,19 @@ export default function EditorPage() {
 
           {/* Navigation preview */}
           {menuPages.length > 1 && (
-            <nav 
-              className="px-6 py-4 flex items-center justify-between nav-preview"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
-              <span className="font-bold text-white">{site.name}</span>
-              <div className="flex gap-4">
-                {menuPages.map((page, idx) => {
-                  const pageIndex = sortedPages.findIndex((p) => p.id === page.id)
-                  return (
-                    <button
-                      key={page.id}
-                      onClick={() => setCurrentPageIndex(pageIndex)}
-                      className={`
-                        text-sm transition-colors
-                        ${currentPageIndex === pageIndex ? 'text-white font-semibold' : 'text-white/70 hover:text-white'}
-                      `}
-                    >
-                      {page.title}
-                    </button>
-                  )
-                })}
-              </div>
-            </nav>
+            <Header
+              siteName={site.name}
+              menuPages={menuPages.map(p => ({ id: p.id, title: p.title }))}
+              currentPageId={currentPage?.id}
+              themeFamily={site.themeFamily}
+              theme={theme}
+              onPageClick={(pageId) => {
+                const pageIndex = sortedPages.findIndex((p) => p.id === pageId)
+                if (pageIndex !== -1) {
+                  setCurrentPageIndex(pageIndex)
+                }
+              }}
+            />
           )}
 
           {/* Page content preview */}

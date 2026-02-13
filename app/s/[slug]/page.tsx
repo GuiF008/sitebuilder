@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { computeTheme, generateThemeStyles } from '@/lib/themes'
+import { Header } from '@/components/shared/Header'
 import { ComputedTheme, SectionStyles } from '@/lib/types'
 import { safeJsonParse } from '@/lib/utils'
 import { BlockRenderer } from '@/components/shared/BlockRenderer'
@@ -126,34 +127,20 @@ export default function PublicSitePage() {
   return (
     <div className="min-h-screen" style={generateThemeStyles(theme)}>
       {/* Navigation */}
-      {menuPages.length > 1 && (
-        <nav
-          className="px-6 py-4 flex items-center justify-between"
-          style={{ backgroundColor: theme.colors.primary }}
-        >
-          <span className="font-bold text-white" style={{ fontFamily: theme.fonts.heading }}>
-            {snapshot.name}
-          </span>
-          <div className="flex gap-4">
-            {menuPages.map((page) => {
-              const pageIndex = sortedPages.findIndex((p) => p.id === page.id)
-              return (
-                <button
-                  key={page.id}
-                  onClick={() => setCurrentPageIndex(pageIndex)}
-                  className={`
-                    text-sm transition-colors
-                    ${currentPageIndex === pageIndex
-                      ? 'text-white font-semibold'
-                      : 'text-white/70 hover:text-white'}
-                  `}
-                >
-                  {page.title}
-                </button>
-              )
-            })}
-          </div>
-        </nav>
+      {menuPages.length > 0 && (
+        <Header
+          siteName={snapshot.name}
+          menuPages={menuPages.map(p => ({ id: p.id, title: p.title }))}
+          currentPageId={currentPage?.id}
+          themeFamily={snapshot.themeFamily}
+          theme={theme}
+          onPageClick={(pageId) => {
+            const pageIndex = sortedPages.findIndex((p) => p.id === pageId)
+            if (pageIndex !== -1) {
+              setCurrentPageIndex(pageIndex)
+            }
+          }}
+        />
       )}
 
       {/* Single page header if no navigation */}

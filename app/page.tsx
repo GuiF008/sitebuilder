@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
+import { themePresets } from '@/lib/themes/presets'
 import { Button, Input, Card, ProgressSteps } from '@/components/ui'
 
 const STEPS = ['Identité', 'Objectif', 'Contenu', 'Besoins']
@@ -285,6 +287,33 @@ export default function LandingPage() {
                 {errors.goal && (
                   <p className="text-red-600 text-sm text-center">{errors.goal}</p>
                 )}
+
+                {/* Template selection */}
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-ovh-gray-900 mb-3">Choisir un modèle</h3>
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    {themePresets.map((preset) => (
+                      <Card
+                        key={preset.id}
+                        selected={themeFamily === preset.id}
+                        onClick={() => setThemeFamily(preset.id)}
+                        className="p-4 cursor-pointer"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-ovh-gray-900">{preset.name}</div>
+                            <div className="text-sm text-ovh-gray-500">{preset.description}</div>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="w-6 h-6 rounded" style={{ background: preset.colors.primary }} />
+                            <div className="w-6 h-6 rounded" style={{ background: preset.colors.secondary }} />
+                            <div className="w-6 h-6 rounded" style={{ background: preset.colors.accent }} />
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -440,9 +469,17 @@ export default function LandingPage() {
             <span className="text-ovh-gray-300">|</span>
             <span className="text-sm text-ovh-gray-600">Site Builder</span>
           </div>
-          <p className="text-sm text-ovh-gray-500">
-            © {new Date().getFullYear()} OVHcloud. Tous droits réservés.
-          </p>
+          <div className="flex items-center gap-6">
+            <Link
+              href="/v2/preview"
+              className="text-sm text-ovh-primary hover:underline font-medium"
+            >
+              V2 Preview (démo)
+            </Link>
+            <p className="text-sm text-ovh-gray-500">
+              © {new Date().getFullYear()} OVHcloud. Tous droits réservés.
+            </p>
+          </div>
         </div>
       </footer>
     </div>

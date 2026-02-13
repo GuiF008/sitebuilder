@@ -18,6 +18,14 @@ export interface ThemePreset {
   borderRadius: string
   buttonStyle: 'rounded' | 'square' | 'pill'
   defaultSections: string[]
+  headerStyle?: {
+    type: 'minimal' | 'classic' | 'bold' | 'modern'
+    showLogo: boolean
+    showNav: boolean
+    backgroundColor?: string
+    textColor?: string
+    layout?: 'horizontal' | 'vertical'
+  }
 }
 
 export const themePresets: ThemePreset[] = [
@@ -41,6 +49,14 @@ export const themePresets: ThemePreset[] = [
     borderRadius: '8px',
     buttonStyle: 'rounded',
     defaultSections: ['hero', 'about', 'services', 'contact', 'footer'],
+    headerStyle: {
+      type: 'modern',
+      showLogo: true,
+      showNav: true,
+      backgroundColor: '#000E9C',
+      textColor: '#FFFFFF',
+      layout: 'horizontal',
+    },
   },
   {
     id: 'classic-elegant',
@@ -62,6 +78,14 @@ export const themePresets: ThemePreset[] = [
     borderRadius: '4px',
     buttonStyle: 'square',
     defaultSections: ['hero', 'about', 'services', 'testimonials', 'contact', 'footer'],
+    headerStyle: {
+      type: 'classic',
+      showLogo: true,
+      showNav: true,
+      backgroundColor: '#1E3A5F',
+      textColor: '#FFFFFF',
+      layout: 'horizontal',
+    },
   },
   {
     id: 'creative-bold',
@@ -83,6 +107,14 @@ export const themePresets: ThemePreset[] = [
     borderRadius: '16px',
     buttonStyle: 'pill',
     defaultSections: ['hero', 'gallery', 'about', 'testimonials', 'contact', 'footer'],
+    headerStyle: {
+      type: 'bold',
+      showLogo: true,
+      showNav: true,
+      backgroundColor: '#7C3AED',
+      textColor: '#FFFFFF',
+      layout: 'horizontal',
+    },
   },
   {
     id: 'pro-business',
@@ -104,6 +136,14 @@ export const themePresets: ThemePreset[] = [
     borderRadius: '6px',
     buttonStyle: 'rounded',
     defaultSections: ['hero', 'about', 'services', 'testimonials', 'contact', 'footer'],
+    headerStyle: {
+      type: 'minimal',
+      showLogo: true,
+      showNav: true,
+      backgroundColor: '#1B1B1B',
+      textColor: '#FFFFFF',
+      layout: 'horizontal',
+    },
   },
   {
     id: 'nature-zen',
@@ -125,6 +165,14 @@ export const themePresets: ThemePreset[] = [
     borderRadius: '12px',
     buttonStyle: 'rounded',
     defaultSections: ['hero', 'about', 'services', 'gallery', 'contact', 'footer'],
+    headerStyle: {
+      type: 'classic',
+      showLogo: true,
+      showNav: true,
+      backgroundColor: '#059669',
+      textColor: '#FFFFFF',
+      layout: 'horizontal',
+    },
   },
   {
     id: 'tech-moderne',
@@ -146,6 +194,14 @@ export const themePresets: ThemePreset[] = [
     borderRadius: '8px',
     buttonStyle: 'rounded',
     defaultSections: ['hero', 'about', 'services', 'testimonials', 'contact', 'footer'],
+    headerStyle: {
+      type: 'modern',
+      showLogo: true,
+      showNav: true,
+      backgroundColor: '#0F172A',
+      textColor: '#F1F5F9',
+      layout: 'horizontal',
+    },
   },
 ]
 

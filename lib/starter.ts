@@ -104,10 +104,11 @@ export function generateStarterSections(
   const preset = getThemePreset(themeFamily) || getDefaultTheme()
   
   // Sections à créer : celles sélectionnées + les sections obligatoires du thème
-  const sectionsToCreate = new Set([
+  const sectionsToCreate = new Set<string>([
     'hero', // Toujours présent
     ...selectedSections,
     'footer', // Toujours présent
+    ...(preset.defaultSections || []), // Sections par défaut du preset
   ])
 
   // Ordre des sections
@@ -118,9 +119,31 @@ export function generateStarterSections(
 
   for (const type of sectionOrder) {
     if (sectionsToCreate.has(type)) {
+      // Allow theme-specific overrides for default data
+      const baseData = getDefaultSectionData(type, siteName)
+      let themedData = baseData
+
+      if (preset.id === 'ovh-modern') {
+        if (type === 'hero') {
+          themedData = {
+            ...baseData,
+            subtitle: 'Hébergé par OVHcloud — fiable et sécurisé',
+            ctaText: 'Commencer',
+            imageSrc: '/hosting-hero.webp',
+          }
+        }
+
+        if (type === 'about') {
+          themedData = {
+            ...baseData,
+            content: `${siteName} — présent sur OVHcloud. Nous fournissons des solutions performantes et sécurisées.`,
+          }
+        }
+      }
+
       sections.push({
         type,
-        dataJson: JSON.stringify(getDefaultSectionData(type, siteName)),
+        dataJson: JSON.stringify(themedData),
         order: order++,
       })
     }
