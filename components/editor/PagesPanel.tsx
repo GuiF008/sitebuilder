@@ -12,6 +12,10 @@ interface PagesPanelProps {
   onPageUpdate: (pageId: string, data: Partial<PageWithSections>) => Promise<void>
   onPageDelete: (pageId: string) => Promise<void>
   onPageReorder: (pageId: string, direction: 'up' | 'down') => Promise<void>
+  /** Afficher un badge SEO par page */
+  showSeoBadge?: boolean
+  /** Afficher la zone "Pages masquées du menu" */
+  showHiddenPagesZone?: boolean
 }
 
 export function PagesPanel({
@@ -22,6 +26,8 @@ export function PagesPanel({
   onPageUpdate,
   onPageDelete,
   onPageReorder,
+  showSeoBadge = true,
+  showHiddenPagesZone = true,
 }: PagesPanelProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [newPageTitle, setNewPageTitle] = useState('')
@@ -30,6 +36,7 @@ export function PagesPanel({
   const [isLoading, setIsLoading] = useState(false)
 
   const sortedPages = [...pages].sort((a, b) => a.order - b.order)
+  const hiddenPages = sortedPages.filter((p) => p.showInMenu === false)
 
   const handleCreatePage = async () => {
     if (!newPageTitle.trim()) return
@@ -142,6 +149,11 @@ export function PagesPanel({
                     {page.title}
                   </span>
                 )}
+                {showSeoBadge && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-ovh-gray-100 text-ovh-gray-500" title="SEO">
+                    SEO
+                  </span>
+                )}
               </div>
 
               {/* Actions */}
@@ -222,6 +234,39 @@ export function PagesPanel({
           </div>
         ))}
       </div>
+
+      {/* Pages masquées du menu */}
+      {showHiddenPagesZone && hiddenPages.length > 0 && (
+        <div className="pt-3 border-t border-ovh-gray-200">
+          <h4 className="text-xs font-semibold text-ovh-gray-500 uppercase tracking-wide mb-2">
+            Pages masquées du menu
+          </h4>
+          <div className="space-y-2">
+            {hiddenPages.map((page) => {
+              const globalIndex = sortedPages.findIndex((p) => p.id === page.id)
+              return (
+                <div
+                  key={page.id}
+                  className="p-2 rounded-ovh border border-ovh-gray-200 bg-ovh-gray-50 flex items-center justify-between"
+                >
+                  <span
+                    className="text-sm text-ovh-gray-600 cursor-pointer hover:text-ovh-primary"
+                    onClick={() => onPageSelect(globalIndex)}
+                  >
+                    {page.title}
+                  </span>
+                  <button
+                    onClick={() => handleToggleMenu(page.id, false)}
+                    className="text-xs text-ovh-primary hover:underline"
+                  >
+                    Afficher dans le menu
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Add page */}
       {isCreating ? (
