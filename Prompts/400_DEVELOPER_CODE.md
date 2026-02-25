@@ -50,7 +50,7 @@ font-family: 'Source Sans Pro', sans-serif;
 - Header OVHcloud avec logo
 - Hero avec CTA "Créer mon site"
 - Features (3-4 points clés)
-- Section thèmes (preview templates)
+- Section thèmes (preview des thèmes builder)
 - Footer
 
 ### 2. Onboarding (`/onboarding`)

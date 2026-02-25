@@ -12,6 +12,7 @@ import { SiteWithRelations, PageWithSections, ComputedTheme, SectionStyles } fro
 import { computeTheme, generateThemeStyles } from '@/lib/themes'
 import { safeJsonParse } from '@/lib/utils'
 import { BlockRenderer } from '@/components/shared/BlockRenderer'
+import { getThemeBranding } from '@/lib/themes/branding'
 
 export default function EditorPage() {
   const params = useParams()
@@ -1006,6 +1007,7 @@ function SectionPreview({
     textColor: theme.colors.text,
     buttonStyle: theme.buttonStyle,
   }
+  const branding = getThemeBranding(site.themeFamily, theme)
 
   // Si la section a des blocs de contenu, les afficher
   if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0) {
@@ -1048,7 +1050,8 @@ function SectionPreview({
           <button
             className="px-6 py-3 font-semibold text-white"
             style={{ 
-              backgroundColor: theme.colors.accent,
+              backgroundColor: branding.heroCtaBg,
+              color: branding.heroCtaText,
               borderRadius: sectionStyles.buttonStyle === 'pill' ? '9999px' : sectionStyles.buttonStyle === 'square' ? '0' : theme.borderRadius,
             }}
           >
@@ -1189,11 +1192,12 @@ function SectionPreview({
       )
 
     case 'footer':
+      const branding = getThemeBranding(site.themeFamily, theme)
       return (
-        <footer className="py-8 border-t mt-8" style={{ borderColor: `${theme.colors.muted}30` }}>
+        <footer className="py-8 mt-8 rounded-ovh" style={{ backgroundColor: branding.footerBg }}>
           <p 
             className="text-center text-sm"
-            style={{ color: theme.colors.muted }}
+            style={{ color: branding.footerText }}
             contentEditable
             suppressContentEditableWarning
           >

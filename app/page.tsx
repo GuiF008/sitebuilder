@@ -25,10 +25,10 @@ const SECTIONS = [
   { id: 'hours', label: 'Horaires & localisation', defaultChecked: false },
 ]
 
-const NEEDS = [
+const OPTIONS = [
   { id: 'domain', label: 'Nom de domaine' },
   { id: 'mail', label: 'Mails professionnels' },
-  { id: 'ssl', label: 'Certificat SSL' },
+  { id: 'ssl', label: 'SSL' },
   { id: 'cdn', label: 'CDN' },
   { id: 'other', label: 'Autres options' },
 ]
@@ -49,8 +49,14 @@ export default function LandingPage() {
   const [needs, setNeeds] = useState<string[]>([])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [phpThemes, setPhpThemes] = useState<Array<{ id: string; name: string }>>([])
-  const [phpThemesLoading, setPhpThemesLoading] = useState(false)
+  const [builderThemes, setBuilderThemes] = useState<Array<{
+    id: string
+    name: string
+    description?: string
+    preview?: { primary?: string; secondary?: string; accent?: string; background?: string }
+  }>>([])
+  const [builderThemesLoading, setBuilderThemesLoading] = useState(false)
+  const [themesLoadError, setThemesLoadError] = useState<string | null>(null)
 
   const validateStep = () => {
     const newErrors: Record<string, string> = {}
@@ -75,25 +81,45 @@ export default function LandingPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  // Charger les thèmes PHP à l'entrée sur l'étape Thème (step 3)
+  // Charger le catalogue de thèmes à l'entrée sur l'étape Thème (step 3)
   useEffect(() => {
     if (currentStep !== 3) return
-    setPhpThemesLoading(true)
-    fetch('/api/themes/php')
+    const controller = new AbortController()
+    setBuilderThemesLoading(true)
+    setThemesLoadError(null)
+    fetch('/api/themes/catalog', { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
         const list = data.themes || []
-        setPhpThemes(list)
+        setBuilderThemes(list)
         setThemeFamily((prev) => {
           if (prev) return prev
           return list.length ? list[0].id : 'ovh-modern'
         })
       })
       .catch(() => {
-        setPhpThemes([])
+        // Fallback immédiat pour éviter un spinner infini
+        setBuilderThemes(themePresets.slice(0, 10).map((preset) => ({
+          id: preset.id,
+          name: preset.name,
+          description: preset.description,
+          preview: {
+            primary: preset.colors.primary,
+            secondary: preset.colors.secondary,
+            accent: preset.colors.accent,
+            background: preset.colors.background,
+          },
+        })))
+        setThemesLoadError('Le catalogue distant est indisponible. Affichage des thèmes locaux.')
         setThemeFamily((prev) => prev || 'ovh-modern')
       })
-      .finally(() => setPhpThemesLoading(false))
+      .finally(() => setBuilderThemesLoading(false))
+
+    const timeout = setTimeout(() => controller.abort(), 6000)
+    return () => {
+      clearTimeout(timeout)
+      controller.abort()
+    }
   }, [currentStep])
 
   const handleNext = () => {
@@ -318,26 +344,30 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Step 3: Thème PHP (ou presets en secours) */}
+            {/* Step 3: Choix du thème (10 thèmes) */}
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-bold text-ovh-gray-900">
-<<<<<<< Current (Your changes)
                     Choisir votre thème
                   </h1>
                   <p className="text-ovh-gray-600 mt-2">
-                    Sélectionnez un thème pour votre site. Vous pourrez le personnaliser dans l&apos;éditeur.
+                    Choisissez 1 thème parmi 10. Ce thème servira de base à toutes les modifications dans le builder.
                   </p>
                 </div>
+                {themesLoadError && (
+                  <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-ovh px-3 py-2">
+                    {themesLoadError}
+                  </p>
+                )}
 
-                {phpThemesLoading ? (
+                {builderThemesLoading ? (
                   <div className="flex justify-center py-12">
                     <div className="w-10 h-10 border-4 border-ovh-primary border-t-transparent rounded-full animate-spin" />
                   </div>
-                ) : phpThemes.length > 0 ? (
+                ) : builderThemes.length > 0 ? (
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {phpThemes.map((theme) => (
+                    {builderThemes.map((theme) => (
                       <Card
                         key={theme.id}
                         selected={themeFamily === theme.id}
@@ -345,14 +375,19 @@ export default function LandingPage() {
                         className="p-5 cursor-pointer"
                       >
                         <div className="font-semibold text-ovh-gray-900">{theme.name}</div>
-                        <div className="text-sm text-ovh-gray-500 mt-1">Thème {theme.name}</div>
+                        <div className="text-sm text-ovh-gray-500 mt-1">{theme.description || `Thème ${theme.name}`}</div>
+                        <div className="flex gap-2 mt-3">
+                          <div className="w-5 h-5 rounded border border-ovh-gray-200" style={{ background: theme.preview?.primary || '#000E9C' }} />
+                          <div className="w-5 h-5 rounded border border-ovh-gray-200" style={{ background: theme.preview?.secondary || '#0050D7' }} />
+                          <div className="w-5 h-5 rounded border border-ovh-gray-200" style={{ background: theme.preview?.accent || '#00D4AA' }} />
+                        </div>
                       </Card>
                     ))}
                   </div>
                 ) : (
                   <div>
                     <p className="text-sm text-ovh-gray-500 mb-3">
-                      Aucun thème PHP trouvé dans le dossier. Choisissez un style par défaut :
+                      Aucun thème du catalogue n'est disponible. Choisissez un style par défaut :
                     </p>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {themePresets.map((preset) => (
@@ -378,37 +413,6 @@ export default function LandingPage() {
                     </div>
                   </div>
                 )}
-=======
-                    Choisir votre thème (10 thèmes)
-                  </h1>
-                  <p className="text-ovh-gray-600 mt-2">
-                    Ces 10 thèmes sont stockés dans le catalogue et servent de base de personnalisation dans le builder.
-                  </p>
-                </div>
-
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {themePresets.slice(0, 10).map((preset) => (
-                    <Card
-                      key={preset.id}
-                      selected={themeFamily === preset.id}
-                      onClick={() => setThemeFamily(preset.id)}
-                      className="p-4 cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium text-ovh-gray-900">{preset.name}</div>
-                          <div className="text-sm text-ovh-gray-500">{preset.description}</div>
-                        </div>
-                        <div className="flex gap-2">
-                          <div className="w-6 h-6 rounded" style={{ background: preset.colors.primary }} />
-                          <div className="w-6 h-6 rounded" style={{ background: preset.colors.secondary }} />
-                          <div className="w-6 h-6 rounded" style={{ background: preset.colors.accent }} />
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
->>>>>>> Incoming (Background Agent changes)
                 {errors.theme && (
                   <p className="text-red-600 text-sm text-center">{errors.theme}</p>
                 )}
@@ -452,20 +456,20 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Step 5: Needs */}
+            {/* Step 5: Options */}
             {currentStep === 5 && (
               <div className="space-y-6">
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-bold text-ovh-gray-900">
-                    Options complémentaires
+                    Quelles options souhaitez-vous ?
                   </h1>
                   <p className="text-ovh-gray-600 mt-2">
-                    Choisissez les options à inclure : domaine, mails, SSL, CDN, autres.
+                    Sélectionnez les options à activer pour votre projet
                   </p>
                 </div>
 
                 <div className="space-y-3">
-                  {NEEDS.map((need) => (
+                  {OPTIONS.map((need) => (
                     <label
                       key={need.id}
                       className={`

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const BASE = process.env.BASE_URL || 'http://localhost:3001';
 
-test('onboarding flow creates a site with selected template', async ({ page }) => {
+test('onboarding flow creates a site with selected theme', async ({ page }) => {
   await page.goto(BASE + '/');
   // click Create your site
   await page.getByRole('button', { name: /Créer votre site/i }).click();
@@ -17,7 +17,7 @@ test('onboarding flow creates a site with selected template', async ({ page }) =
   // Continue to step 2
   await page.getByRole('button', { name: /Continuer/i }).click();
 
-  // Choose a template (first preset)
+  // Choose a theme (first preset)
   await page.locator('text=OVH Modern,Classic Élégant,Créatif Bold').first();
   // click the first card
   await page.locator('div:has-text("OVH Modern")').first().click();

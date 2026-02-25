@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { PagesPanel } from './PagesPanel'
 import { SectionsPanel } from './SectionsPanel'
 import { DesignPanel } from './DesignPanel'
-import { MediaPanel } from './MediaPanel'
+import { SeoPanel } from './SeoPanel'
 import { AiToolsPanel } from './AiToolsPanel'
 import { AppsPanel } from './AppsPanel'
 import { SiteWithRelations, PageWithSections } from '@/lib/types'
@@ -34,8 +34,8 @@ interface SettingsModalProps {
   onMediaDelete: (mediaId: string) => Promise<void>
 }
 
-// Navigation modulaire du builder
-type SectionId = 'pages' | 'sections' | 'styles' | 'library' | 'ai' | 'options'
+// Navigation modulaire selon le spec : Éléments, Pages, Styles, SEO, Outils IA, Apps/Plus
+type SectionId = 'elements' | 'pages' | 'styles' | 'seo' | 'ai' | 'apps'
 
 export function SettingsModal({
   isOpen,
@@ -59,7 +59,7 @@ export function SettingsModal({
   onMediaUpload,
   onMediaDelete,
 }: SettingsModalProps) {
-  const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set<SectionId>(['pages']))
+  const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set<SectionId>(['elements']))
 
   const toggleSection = (sectionId: SectionId) => {
     setOpenSections(prev => {
@@ -76,12 +76,12 @@ export function SettingsModal({
   const currentPage = site.pages[currentPageIndex] || null
 
   const sections: { id: SectionId; iconSrc: string; label: string; subtitle: string }[] = [
-    { id: 'pages', iconSrc: '/pictos/book.png', label: 'Menu & Page', subtitle: 'Liste des pages et navigation' },
-    { id: 'sections', iconSrc: '/pictos/settings.png', label: 'Section', subtitle: 'Gestion des sections de la page' },
-    { id: 'styles', iconSrc: '/pictos/brush.png', label: 'Design et style du site', subtitle: 'Couleurs, polices, boutons, animations' },
-    { id: 'library', iconSrc: '/pictos/page-script.png', label: 'Bibliothèque', subtitle: 'Médiathèque et ressources' },
+    { id: 'elements', iconSrc: '/pictos/page-script.png', label: 'Éléments', subtitle: 'Glisser-déposer les composants' },
+    { id: 'pages', iconSrc: '/pictos/book.png', label: 'Pages / Menu du site', subtitle: 'Liste des pages et navigation' },
+    { id: 'styles', iconSrc: '/pictos/brush.png', label: 'Styles du site', subtitle: 'Couleurs, polices, boutons, animations' },
+    { id: 'seo', iconSrc: '/pictos/settings.png', label: 'SEO', subtitle: 'Titre, meta, OpenGraph, alt images' },
     { id: 'ai', iconSrc: '/pictos/trophy.png', label: 'Outils IA', subtitle: 'Rédacteur IA, image par IA' },
-    { id: 'options', iconSrc: '/pictos/camera.png', label: 'Option', subtitle: 'Intégrations et extensions' },
+    { id: 'apps', iconSrc: '/pictos/camera.png', label: 'Apps / Plus', subtitle: 'Intégrations et extensions' },
   ]
 
   return (
@@ -168,7 +168,7 @@ export function SettingsModal({
                 `}
               >
                 <div className="px-5 py-4 bg-white">
-                  {section.id === 'sections' && currentPage && (
+                  {section.id === 'elements' && currentPage && (
                     <SectionsPanel
                       currentPage={currentPage}
                       onSectionCreate={(type) => onSectionCreate(currentPage.id, type)}
@@ -177,6 +177,7 @@ export function SettingsModal({
                       onSectionReorder={onSectionReorder}
                       onSectionDragReorder={onSectionDragReorder}
                       onSectionSelect={onSectionSelect}
+                      showElementsList
                     />
                   )}
                   {section.id === 'pages' && (
@@ -199,17 +200,13 @@ export function SettingsModal({
                       onThemeChange={onThemeChange}
                     />
                   )}
-                  {section.id === 'library' && (
-                    <MediaPanel
-                      media={site.media}
-                      onUpload={onMediaUpload}
-                      onDelete={onMediaDelete}
-                    />
+                  {section.id === 'seo' && (
+                    <SeoPanel site={site} onSiteUpdate={onSiteUpdate} />
                   )}
                   {section.id === 'ai' && (
                     <AiToolsPanel />
                   )}
-                  {section.id === 'options' && (
+                  {section.id === 'apps' && (
                     <AppsPanel media={site.media} onUpload={onMediaUpload} onDelete={onMediaDelete} />
                   )}
                 </div>

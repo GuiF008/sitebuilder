@@ -9,6 +9,7 @@ import { Header } from '@/components/shared/Header'
 import { ComputedTheme, SectionStyles } from '@/lib/types'
 import { safeJsonParse } from '@/lib/utils'
 import { BlockRenderer } from '@/components/shared/BlockRenderer'
+import { getThemeBranding } from '@/lib/themes/branding'
 
 interface Snapshot {
   name: string
@@ -123,6 +124,7 @@ export default function PublicSitePage() {
   const sortedPages = [...snapshot.pages].sort((a, b) => a.order - b.order)
   const menuPages = sortedPages.filter((p) => p.showInMenu)
   const currentPage = sortedPages[currentPageIndex]
+  const branding = getThemeBranding(snapshot.themeFamily, theme)
 
   return (
     <div className="min-h-screen" style={generateThemeStyles(theme)}>
@@ -147,9 +149,9 @@ export default function PublicSitePage() {
       {menuPages.length <= 1 && (
         <header
           className="px-6 py-4"
-          style={{ backgroundColor: theme.colors.primary }}
+          style={{ backgroundColor: branding.headerBg }}
         >
-          <span className="font-bold text-white" style={{ fontFamily: theme.fonts.heading }}>
+          <span className="font-bold" style={{ fontFamily: theme.fonts.heading, color: branding.headerText }}>
             {snapshot.name}
           </span>
         </header>
@@ -166,6 +168,7 @@ export default function PublicSitePage() {
                   key={section.id}
                   section={section}
                   theme={theme}
+                  themeFamily={snapshot.themeFamily}
                 />
               ))}
           </div>
@@ -195,11 +198,14 @@ export default function PublicSitePage() {
 function PublicSection({
   section,
   theme,
+  themeFamily,
 }: {
   section: { id: string; type: string; dataJson: string }
   theme: ComputedTheme
+  themeFamily: string
 }) {
   const data = safeJsonParse<Record<string, unknown>>(section.dataJson, {}) || {}
+  const branding = getThemeBranding(themeFamily, theme)
   
   // Helper pour accéder aux propriétés de data de manière sécurisée
   const getDataValue = (key: string): string => {
@@ -254,7 +260,8 @@ function PublicSection({
               href={(data.ctaLink as string) || '#'}
               className="inline-block px-6 py-3 font-semibold text-white transition-transform hover:scale-105"
               style={{
-                backgroundColor: theme.colors.accent,
+                backgroundColor: branding.heroCtaBg,
+                color: branding.heroCtaText,
                 borderRadius:
                   sectionStyles.buttonStyle === 'pill'
                     ? '9999px'
@@ -459,12 +466,12 @@ function PublicSection({
     case 'footer':
       return (
         <footer
-          className="py-8 border-t mt-8"
-          style={{ borderColor: `${theme.colors.muted}30` }}
+          className="py-8 mt-8 rounded-lg"
+          style={{ backgroundColor: branding.footerBg }}
         >
           <p
             className="text-center text-sm"
-            style={{ color: theme.colors.muted }}
+            style={{ color: branding.footerText }}
           >
             {getDataValue('copyright')}
           </p>
