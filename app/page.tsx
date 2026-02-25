@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { themePresets } from '@/lib/themes/presets'
 import { Button, Input, Card, ProgressSteps } from '@/components/ui'
 
-const STEPS = ['Identité', 'Objectif', 'Contenu', 'Besoins']
+const STEPS = ['Identité', 'Objectif', 'Thème', 'Contenu', 'Besoins']
 
 const GOALS = [
   { id: 'vitrine', iconSrc: '/pictos/house.png', label: 'Vitrine', description: 'Présenter mon activité' },
@@ -25,12 +25,12 @@ const SECTIONS = [
   { id: 'hours', label: 'Horaires & localisation', defaultChecked: false },
 ]
 
-const NEEDS = [
-  { id: 'form', label: 'Formulaire de contact', premium: false },
-  { id: 'seo', label: 'Visible sur Google', premium: false },
-  { id: 'chat', label: 'Chat en direct', premium: true },
-  { id: 'booking', label: 'Prise de rendez-vous', premium: true },
-  { id: 'shop', label: 'Vendre en ligne', premium: true },
+const OPTIONS = [
+  { id: 'domain', label: 'Nom de domaine' },
+  { id: 'mail', label: 'Mails professionnels' },
+  { id: 'ssl', label: 'SSL' },
+  { id: 'cdn', label: 'CDN' },
+  { id: 'other', label: 'Autres options' },
 ]
 
 export default function LandingPage() {
@@ -42,13 +42,21 @@ export default function LandingPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [goal, setGoal] = useState('')
-  const [themeFamily, setThemeFamily] = useState('ovh-modern')
+  const [themeFamily, setThemeFamily] = useState('')
   const [sections, setSections] = useState<string[]>(
     SECTIONS.filter(s => s.defaultChecked).map(s => s.id)
   )
   const [needs, setNeeds] = useState<string[]>([])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [builderThemes, setBuilderThemes] = useState<Array<{
+    id: string
+    name: string
+    description?: string
+    preview?: { primary?: string; secondary?: string; accent?: string; background?: string }
+  }>>([])
+  const [builderThemesLoading, setBuilderThemesLoading] = useState(false)
+  const [themesLoadError, setThemesLoadError] = useState<string | null>(null)
 
   const validateStep = () => {
     const newErrors: Record<string, string> = {}
@@ -65,9 +73,54 @@ export default function LandingPage() {
       newErrors.goal = 'Veuillez sélectionner un objectif'
     }
 
+    if (currentStep === 3 && !themeFamily.trim()) {
+      newErrors.theme = 'Veuillez sélectionner un thème'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
+
+  // Charger le catalogue de thèmes à l'entrée sur l'étape Thème (step 3)
+  useEffect(() => {
+    if (currentStep !== 3) return
+    const controller = new AbortController()
+    setBuilderThemesLoading(true)
+    setThemesLoadError(null)
+    fetch('/api/themes/catalog', { signal: controller.signal })
+      .then((res) => res.json())
+      .then((data) => {
+        const list = data.themes || []
+        setBuilderThemes(list)
+        setThemeFamily((prev) => {
+          if (prev) return prev
+          return list.length ? list[0].id : 'ovh-modern'
+        })
+      })
+      .catch(() => {
+        // Fallback immédiat pour éviter un spinner infini
+        setBuilderThemes(themePresets.slice(0, 10).map((preset) => ({
+          id: preset.id,
+          name: preset.name,
+          description: preset.description,
+          preview: {
+            primary: preset.colors.primary,
+            secondary: preset.colors.secondary,
+            accent: preset.colors.accent,
+            background: preset.colors.background,
+          },
+        })))
+        setThemesLoadError('Le catalogue distant est indisponible. Affichage des thèmes locaux.')
+        setThemeFamily((prev) => prev || 'ovh-modern')
+      })
+      .finally(() => setBuilderThemesLoading(false))
+
+    const timeout = setTimeout(() => controller.abort(), 6000)
+    return () => {
+      clearTimeout(timeout)
+      controller.abort()
+    }
+  }, [currentStep])
 
   const handleNext = () => {
     if (!validateStep()) return
@@ -90,7 +143,8 @@ export default function LandingPage() {
 
   const handleSubmit = async () => {
     setIsLoading(true)
-    
+    const themeToSend = themeFamily?.trim() || 'ovh-modern'
+
     try {
       const response = await fetch('/api/sites', {
         method: 'POST',
@@ -99,7 +153,7 @@ export default function LandingPage() {
           name,
           contactEmail: email,
           goal,
-          themeFamily,
+          themeFamily: themeToSend,
           sections,
           needs,
         }),
@@ -287,38 +341,86 @@ export default function LandingPage() {
                 {errors.goal && (
                   <p className="text-red-600 text-sm text-center">{errors.goal}</p>
                 )}
+              </div>
+            )}
 
-                {/* Template selection */}
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-ovh-gray-900 mb-3">Choisir un modèle</h3>
-                  <div className="grid sm:grid-cols-3 gap-3">
-                    {themePresets.map((preset) => (
+            {/* Step 3: Choix du thème (10 thèmes) */}
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                <div className="text-center mb-8">
+                  <h1 className="text-2xl font-bold text-ovh-gray-900">
+                    Choisir votre thème
+                  </h1>
+                  <p className="text-ovh-gray-600 mt-2">
+                    Choisissez 1 thème parmi 10. Ce thème servira de base à toutes les modifications dans le builder.
+                  </p>
+                </div>
+                {themesLoadError && (
+                  <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-ovh px-3 py-2">
+                    {themesLoadError}
+                  </p>
+                )}
+
+                {builderThemesLoading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="w-10 h-10 border-4 border-ovh-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : builderThemes.length > 0 ? (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {builderThemes.map((theme) => (
                       <Card
-                        key={preset.id}
-                        selected={themeFamily === preset.id}
-                        onClick={() => setThemeFamily(preset.id)}
-                        className="p-4 cursor-pointer"
+                        key={theme.id}
+                        selected={themeFamily === theme.id}
+                        onClick={() => setThemeFamily(theme.id)}
+                        className="p-5 cursor-pointer"
                       >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium text-ovh-gray-900">{preset.name}</div>
-                            <div className="text-sm text-ovh-gray-500">{preset.description}</div>
-                          </div>
-                          <div className="flex gap-2">
-                            <div className="w-6 h-6 rounded" style={{ background: preset.colors.primary }} />
-                            <div className="w-6 h-6 rounded" style={{ background: preset.colors.secondary }} />
-                            <div className="w-6 h-6 rounded" style={{ background: preset.colors.accent }} />
-                          </div>
+                        <div className="font-semibold text-ovh-gray-900">{theme.name}</div>
+                        <div className="text-sm text-ovh-gray-500 mt-1">{theme.description || `Thème ${theme.name}`}</div>
+                        <div className="flex gap-2 mt-3">
+                          <div className="w-5 h-5 rounded border border-ovh-gray-200" style={{ background: theme.preview?.primary || '#000E9C' }} />
+                          <div className="w-5 h-5 rounded border border-ovh-gray-200" style={{ background: theme.preview?.secondary || '#0050D7' }} />
+                          <div className="w-5 h-5 rounded border border-ovh-gray-200" style={{ background: theme.preview?.accent || '#00D4AA' }} />
                         </div>
                       </Card>
                     ))}
                   </div>
-                </div>
+                ) : (
+                  <div>
+                    <p className="text-sm text-ovh-gray-500 mb-3">
+                      Aucun thème du catalogue n'est disponible. Choisissez un style par défaut :
+                    </p>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {themePresets.map((preset) => (
+                        <Card
+                          key={preset.id}
+                          selected={themeFamily === preset.id}
+                          onClick={() => setThemeFamily(preset.id)}
+                          className="p-4 cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-ovh-gray-900">{preset.name}</div>
+                              <div className="text-sm text-ovh-gray-500">{preset.description}</div>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="w-6 h-6 rounded" style={{ background: preset.colors.primary }} />
+                              <div className="w-6 h-6 rounded" style={{ background: preset.colors.secondary }} />
+                              <div className="w-6 h-6 rounded" style={{ background: preset.colors.accent }} />
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {errors.theme && (
+                  <p className="text-red-600 text-sm text-center">{errors.theme}</p>
+                )}
               </div>
             )}
 
-            {/* Step 3: Sections */}
-            {currentStep === 3 && (
+            {/* Step 4: Sections */}
+            {currentStep === 4 && (
               <div className="space-y-6">
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-bold text-ovh-gray-900">
@@ -354,20 +456,20 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Step 4: Needs */}
-            {currentStep === 4 && (
+            {/* Step 5: Options */}
+            {currentStep === 5 && (
               <div className="space-y-6">
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-bold text-ovh-gray-900">
-                    Avez-vous des besoins particuliers ?
+                    Quelles options souhaitez-vous ?
                   </h1>
                   <p className="text-ovh-gray-600 mt-2">
-                    Certaines fonctionnalités sont disponibles en Premium
+                    Sélectionnez les options à activer pour votre projet
                   </p>
                 </div>
 
                 <div className="space-y-3">
-                  {NEEDS.map((need) => (
+                  {OPTIONS.map((need) => (
                     <label
                       key={need.id}
                       className={`
@@ -387,11 +489,6 @@ export default function LandingPage() {
                         />
                         <span className="font-medium text-ovh-gray-800">{need.label}</span>
                       </div>
-                      {need.premium && (
-                        <span className="text-xs font-semibold text-ovh-accent bg-ovh-accent/10 px-2 py-1 rounded-full">
-                          Premium
-                        </span>
-                      )}
                     </label>
                   ))}
                 </div>

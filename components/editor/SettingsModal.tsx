@@ -5,7 +5,9 @@ import Image from 'next/image'
 import { PagesPanel } from './PagesPanel'
 import { SectionsPanel } from './SectionsPanel'
 import { DesignPanel } from './DesignPanel'
-import { MediaPanel } from './MediaPanel'
+import { SeoPanel } from './SeoPanel'
+import { AiToolsPanel } from './AiToolsPanel'
+import { AppsPanel } from './AppsPanel'
 import { SiteWithRelations, PageWithSections } from '@/lib/types'
 import { ComputedTheme } from '@/lib/types'
 
@@ -32,7 +34,8 @@ interface SettingsModalProps {
   onMediaDelete: (mediaId: string) => Promise<void>
 }
 
-type SectionId = 'pages' | 'sections' | 'design' | 'media'
+// Navigation modulaire selon le spec : Éléments, Pages, Styles, SEO, Outils IA, Apps/Plus
+type SectionId = 'elements' | 'pages' | 'styles' | 'seo' | 'ai' | 'apps'
 
 export function SettingsModal({
   isOpen,
@@ -56,7 +59,7 @@ export function SettingsModal({
   onMediaUpload,
   onMediaDelete,
 }: SettingsModalProps) {
-  const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set<SectionId>(['pages']))
+  const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set<SectionId>(['elements']))
 
   const toggleSection = (sectionId: SectionId) => {
     setOpenSections(prev => {
@@ -72,31 +75,13 @@ export function SettingsModal({
 
   const currentPage = site.pages[currentPageIndex] || null
 
-  const sections = [
-    {
-      id: 'pages' as SectionId,
-      iconSrc: '/pictos/book.png',
-      label: 'Pages & Menu',
-      subtitle: 'Gérer les pages et la navigation',
-    },
-    {
-      id: 'sections' as SectionId,
-      iconSrc: '/pictos/settings.png',
-      label: 'Sections & Contenu',
-      subtitle: 'Créer et gérer les sections de la page',
-    },
-    {
-      id: 'design' as SectionId,
-      iconSrc: '/pictos/brush.png',
-      label: 'Design du site',
-      subtitle: 'Couleurs, polices et styles',
-    },
-    {
-      id: 'media' as SectionId,
-      iconSrc: '/pictos/camera.png',
-      label: 'Médiathèque',
-      subtitle: 'Images, vidéos et fichiers',
-    },
+  const sections: { id: SectionId; iconSrc: string; label: string; subtitle: string }[] = [
+    { id: 'elements', iconSrc: '/pictos/page-script.png', label: 'Éléments', subtitle: 'Glisser-déposer les composants' },
+    { id: 'pages', iconSrc: '/pictos/book.png', label: 'Pages / Menu du site', subtitle: 'Liste des pages et navigation' },
+    { id: 'styles', iconSrc: '/pictos/brush.png', label: 'Styles du site', subtitle: 'Couleurs, polices, boutons, animations' },
+    { id: 'seo', iconSrc: '/pictos/settings.png', label: 'SEO', subtitle: 'Titre, meta, OpenGraph, alt images' },
+    { id: 'ai', iconSrc: '/pictos/trophy.png', label: 'Outils IA', subtitle: 'Rédacteur IA, image par IA' },
+    { id: 'apps', iconSrc: '/pictos/camera.png', label: 'Apps / Plus', subtitle: 'Intégrations et extensions' },
   ]
 
   return (
@@ -183,6 +168,18 @@ export function SettingsModal({
                 `}
               >
                 <div className="px-5 py-4 bg-white">
+                  {section.id === 'elements' && currentPage && (
+                    <SectionsPanel
+                      currentPage={currentPage}
+                      onSectionCreate={(type) => onSectionCreate(currentPage.id, type)}
+                      onSectionUpdate={onSectionUpdate}
+                      onSectionDelete={onSectionDelete}
+                      onSectionReorder={onSectionReorder}
+                      onSectionDragReorder={onSectionDragReorder}
+                      onSectionSelect={onSectionSelect}
+                      showElementsList
+                    />
+                  )}
                   {section.id === 'pages' && (
                     <PagesPanel
                       pages={site.pages}
@@ -192,32 +189,25 @@ export function SettingsModal({
                       onPageUpdate={onPageUpdate}
                       onPageDelete={onPageDelete}
                       onPageReorder={onPageReorder}
+                      showSeoBadge
+                      showHiddenPagesZone
                     />
                   )}
-                  {section.id === 'sections' && currentPage && (
-                    <SectionsPanel
-                      currentPage={currentPage}
-                      onSectionCreate={(type) => onSectionCreate(currentPage.id, type)}
-                      onSectionUpdate={onSectionUpdate}
-                      onSectionDelete={onSectionDelete}
-                      onSectionReorder={onSectionReorder}
-                      onSectionDragReorder={onSectionDragReorder}
-                      onSectionSelect={onSectionSelect}
-                    />
-                  )}
-                  {section.id === 'design' && (
+                  {section.id === 'styles' && (
                     <DesignPanel
                       site={site}
                       theme={theme}
                       onThemeChange={onThemeChange}
                     />
                   )}
-                  {section.id === 'media' && (
-                    <MediaPanel
-                      media={site.media}
-                      onUpload={onMediaUpload}
-                      onDelete={onMediaDelete}
-                    />
+                  {section.id === 'seo' && (
+                    <SeoPanel site={site} onSiteUpdate={onSiteUpdate} />
+                  )}
+                  {section.id === 'ai' && (
+                    <AiToolsPanel />
+                  )}
+                  {section.id === 'apps' && (
+                    <AppsPanel media={site.media} onUpload={onMediaUpload} onDelete={onMediaDelete} />
                   )}
                 </div>
               </div>

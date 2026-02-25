@@ -162,9 +162,9 @@ export function DesignPanel({
         </div>
       </div>
 
-      {/* Button style */}
+      {/* Boutons : Primaire / Secondaire - spec Styles du site */}
       <div>
-        <h3 className="font-semibold text-ovh-gray-800 mb-3">Style des boutons</h3>
+        <h3 className="font-semibold text-ovh-gray-800 mb-3">Boutons (Primaire / Secondaire)</h3>
         <div className="flex gap-2">
           {BUTTON_STYLES.map((style) => (
             <button
@@ -181,6 +181,33 @@ export function DesignPanel({
               `}
             >
               {style.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Animations - spec : Sans animation, Fondu, Diapositive, Échelle */}
+      <div>
+        <h3 className="font-semibold text-ovh-gray-800 mb-3">Animations</h3>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { value: 'none', label: 'Sans animation' },
+            { value: 'fade', label: 'Fondu' },
+            { value: 'slide', label: 'Diapositive' },
+            { value: 'scale', label: 'Échelle' },
+          ].map((anim) => (
+            <button
+              key={anim.value}
+              type="button"
+              onClick={() => onThemeChange({ animation: anim.value })}
+              className={`
+                py-2 px-3 border-2 text-sm font-medium transition-all rounded-ovh
+                ${(site.siteTheme as { animation?: string } | null)?.animation === anim.value
+                  ? 'border-ovh-primary bg-ovh-primary/10 text-ovh-primary'
+                  : 'border-ovh-gray-200 text-ovh-gray-600 hover:border-ovh-gray-300'}
+              `}
+            >
+              {anim.label}
             </button>
           ))}
         </div>
