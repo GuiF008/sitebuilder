@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { themePresets } from '@/lib/themes/presets'
 import { Button, Input, Card, ProgressSteps } from '@/components/ui'
 
-const STEPS = ['Identité', 'Objectif', 'Contenu', 'Besoins']
+const STEPS = ['Identité', 'Objectif', 'Thème', 'Contenu', 'Besoins']
 
 const GOALS = [
   { id: 'vitrine', iconSrc: '/pictos/house.png', label: 'Vitrine', description: 'Présenter mon activité' },
@@ -26,11 +26,11 @@ const SECTIONS = [
 ]
 
 const NEEDS = [
-  { id: 'form', label: 'Formulaire de contact', premium: false },
-  { id: 'seo', label: 'Visible sur Google', premium: false },
-  { id: 'chat', label: 'Chat en direct', premium: true },
-  { id: 'booking', label: 'Prise de rendez-vous', premium: true },
-  { id: 'shop', label: 'Vendre en ligne', premium: true },
+  { id: 'domain', label: 'Nom de domaine' },
+  { id: 'mail', label: 'Mails professionnels' },
+  { id: 'ssl', label: 'Certificat SSL' },
+  { id: 'cdn', label: 'CDN' },
+  { id: 'other', label: 'Autres options' },
 ]
 
 export default function LandingPage() {
@@ -42,13 +42,15 @@ export default function LandingPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [goal, setGoal] = useState('')
-  const [themeFamily, setThemeFamily] = useState('ovh-modern')
+  const [themeFamily, setThemeFamily] = useState('')
   const [sections, setSections] = useState<string[]>(
     SECTIONS.filter(s => s.defaultChecked).map(s => s.id)
   )
   const [needs, setNeeds] = useState<string[]>([])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [phpThemes, setPhpThemes] = useState<Array<{ id: string; name: string }>>([])
+  const [phpThemesLoading, setPhpThemesLoading] = useState(false)
 
   const validateStep = () => {
     const newErrors: Record<string, string> = {}
@@ -65,9 +67,34 @@ export default function LandingPage() {
       newErrors.goal = 'Veuillez sélectionner un objectif'
     }
 
+    if (currentStep === 3 && !themeFamily.trim()) {
+      newErrors.theme = 'Veuillez sélectionner un thème'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
+
+  // Charger les thèmes PHP à l'entrée sur l'étape Thème (step 3)
+  useEffect(() => {
+    if (currentStep !== 3) return
+    setPhpThemesLoading(true)
+    fetch('/api/themes/php')
+      .then((res) => res.json())
+      .then((data) => {
+        const list = data.themes || []
+        setPhpThemes(list)
+        setThemeFamily((prev) => {
+          if (prev) return prev
+          return list.length ? list[0].id : 'ovh-modern'
+        })
+      })
+      .catch(() => {
+        setPhpThemes([])
+        setThemeFamily((prev) => prev || 'ovh-modern')
+      })
+      .finally(() => setPhpThemesLoading(false))
+  }, [currentStep])
 
   const handleNext = () => {
     if (!validateStep()) return
@@ -90,7 +117,8 @@ export default function LandingPage() {
 
   const handleSubmit = async () => {
     setIsLoading(true)
-    
+    const themeToSend = themeFamily?.trim() || 'ovh-modern'
+
     try {
       const response = await fetch('/api/sites', {
         method: 'POST',
@@ -99,7 +127,7 @@ export default function LandingPage() {
           name,
           contactEmail: email,
           goal,
-          themeFamily,
+          themeFamily: themeToSend,
           sections,
           needs,
         }),
@@ -287,38 +315,108 @@ export default function LandingPage() {
                 {errors.goal && (
                   <p className="text-red-600 text-sm text-center">{errors.goal}</p>
                 )}
-
-                {/* Template selection */}
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-ovh-gray-900 mb-3">Choisir un modèle</h3>
-                  <div className="grid sm:grid-cols-3 gap-3">
-                    {themePresets.map((preset) => (
-                      <Card
-                        key={preset.id}
-                        selected={themeFamily === preset.id}
-                        onClick={() => setThemeFamily(preset.id)}
-                        className="p-4 cursor-pointer"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium text-ovh-gray-900">{preset.name}</div>
-                            <div className="text-sm text-ovh-gray-500">{preset.description}</div>
-                          </div>
-                          <div className="flex gap-2">
-                            <div className="w-6 h-6 rounded" style={{ background: preset.colors.primary }} />
-                            <div className="w-6 h-6 rounded" style={{ background: preset.colors.secondary }} />
-                            <div className="w-6 h-6 rounded" style={{ background: preset.colors.accent }} />
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
 
-            {/* Step 3: Sections */}
+            {/* Step 3: Thème PHP (ou presets en secours) */}
             {currentStep === 3 && (
+              <div className="space-y-6">
+                <div className="text-center mb-8">
+                  <h1 className="text-2xl font-bold text-ovh-gray-900">
+<<<<<<< Current (Your changes)
+                    Choisir votre thème
+                  </h1>
+                  <p className="text-ovh-gray-600 mt-2">
+                    Sélectionnez un thème pour votre site. Vous pourrez le personnaliser dans l&apos;éditeur.
+                  </p>
+                </div>
+
+                {phpThemesLoading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="w-10 h-10 border-4 border-ovh-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : phpThemes.length > 0 ? (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {phpThemes.map((theme) => (
+                      <Card
+                        key={theme.id}
+                        selected={themeFamily === theme.id}
+                        onClick={() => setThemeFamily(theme.id)}
+                        className="p-5 cursor-pointer"
+                      >
+                        <div className="font-semibold text-ovh-gray-900">{theme.name}</div>
+                        <div className="text-sm text-ovh-gray-500 mt-1">Thème {theme.name}</div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm text-ovh-gray-500 mb-3">
+                      Aucun thème PHP trouvé dans le dossier. Choisissez un style par défaut :
+                    </p>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {themePresets.map((preset) => (
+                        <Card
+                          key={preset.id}
+                          selected={themeFamily === preset.id}
+                          onClick={() => setThemeFamily(preset.id)}
+                          className="p-4 cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-ovh-gray-900">{preset.name}</div>
+                              <div className="text-sm text-ovh-gray-500">{preset.description}</div>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="w-6 h-6 rounded" style={{ background: preset.colors.primary }} />
+                              <div className="w-6 h-6 rounded" style={{ background: preset.colors.secondary }} />
+                              <div className="w-6 h-6 rounded" style={{ background: preset.colors.accent }} />
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+=======
+                    Choisir votre thème (10 thèmes)
+                  </h1>
+                  <p className="text-ovh-gray-600 mt-2">
+                    Ces 10 thèmes sont stockés dans le catalogue et servent de base de personnalisation dans le builder.
+                  </p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {themePresets.slice(0, 10).map((preset) => (
+                    <Card
+                      key={preset.id}
+                      selected={themeFamily === preset.id}
+                      onClick={() => setThemeFamily(preset.id)}
+                      className="p-4 cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-ovh-gray-900">{preset.name}</div>
+                          <div className="text-sm text-ovh-gray-500">{preset.description}</div>
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="w-6 h-6 rounded" style={{ background: preset.colors.primary }} />
+                          <div className="w-6 h-6 rounded" style={{ background: preset.colors.secondary }} />
+                          <div className="w-6 h-6 rounded" style={{ background: preset.colors.accent }} />
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+>>>>>>> Incoming (Background Agent changes)
+                {errors.theme && (
+                  <p className="text-red-600 text-sm text-center">{errors.theme}</p>
+                )}
+              </div>
+            )}
+
+            {/* Step 4: Sections */}
+            {currentStep === 4 && (
               <div className="space-y-6">
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-bold text-ovh-gray-900">
@@ -354,15 +452,15 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Step 4: Needs */}
-            {currentStep === 4 && (
+            {/* Step 5: Needs */}
+            {currentStep === 5 && (
               <div className="space-y-6">
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-bold text-ovh-gray-900">
-                    Avez-vous des besoins particuliers ?
+                    Options complémentaires
                   </h1>
                   <p className="text-ovh-gray-600 mt-2">
-                    Certaines fonctionnalités sont disponibles en Premium
+                    Choisissez les options à inclure : domaine, mails, SSL, CDN, autres.
                   </p>
                 </div>
 
@@ -387,11 +485,6 @@ export default function LandingPage() {
                         />
                         <span className="font-medium text-ovh-gray-800">{need.label}</span>
                       </div>
-                      {need.premium && (
-                        <span className="text-xs font-semibold text-ovh-accent bg-ovh-accent/10 px-2 py-1 rounded-full">
-                          Premium
-                        </span>
-                      )}
                     </label>
                   ))}
                 </div>

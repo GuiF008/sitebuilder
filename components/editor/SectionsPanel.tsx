@@ -12,8 +12,11 @@ interface SectionsPanelProps {
   onSectionReorder: (sectionId: string, direction: 'up' | 'down') => Promise<void>
   onSectionDragReorder?: (draggedId: string, targetId: string) => Promise<void>
   onSectionSelect?: (sectionId: string) => void
+  /** Afficher la liste des éléments (composants) glisser-déposer selon le spec */
+  showElementsList?: boolean
 }
 
+// Types de sections (bibliothèque)
 const SECTION_TYPES = [
   { id: 'hero', label: 'Hero', iconSrc: '/pictos/trophy.png', description: 'En-tête avec titre et image' },
   { id: 'about', label: 'À propos', iconSrc: '/pictos/page-script.png', description: 'Texte et image' },
@@ -24,6 +27,25 @@ const SECTION_TYPES = [
   { id: 'contact', label: 'Contact', iconSrc: '/pictos/contacts.png', description: 'Informations de contact' },
 ]
 
+// Éléments (composants) selon le spec : Texte, Bouton, Image, Galerie, Vidéo, Forme, Carte, Feed Instagram, etc.
+const ELEMENT_TYPES = [
+  { id: 'text', label: 'Texte', icon: 'T' },
+  { id: 'button', label: 'Bouton', icon: 'B' },
+  { id: 'image', label: 'Image', icon: 'Img' },
+  { id: 'gallery', label: 'Galerie', icon: 'G' },
+  { id: 'video', label: 'Vidéo', icon: 'V' },
+  { id: 'shape', label: 'Forme', icon: '◇' },
+  { id: 'card', label: 'Carte', icon: 'C' },
+  { id: 'instagram', label: 'Feed Instagram', icon: 'IG' },
+  { id: 'contact-form', label: 'Formulaire de contact', icon: 'F' },
+  { id: 'newsletter', label: 'Formulaire d\'abonnement', icon: 'N' },
+  { id: 'social-icons', label: 'Icônes sociales', icon: 'S' },
+  { id: 'embed', label: 'Code incorporé', icon: '</>' },
+  { id: 'product-search', label: 'Recherche produit', icon: '🔍', ecommerce: true },
+  { id: 'add-to-cart', label: 'Ajouter au panier', icon: '🛒', ecommerce: true },
+  { id: 'affiliate', label: 'Lien d\'affiliation', icon: 'A', ecommerce: true },
+]
+
 export function SectionsPanel({
   currentPage,
   onSectionCreate,
@@ -32,6 +54,7 @@ export function SectionsPanel({
   onSectionReorder,
   onSectionDragReorder,
   onSectionSelect,
+  showElementsList = false,
 }: SectionsPanelProps) {
   const [showTypeModal, setShowTypeModal] = useState(false)
   const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null)
@@ -53,6 +76,32 @@ export function SectionsPanel({
 
   return (
     <div className="space-y-4">
+      {/* Liste des éléments (glisser-déposer) - spec Éléments */}
+      {showElementsList && (
+        <div className="pb-3 border-b border-ovh-gray-200">
+          <h4 className="text-xs font-semibold text-ovh-gray-500 uppercase tracking-wide mb-2">
+            Éléments à glisser sur la page
+          </h4>
+          <div className="flex flex-wrap gap-1.5">
+            {ELEMENT_TYPES.map((el) => (
+              <button
+                key={el.id}
+                type="button"
+                onClick={() => onSectionCreate(el.id)}
+                className="px-2 py-1.5 text-xs font-medium rounded-ovh border border-ovh-gray-200 bg-white hover:border-ovh-primary hover:bg-ovh-primary/5 transition-colors flex items-center gap-1"
+                title={el.label}
+              >
+                <span className="opacity-70">{el.icon}</span>
+                <span className="truncate max-w-[80px]">{el.label}</span>
+                {el.ecommerce && (
+                  <span className="text-[9px] text-ovh-gray-400">e-com</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Liste des sections */}
       <div className="space-y-2">
         {sortedSections.length === 0 ? (
