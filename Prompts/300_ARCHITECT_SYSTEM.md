@@ -351,15 +351,21 @@ Le header de l'onboarding doit afficher le logo OVHcloud en haut à droite, conf
 - **Lien** : `https://www.ovhcloud.com` (target="_blank")
 - **Référence** : https://zeroheight.com/6fc8a63f7/p/394306-welcome-to-the-brand-hub
 
-### Modale accordéon
+### Menu de gauche et modales niveau 2
 
 ```
 components/editor/
-├── SettingsModal.tsx      # Container accordéon 420px
-├── PagesPanel.tsx         # Section Pages & Menu
-├── DesignPanel.tsx        # Section Design (temps réel)
-└── MediaPanel.tsx         # Section Médiathèque
+├── SettingsModal.tsx           # Menu deux colonnes (icônes 72px + panneau 360px)
+├── PagesPanel.tsx               # Onglet Pages (liste, drag, menu contextuel, AddPageModal)
+├── AddPageModal.tsx             # Modale niveau 2 (portal) — ajouter une page
+├── SectionEditorModal.tsx       # Modale niveau 2 (portal) — éditer contenu section
+├── SectionInlineSettingsModal.tsx # Barre inline au clic sur une section ; bouton « Éditer le contenu »
+├── DesignPanel.tsx              # Onglet Styles (temps réel)
+├── MediaPanel.tsx               # Onglet Bibliothèque
+└── ...
 ```
+
+**Thèmes** : `lib/themes/branding.ts` — `getThemeBranding()` dérive `heroBg` et `footerBg` du fond du site (contraste). Presets enrichis et `getThemesForGoal(goal)` dans `presets.ts`.
 
 ### État pour temps réel
 
@@ -430,9 +436,10 @@ const theme = site.siteTheme ? {
 2. ✅ Modèle Prisma complet (avec Page multipage, SiteTheme, Media)
 3. ✅ Structure thèmes préenregistrés
 4. ✅ Routes API (pages, theme, media)
-5. ✅ Structure composants modale
+5. ✅ Structure composants (menu gauche + modales niveau 2 portal)
 6. ✅ Mécanisme publication
+7. ✅ Branding thème (hero/footer dynamiques)
 
 ---
 
-*Dernière mise à jour : 2 février 2026*
+*Dernière mise à jour : 25 février 2026*

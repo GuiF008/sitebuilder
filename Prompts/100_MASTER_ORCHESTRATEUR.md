@@ -42,7 +42,7 @@ Livrer un **prototype fonctionnel** "OVHcloud Site Builder" permettant à un uti
 
 - **Zéro compte requis** : création publique, accès admin via lien secret
 - **Onboarding 5 étapes** avec galerie de thèmes préenregistrés
-- **Éditeur visuel** avec modale de paramétrage (420px, accordéon)
+- **Éditeur visuel** avec menu de gauche (deux colonnes : icônes + panneau) et modales niveau 2 (portal centré)
 - **Modifications temps réel** : changements de design instantanés
 - **Drag & Drop** : upload d'images par glisser-déposer
 - **Sites multipages** : navigation entre pages avec menu
@@ -119,10 +119,12 @@ Livrer un **prototype fonctionnel** "OVHcloud Site Builder" permettant à un uti
 
 ### Phase 3 : Développement (400 DEVELOPER)
 - [ ] Landing page
-- [ ] Onboarding + galerie thèmes
-- [ ] Éditeur + modale accordéon
+- [ ] Onboarding + galerie thèmes (presets enrichis, objectifs)
+- [ ] Éditeur + menu gauche deux colonnes + modales niveau 2 (portal)
+- [ ] Clic section → barre inline ; « Éditer le contenu » → modale d’édition
 - [ ] Temps réel + drag & drop
-- [ ] Multipage + navigation
+- [ ] Multipage + navigation (header uniquement, pas d’onglets redondants)
+- [ ] Sections full-width ; hero/footer liés au thème (branding)
 
 ### Phase 4 : Intégration (500 INTEGRATOR)
 - [ ] Branches mergées sans conflits
@@ -165,6 +167,10 @@ Livrer un **prototype fonctionnel** "OVHcloud Site Builder" permettant à un uti
 | 2026-02-02 | Site multipage + menu | 200, 300, 400 |
 | 2026-02-02 | Ajout agent INTEGRATOR | 100, 500 |
 | 2026-02-02 | Restructuration numérotation | Tous |
+| 2026-02-25 | Menu gauche deux colonnes, modales niveau 2 (portal) | 200, 300, 400 |
+| 2026-02-25 | Clic section → barre inline ; modale édition via « Éditer le contenu » | 200, 400 |
+| 2026-02-25 | Thèmes hero/footer dynamiques, presets enrichis | 200, 300, 400 |
+| 2026-02-25 | AddPageModal, AddSectionModal, SectionEditorModal style unifié | 200, 400 |
 
 ---
 
@@ -174,7 +180,7 @@ Avant de considérer le projet livrable :
 
 - [ ] Un utilisateur peut créer un site sans compte
 - [ ] L'onboarding propose des thèmes avec preview
-- [ ] L'éditeur a une modale accordéon fonctionnelle
+- [ ] L'éditeur a un menu gauche (onglets) et des modales niveau 2 fonctionnels
 - [ ] Les modifications sont en temps réel
 - [ ] Le drag & drop d'images fonctionne
 - [ ] Le site peut être multipage avec menu
@@ -185,4 +191,4 @@ Avant de considérer le projet livrable :
 
 ---
 
-*Dernière mise à jour : 2 février 2026*
+*Dernière mise à jour : 25 février 2026*

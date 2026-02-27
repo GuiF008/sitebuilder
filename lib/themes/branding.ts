@@ -1,9 +1,11 @@
 import { ComputedTheme } from '@/lib/types'
 import { getThemePreset } from './presets'
 
-type ThemeBranding = {
+export type ThemeBranding = {
   headerBg: string
   headerText: string
+  /** Fond de la section hero (lié au thème) */
+  heroBg: string
   footerBg: string
   footerText: string
   heroCtaBg: string
@@ -11,40 +13,43 @@ type ThemeBranding = {
 }
 
 /**
- * Variante thématique header/footer pour chaque template.
- * Permet d'ajuster la cohérence visuelle thème par thème.
+ * Couleurs header / hero / footer dérivées du thème (preset).
+ * Hero et footer utilisent les couleurs du thème choisi à l'onboarding.
  */
 export function getThemeBranding(themeFamily: string, theme: ComputedTheme): ThemeBranding {
   const preset = getThemePreset(themeFamily)
-  const headerBg = preset?.headerStyle?.backgroundColor || theme.colors.primary
+  const headerBg = theme.colors.primary
   const headerText = preset?.headerStyle?.textColor || '#FFFFFF'
 
-  const byTheme: Record<string, { footerBg: string; footerText: string; heroCtaBg: string; heroCtaText: string }> = {
-    'ovh-modern': { footerBg: '#00167A', footerText: '#FFFFFF', heroCtaBg: '#00D4AA', heroCtaText: '#00167A' },
-    'classic-elegant': { footerBg: '#2A4A70', footerText: '#FFFFFF', heroCtaBg: '#98C1D9', heroCtaText: '#1E3A5F' },
-    'creative-bold': { footerBg: '#9333EA', footerText: '#FFFFFF', heroCtaBg: '#F472B6', heroCtaText: '#4A1D96' },
-    'pro-business': { footerBg: '#111827', footerText: '#FFFFFF', heroCtaBg: '#3B82F6', heroCtaText: '#FFFFFF' },
-    'nature-zen': { footerBg: '#047857', footerText: '#FFFFFF', heroCtaBg: '#F59E0B', heroCtaText: '#1F2937' },
-    'tech-moderne': { footerBg: '#111827', footerText: '#E2E8F0', heroCtaBg: '#8B5CF6', heroCtaText: '#FFFFFF' },
-    'artisan-chic': { footerBg: '#6B3F24', footerText: '#FFF8EE', heroCtaBg: '#E7B36A', heroCtaText: '#4A2A14' },
-    'minimal-light': { footerBg: '#F3F4F6', footerText: '#111827', heroCtaBg: '#111827', heroCtaText: '#FFFFFF' },
-    'agency-neon': { footerBg: '#0B1020', footerText: '#E2E8F0', heroCtaBg: '#22D3EE', heroCtaText: '#0B1020' },
-    'restaurant-sun': { footerBg: '#92400E', footerText: '#FFF7ED', heroCtaBg: '#F59E0B', heroCtaText: '#3F2A14' },
+  const siteBackground = preset?.colors?.background ?? theme.colors.background
+
+  const isLight = (color: string) => {
+    const hex = color.replace('#', '')
+    if (hex.length !== 6) return true
+    const r = parseInt(hex.slice(0, 2), 16)
+    const g = parseInt(hex.slice(2, 4), 16)
+    const b = parseInt(hex.slice(4, 6), 16)
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000
+    return brightness > 160
   }
 
-  const footerVariant = byTheme[themeFamily] || {
-    footerBg: preset?.colors.secondary || theme.colors.secondary,
-    footerText: '#FFFFFF',
-    heroCtaBg: preset?.colors.accent || theme.colors.accent,
-    heroCtaText: '#FFFFFF',
-  }
+  const baseDark = preset?.colors?.primary ?? theme.colors.primary
+  const baseLight = preset?.colors?.secondary ?? '#FFFFFF'
+  const heroFooterColor = isLight(siteBackground) ? baseDark : baseLight
+
+  const heroBg = heroFooterColor
+  const footerBg = heroFooterColor
+  const footerText = '#FFFFFF'
+  const heroCtaBg = preset?.colors?.accent ?? theme.colors.accent
+  const heroCtaText = theme.colors.primary
 
   return {
     headerBg,
     headerText,
-    footerBg: footerVariant.footerBg,
-    footerText: footerVariant.footerText,
-    heroCtaBg: footerVariant.heroCtaBg,
-    heroCtaText: footerVariant.heroCtaText,
+    heroBg,
+    footerBg,
+    footerText,
+    heroCtaBg,
+    heroCtaText,
   }
 }

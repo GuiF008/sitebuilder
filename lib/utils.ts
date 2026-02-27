@@ -91,3 +91,26 @@ export function sanitizeFilename(filename: string): string {
     .replace(/\.\./g, '_')
     .slice(0, 255)
 }
+
+/**
+ * Retourne une couleur de texte lisible (noir ou blanc) selon la luminosité du fond
+ */
+export function getReadableTextColor(hexBackground: string): string {
+  const hex = hexBackground.replace(/^#/, '')
+  const r = parseInt(hex.slice(0, 2), 16)
+  const g = parseInt(hex.slice(2, 4), 16)
+  const b = parseInt(hex.slice(4, 6), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.5 ? '#111827' : '#FFFFFF'
+}
+
+/**
+ * Assombrit une couleur hexadécimale (amount entre 0 et 1, ex. 0.2 = 20% plus sombre)
+ */
+export function darkenColor(hex: string, amount: number): string {
+  const h = hex.replace(/^#/, '')
+  let r = Math.max(0, parseInt(h.slice(0, 2), 16) * (1 - amount))
+  let g = Math.max(0, parseInt(h.slice(2, 4), 16) * (1 - amount))
+  let b = Math.max(0, parseInt(h.slice(4, 6), 16) * (1 - amount))
+  return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`
+}

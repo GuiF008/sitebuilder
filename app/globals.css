@@ -10,8 +10,8 @@
   --theme-background: #FFFFFF;
   --theme-text: #212529;
   --theme-muted: #6C757D;
-  --theme-heading-font: 'Source Sans Pro', system-ui, sans-serif;
-  --theme-body-font: 'Source Sans Pro', system-ui, sans-serif;
+  --theme-heading-font: var(--font-source-sans), 'Source Sans 3', system-ui, sans-serif;
+  --theme-body-font: var(--font-source-sans), 'Source Sans 3', system-ui, sans-serif;
   --theme-border-radius: 8px;
 }
 

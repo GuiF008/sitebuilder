@@ -61,37 +61,47 @@ Feature: Création de site
     And je peux copier ce lien
 ```
 
-### Scénario 2 : Modale accordéon
+### Scénario 2 : Menu de gauche et modales niveau 2
 
 ```gherkin
-Feature: Modale de paramétrage
+Feature: Menu de paramétrage
   En tant qu'utilisateur dans l'éditeur
-  Je veux utiliser la modale accordéon
+  Je veux utiliser le menu de gauche (deux colonnes)
   Afin de configurer mon site
 
-  Scenario: Ouvrir/fermer la modale
+  Scenario: Ouvrir/fermer le menu
     Given je suis dans l'éditeur
     When je clique sur le bouton menu (☰)
-    Then la modale 420px s'ouvre sur la gauche
-    And la section "Pages & Menu" est ouverte par défaut
+    Then la barre d'icônes (72px) et le panneau (360px) s'ouvrent sur la gauche
+    And l'onglet actif affiche son contenu (ex. Configuration)
 
-  Scenario: Navigation accordéon
-    Given la modale est ouverte
-    When je clique sur "🎨 Design du site"
-    Then la section Design se déplie
-    And je vois les sous-sections (Modèles, Couleurs, Polices, Boutons)
-    
-    When je clique sur "📄 Pages & Menu"
-    Then la section Pages se déplie
-    And la section Design reste ouverte (multi-accordéon)
+  Scenario: Navigation entre onglets
+    Given le menu est ouvert
+    When je clique sur l'icône "Styles"
+    Then le panneau affiche Design (thèmes, couleurs, polices)
+    When je clique sur l'icône "Pages"
+    Then le panneau affiche la liste des pages et "Ajouter une page"
 
-  Scenario: Créer une page
-    Given la modale est ouverte sur Pages & Menu
+  Scenario: Créer une page (AddPageModal)
+    Given le menu est ouvert sur l'onglet Pages
     When je clique sur "Ajouter une page"
-    And je saisis "Nos services"
-    And je valide
+    Then une modale niveau 2 (portal centré) s'ouvre
+    And je peux choisir un template ou une page vide
+    When je valide la création
     Then la page apparaît dans la liste
-    And un nouvel onglet apparaît en haut de l'éditeur
+    And le menu du site (header) affiche la nouvelle page
+
+  Scenario: Clic sur une section — barre inline uniquement
+    Given je suis dans l'éditeur avec au moins une section
+    When je clique sur une section dans le canvas
+    Then la barre inline (SectionInlineSettingsModal) s'affiche en haut à droite de la section
+    And la modale d'édition complète ne s'ouvre PAS
+
+  Scenario: Ouvrir la modale d'édition de section
+    Given une section est sélectionnée (barre inline visible)
+    When je clique sur "Éditer le contenu" dans la barre inline
+    Then la modale SectionEditorModal s'ouvre (portal centré)
+    And je peux modifier les blocs et le style de la section
 ```
 
 ### Scénario 3 : Modifications temps réel
@@ -104,20 +114,20 @@ Feature: Temps réel
 
   Scenario: Changement de thème
     Given je suis dans l'éditeur
-    And la modale est ouverte sur Design > Modèles
+    And le menu est ouvert sur l'onglet Styles (Design)
     When je clique sur le thème "Creative Bold"
     Then les couleurs du site changent instantanément
     And pas besoin de recharger la page
 
   Scenario: Changement de couleur
     Given je suis dans l'éditeur
-    And la modale est ouverte sur Design > Couleurs
+    And le menu est ouvert sur l'onglet Styles
     When je modifie la couleur primaire en #FF0000
     Then tous les éléments primaires deviennent rouges immédiatement
 
   Scenario: Changement de police
     Given je suis dans l'éditeur
-    And la modale est ouverte sur Design > Polices
+    And le menu est ouvert sur l'onglet Styles
     When je change la police des titres en "Georgia"
     Then tous les titres changent de police instantanément
 ```
@@ -491,4 +501,4 @@ Si des erreurs sont détectées :
 
 ---
 
-*Dernière mise à jour : 2 février 2026*
+*Dernière mise à jour : 25 février 2026*

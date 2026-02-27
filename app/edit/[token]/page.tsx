@@ -1,14 +1,16 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui'
 import { SettingsModal } from '@/components/editor'
 import { SectionEditorModal } from '@/components/editor/SectionEditorModal'
+import { SectionInlineSettingsModal } from '@/components/editor/SectionInlineSettingsModal'
 import { Header } from '@/components/shared/Header'
-import { SiteWithRelations, PageWithSections, ComputedTheme, SectionStyles } from '@/lib/types'
+import { SiteWithRelations, PageWithSections, ComputedTheme, SectionStyles, ContentBlockType } from '@/lib/types'
 import { computeTheme, generateThemeStyles } from '@/lib/themes'
 import { safeJsonParse } from '@/lib/utils'
 import { BlockRenderer } from '@/components/shared/BlockRenderer'
@@ -29,6 +31,7 @@ export default function EditorPage() {
   const [uploadToast, setUploadToast] = useState<number>(0) // Nombre d'images uploadées
   const [isSaving, setIsSaving] = useState(false)
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null)
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [isPublishing, setIsPublishing] = useState(false)
   const [showAddSectionModal, setShowAddSectionModal] = useState(false)
@@ -317,6 +320,32 @@ export default function EditorPage() {
     }
   }
 
+  const handleSectionDuplicate = async (section: { id: string; type: string; dataJson: string }) => {
+    if (!site || !currentPage) return
+    try {
+      const response = await fetch(`/api/pages/${currentPage.id}/sections`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: section.type }),
+      })
+      const data = await response.json()
+      await fetch(`/api/sections/${data.section.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataJson: section.dataJson }),
+      })
+      const refreshed = await fetch(`/api/sites/by-token?token=${token}`)
+      if (refreshed.ok) {
+        const j = await refreshed.json()
+        setSite(j.site)
+        setSelectedSectionId(data.section.id)
+      }
+      showSaveStatus()
+    } catch (err) {
+      console.error('Failed to duplicate section:', err)
+    }
+  }
+
   const handleSectionUpdate = async (sectionId: string, updates: Record<string, unknown>) => {
     if (!site) return
 
@@ -356,6 +385,49 @@ export default function EditorPage() {
     } catch (err) {
       console.error('Failed to update section:', err)
     }
+  }
+
+  const generateBlockId = () => `block_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+  const handleAddBlockToSection = (sectionId: string, blockType: ContentBlockType, options?: { elementId?: string }) => {
+    if (!site || !currentPage) return
+    const section = currentPage.sections.find(s => s.id === sectionId)
+    if (!section) return
+    const currentData = safeJsonParse<Record<string, unknown>>(section.dataJson, {}) || {}
+    const blocks = (currentData.blocks as Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>) || []
+    const maxOrder = blocks.length > 0 ? Math.max(...blocks.map(b => b.order)) : -1
+    const defaultContent: Record<string, string> = {
+      title: 'Nouveau titre',
+      subtitle: 'Sous-titre',
+      text: 'Votre texte ici...',
+      button: 'Cliquez ici',
+      image: '',
+      video: '',
+      audio: '',
+      shape: '',
+      gallery: '',
+      'contact-form': 'Formulaire de contact',
+      'social-icons': 'Liens réseaux sociaux',
+    }
+    const settings: Record<string, unknown> = {}
+    if (blockType === 'button' && options?.elementId === 'affiliate') {
+      settings.linkMode = 'url'
+      settings.link = '#'
+    }
+    if (blockType === 'button' && options?.elementId === 'add-to-cart') {
+      settings.linkMode = 'url'
+      settings.link = '#'
+    }
+    const newBlock = {
+      id: generateBlockId(),
+      type: blockType,
+      order: maxOrder + 1,
+      content: defaultContent[blockType] ?? '',
+      settings: Object.keys(settings).length ? settings : undefined,
+    }
+    handleSectionUpdate(sectionId, { ...currentData, blocks: [...blocks, newBlock] })
+    setSelectedSectionId(sectionId)
+    showSaveStatus()
   }
 
   const handleSectionDelete = async (sectionId: string) => {
@@ -616,55 +688,33 @@ export default function EditorPage() {
           onThemeChange={handleThemeChange}
           onMediaUpload={handleMediaUpload}
           onMediaDelete={handleMediaDelete}
+          selectedSectionId={selectedSectionId}
+          onAddBlockToSection={handleAddBlockToSection}
         />
 
-        {/* Section Editor Modal */}
-        {selectedSectionId && currentPage && (
+        {/* Section Editor Modal (niveau 2 – portal centré, déclenché depuis le menu inline) */}
+        {editingSectionId && currentPage && (
           <SectionEditorModal
-            isOpen={!!selectedSectionId}
-            onClose={() => setSelectedSectionId(null)}
-            section={currentPage.sections.find(s => s.id === selectedSectionId) || null}
+            isOpen={!!editingSectionId}
+            onClose={() => setEditingSectionId(null)}
+            section={currentPage.sections.find(s => s.id === editingSectionId) || null}
             site={site}
             theme={theme}
             onUpdate={handleSectionUpdate}
-            settingsModalOpen={settingsOpen}
+            currentPage={currentPage}
           />
         )}
 
-        {/* Editor area */}
+        {/* Editor area - pas de décalage quand la modale section s'ouvre (overlay) */}
         <main 
           className={`
             flex-1 transition-all duration-300 flex flex-col
-            ${settingsOpen ? 'ml-[420px]' : 'ml-0'}
-            ${selectedSectionId && settingsOpen ? 'mr-[840px]' : selectedSectionId ? 'mr-[420px]' : 'mr-0'}
+            ${settingsOpen ? 'ml-[432px]' : 'ml-0'}
           `}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          {/* Page tabs */}
-          {sortedPages.length > 1 && (
-            <div className="bg-white border-b border-ovh-gray-200 px-4 py-2 flex gap-1 overflow-x-auto flex-shrink-0">
-              {sortedPages.map((page, index) => (
-                <button
-                  key={page.id}
-                  onClick={() => setCurrentPageIndex(index)}
-                  className={`
-                    px-4 py-2 rounded-ovh whitespace-nowrap text-sm font-medium transition-colors page-tab
-                    ${currentPageIndex === index
-                      ? 'text-white'
-                      : 'text-ovh-gray-600 hover:bg-ovh-gray-100'}
-                  `}
-                  style={{
-                    backgroundColor: currentPageIndex === index ? theme.colors.primary : undefined,
-                  }}
-                >
-                  {page.title}
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* Navigation preview */}
           {menuPages.length > 1 && (
             <Header
@@ -689,93 +739,54 @@ export default function EditorPage() {
           >
             {currentPage ? (
               <>
-                <div className="max-w-4xl mx-auto p-8 pb-20">
+                <div className="w-full pb-20">
                   {currentPage.sections
                     .sort((a, b) => a.order - b.order)
                     .map((section) => (
                       <div
                         key={section.id}
-                        className="relative group rounded-ovh transition-all"
+                        className="relative group transition-all"
                         onClick={(e) => {
                           e.stopPropagation()
                           setSelectedSectionId(section.id)
                         }}
+                        onDragOver={(e) => {
+                          e.preventDefault()
+                          e.dataTransfer.dropEffect = 'copy'
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault()
+                          const raw = e.dataTransfer.getData('application/element')
+                          if (raw) {
+                            try {
+                              const { blockType, elementId } = JSON.parse(raw)
+                              handleAddBlockToSection(section.id, blockType, elementId ? { elementId } : undefined)
+                            } catch {}
+                          }
+                        }}
                       >
-                        {/* Toolbar section : Modifier la section + menu (ellipsis) - spec */}
-                        {selectedSectionId === section.id && (
-                          <div className="flex items-center justify-end gap-1 mb-2 px-1 py-1 bg-ovh-gray-100 rounded-ovh">
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); setSelectedSectionId(section.id); }}
-                              className="text-xs font-medium px-2 py-1 text-ovh-primary hover:bg-ovh-primary/10 rounded"
-                            >
-                              Modifier la section
-                            </button>
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setSectionMenuOpen(sectionMenuOpen === section.id ? null : section.id)
-                                }}
-                                className="p-1.5 rounded hover:bg-ovh-gray-200"
-                                aria-label="Actions"
-                              >
-                                <svg className="w-4 h-4 text-ovh-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-                                </svg>
-                              </button>
-                              {sectionMenuOpen === section.id && (
-                                <>
-                                  <div className="fixed inset-0 z-10" onClick={() => setSectionMenuOpen(null)} />
-                                  <div className="absolute right-0 top-full mt-1 py-1 bg-white border border-ovh-gray-200 rounded-ovh shadow-lg z-20 min-w-[180px]">
-                                    <button
-                                      type="button"
-                                      className="w-full text-left px-3 py-2 text-sm hover:bg-ovh-gray-50"
-                                      onClick={() => {
-                                        setCopiedSectionData({ type: section.type, dataJson: section.dataJson })
-                                        setSectionMenuOpen(null)
-                                      }}
-                                    >
-                                      Copier
-                                    </button>
-                                    <button
-                                      type="button"
-                                      disabled={!copiedSectionData}
-                                      className="w-full text-left px-3 py-2 text-sm hover:bg-ovh-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                      onClick={async () => {
-                                        if (!copiedSectionData) return
-                                        await handleSectionCreate(currentPage.id, copiedSectionData.type)
-                                        setSectionMenuOpen(null)
-                                      }}
-                                    >
-                                      Coller
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                                      onClick={() => {
-                                        if (confirm('Supprimer cette section ?')) handleSectionDelete(section.id)
-                                        setSectionMenuOpen(null)
-                                      }}
-                                    >
-                                      Supprimer
-                                    </button>
-                                    <hr className="my-1 border-ovh-gray-200" />
-                                    <button
-                                      type="button"
-                                      className="w-full text-left px-3 py-2 text-sm hover:bg-ovh-gray-50"
-                                      onClick={() => setSectionMenuOpen(null)}
-                                    >
-                                      Créer une image par IA
-                                    </button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        <div className="cursor-pointer hover:outline hover:outline-2 hover:outline-ovh-primary hover:outline-offset-2 rounded-ovh transition-all">
+                        {/* Modale inline en haut à droite : Paramètres de la section */}
+                        {selectedSectionId === section.id && (() => {
+                          const sorted = [...currentPage.sections].sort((a, b) => a.order - b.order)
+                          const idx = sorted.findIndex(s => s.id === section.id)
+                          return (
+                            <SectionInlineSettingsModal
+                              section={section}
+                              theme={theme}
+                              siteMedia={site.media}
+                              onUpdate={handleSectionUpdate}
+                              onDuplicate={handleSectionDuplicate}
+                              onDelete={handleSectionDelete}
+                              onReorderUp={(id) => { handleSectionReorder(id, 'up') }}
+                              onReorderDown={(id) => { handleSectionReorder(id, 'down') }}
+                              canMoveUp={idx > 0}
+                              canMoveDown={idx < sorted.length - 1}
+                              onClose={() => setSelectedSectionId(null)}
+                              onEdit={() => setEditingSectionId(section.id)}
+                            />
+                          )
+                        })()}
+                        <div className="cursor-pointer hover:outline hover:outline-2 hover:outline-ovh-primary hover:outline-offset-0 transition-all">
                           <SectionPreview
                             section={section}
                             theme={theme}
@@ -929,42 +940,51 @@ function AddSectionModal({
   onSectionCreate: (type: string) => Promise<void>
   onClose: () => void
 }) {
-  return (
-    <>
-      <div className="fixed inset-0 z-[60] bg-black/50" onClick={onClose} />
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-        <div className="bg-white rounded-ovh-lg shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col">
-          <div className="px-6 py-4 border-b border-ovh-gray-200 flex items-center justify-between flex-shrink-0">
+  if (typeof document === 'undefined') return null
+
+  const modal = (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-[90vw] max-w-[880px] h-[80vh] max-h-[640px] flex flex-col overflow-hidden">
+        <div className="flex items-start justify-between px-6 py-4 border-b border-ovh-gray-200 flex-shrink-0">
+          <div>
             <h2 className="text-lg font-bold text-ovh-gray-900">Ajouter une nouvelle section</h2>
-            <button type="button" onClick={onClose} className="p-2 hover:bg-ovh-gray-100 rounded-ovh">
-              <svg className="w-5 h-5 text-ovh-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <p className="text-sm text-ovh-gray-500 mt-0.5">Choisissez un type de section pour enrichir votre page.</p>
           </div>
-          <div className="flex-1 overflow-y-auto p-6">
-            {SECTION_CATEGORIES.map((cat) => (
-              <div key={cat.id} className="mb-6">
-                <h3 className="text-sm font-semibold text-ovh-gray-700 uppercase tracking-wide mb-2">{cat.label}</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {cat.types.map((typeId) => (
-                    <button
-                      key={`${cat.id}-${typeId}`}
-                      type="button"
-                      onClick={() => onSectionCreate(typeId)}
-                      className="p-3 text-left border border-ovh-gray-200 rounded-ovh hover:border-ovh-primary hover:bg-ovh-primary/5 transition-colors"
-                    >
-                      {SECTION_TYPE_LABELS[typeId] ?? typeId}
-                    </button>
-                  ))}
-                </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 hover:bg-ovh-gray-100 rounded-lg transition-colors flex-shrink-0 -mt-1 -mr-1"
+          >
+            <svg className="w-5 h-5 text-ovh-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {SECTION_CATEGORIES.map((cat) => (
+            <div key={cat.id} className="mb-6">
+              <h3 className="text-sm font-semibold text-ovh-gray-700 uppercase tracking-wide mb-2">{cat.label}</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {cat.types.map((typeId) => (
+                  <button
+                    key={`${cat.id}-${typeId}`}
+                    type="button"
+                    onClick={() => onSectionCreate(typeId)}
+                    className="p-4 text-left border border-ovh-gray-200 rounded-xl hover:border-ovh-primary hover:bg-ovh-primary/5 transition-colors text-sm font-medium text-ovh-gray-800"
+                  >
+                    {SECTION_TYPE_LABELS[typeId] ?? typeId}
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
-    </>
+    </div>
   )
+
+  return createPortal(modal, document.body)
 }
 
 // Section preview component
@@ -1008,11 +1028,21 @@ function SectionPreview({
     buttonStyle: theme.buttonStyle,
   }
   const branding = getThemeBranding(site.themeFamily, theme)
+  const contentAlignment = (data.contentAlignment as 'left' | 'center' | 'right') || 'left'
+  const sectionImages: string[] = Array.isArray(data.sectionImages) ? (data.sectionImages as string[]) : []
+  const alignmentClass = contentAlignment === 'center' ? 'text-center' : contentAlignment === 'right' ? 'text-right' : 'text-left'
 
   // Si la section a des blocs de contenu, les afficher
   if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0) {
     return (
-      <section className="py-8 mb-4 px-4 rounded-ovh" style={{ backgroundColor: sectionStyles.backgroundColor }}>
+      <section className={`py-8 px-8 ${alignmentClass}`} style={{ backgroundColor: sectionStyles.backgroundColor }}>
+        {sectionImages.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+            {sectionImages.slice(0, 4).map((url, i) => (
+              <img key={i} src={url} alt="" className="w-full aspect-video object-cover rounded-lg" />
+            ))}
+          </div>
+        )}
         <BlockRenderer 
           blocks={(data.blocks || []) as Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>} 
           sectionStyles={sectionStyles} 
@@ -1028,7 +1058,7 @@ function SectionPreview({
     case 'hero':
       return (
         <section 
-          className="py-20 text-center mb-8 rounded-ovh-lg" 
+          className={`py-20 px-8 ${alignmentClass}`}
           style={{ backgroundColor: sectionStyles.backgroundColor || theme.colors.primary }}
         >
           <h1 
@@ -1063,7 +1093,7 @@ function SectionPreview({
     case 'about':
       return (
         <section 
-          className="py-12 mb-8 rounded-ovh"
+          className={`py-12 px-8 ${alignmentClass}`}
           style={{ backgroundColor: sectionStyles.backgroundColor }}
         >
           <h2 
@@ -1077,10 +1107,10 @@ function SectionPreview({
           </h2>
           {data.image ? (
             <div className="mb-6 relative group">
-              <img src={data.image as string} alt={getDataValue('title')} className="w-full h-64 object-cover rounded-ovh" />
+              <img src={data.image as string} alt={getDataValue('title')} className="w-full h-64 object-cover" />
               <button
                 onClick={() => handleImageClick()}
-                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white rounded-ovh"
+                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
               >
                 <span className="text-sm">Changer l'image</span>
               </button>
@@ -1088,7 +1118,7 @@ function SectionPreview({
           ) : (
             <div
               onClick={handleImageClick}
-              className="mb-6 h-64 border-2 border-dashed border-ovh-gray-300 rounded-ovh flex items-center justify-center cursor-pointer hover:border-ovh-primary transition-colors"
+              className="mb-6 h-64 border-2 border-dashed border-ovh-gray-300 flex items-center justify-center cursor-pointer hover:border-ovh-primary transition-colors"
             >
               <div className="text-center">
                 <svg className="w-12 h-12 mx-auto mb-2 text-ovh-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1120,11 +1150,11 @@ function SectionPreview({
     case 'services':
       return (
         <section 
-          className="py-12 mb-8 rounded-ovh"
+          className={`py-12 px-8 ${alignmentClass}`}
           style={{ backgroundColor: sectionStyles.backgroundColor }}
         >
           <h2 
-            className="text-3xl font-bold mb-8 text-center"
+            className="text-3xl font-bold mb-8"
             style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
             contentEditable
             suppressContentEditableWarning
@@ -1174,9 +1204,9 @@ function SectionPreview({
 
     case 'contact':
       return (
-        <section className="py-12 mb-8">
+        <section className={`py-12 px-8 ${alignmentClass}`}>
           <h2 
-            className="text-3xl font-bold mb-8 text-center"
+            className="text-3xl font-bold mb-8"
             style={{ fontFamily: theme.fonts.heading, color: theme.colors.text }}
             contentEditable
             suppressContentEditableWarning
@@ -1194,7 +1224,7 @@ function SectionPreview({
     case 'footer':
       const branding = getThemeBranding(site.themeFamily, theme)
       return (
-        <footer className="py-8 mt-8 rounded-ovh" style={{ backgroundColor: branding.footerBg }}>
+        <footer className={`py-8 px-8 ${alignmentClass}`} style={{ backgroundColor: branding.footerBg }}>
           <p 
             className="text-center text-sm"
             style={{ color: branding.footerText }}
@@ -1208,7 +1238,7 @@ function SectionPreview({
 
     default:
       return (
-        <div className="py-8 text-center text-ovh-gray-400 border border-dashed border-ovh-gray-300 rounded-ovh mb-4">
+        <div className={`py-8 text-ovh-gray-400 border border-dashed border-ovh-gray-300 ${alignmentClass}`}>
           Section : {section.type}
         </div>
       )

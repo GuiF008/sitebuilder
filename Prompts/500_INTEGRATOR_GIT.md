@@ -414,4 +414,4 @@ git push origin --delete feature/modale-accordeon
 
 ---
 
-*Dernière mise à jour : 2 février 2026*
+*Dernière mise à jour : 25 février 2026*

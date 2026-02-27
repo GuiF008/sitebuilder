@@ -29,7 +29,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['Source Sans Pro', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-source-sans)', 'Source Sans 3', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         'ovh': '8px',

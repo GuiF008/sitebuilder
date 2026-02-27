@@ -56,7 +56,7 @@ Onboarding (/onboarding) - 5 étapes
     ↓
 Succès (/onboarding/success) - Lien secret affiché
     ↓
-Éditeur (/edit/<token>) - Modale accordéon + multipage
+Éditeur (/edit/<token>) - Menu gauche deux colonnes + modales niveau 2 + multipage
     ↓
 Publication
     ↓
@@ -109,6 +109,9 @@ Site public (/s/<slug>) - Menu navigation si multipage
 - Preview visuel avec simulation de layout
 - Affichage de la palette (3 pastilles)
 - Indicateur de sélection (checkmark)
+- Filtrage possible par objectif (étape 2) : `getThemesForGoal(goal)`
+
+**Hero et Footer** : Les couleurs de fond du hero et du footer sont dérivées du thème avec logique de contraste (fond de site clair → hero/footer sombres ; fond sombre → hero/footer clairs). Même couleur pour hero et footer.
 
 
 ### Étape 4 : Contenu
@@ -130,78 +133,65 @@ Site public (/s/<slug>) - Menu navigation si multipage
 
 ---
 
-## Spécifications : Éditeur avec modale accordéon
+## Spécifications : Éditeur avec menu de gauche (deux colonnes)
 
 - L'éditeur doit se baser sur le design system : https://github.com/ovh/design-system
 - La charte graphique de référence de l'éditeur : https://zeroheight.com/6fc8a63f7/p/394306-welcome-to-the-brand-hub
 
 ### Layout général
 
+- **Pas d’onglets de pages** au-dessus de la zone d’édition : la navigation entre pages se fait uniquement via le **menu du site** (header du thème).
+- **Menu de gauche** : deux colonnes — barre d’icônes (72px) + panneau coulissant (360px) selon l’onglet actif.
+- **Clic sur une section** dans le canvas : ouvre uniquement la **barre inline** (SectionInlineSettingsModal) en haut à droite de la section. La **modale d’édition complète** (SectionEditorModal) ne s’ouvre **pas** au clic ; elle s’ouvre via le bouton **« Éditer le contenu »** dans cette barre inline.
+- **Sections** : rendu **pleine largeur** (fond perdu), sans cadre ni coins arrondis sur le conteneur ; l’alignement (gauche/centre/droite) s’applique à tout le contenu de la section.
+
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────────┐
 │  [☰]  [←] Mon Site                          [Lien] [Upgrade] [Publier]                      │
-├──────────────┬──────────────────────────────────────────────────────────────┬───────────────┤
-│              │  [Page 1] [Page 2] [Page 3]  ← Onglets pages                 │               │
-│ MODALE       ├──────────────────────────────────────────────────────────────┤ MODALE        │
-│ PARAMÈTRES   │  ┌────────────────────────────────────────────────────────┐  │ ÉDITION       │
-│ (420px,      │  │     MENU NAVIGATION (preview si >1 page)              │  │ SECTION      │
-│ accordéon)   │  └────────────────────────────────────────────────────────┘  │ (420px)       │
-│              │                                                              │               │
-│ ▼ 📄 Pages   │           ZONE D'ÉDITION VISUELLE                           │ Titre         │
-│   & Menu     │           (clic section = ouvrir modale droite)              │ Sous-titre    │
-│              │                                                              │ Média         │
-│ ▶ 📝 Sections│                                                              │ Texte         │
-│              │                                                              │               │
-│ ▶ 🎨 Design  │                                                              │               │
-│              │                                                              │               │
-│ ▶ 🖼️ Média   │                                                              │               │
-├──────────────┴──────────────────────────────────────────────────────────────┴───────────────┤
+├────┬─────────┬─────────────────────────────────────────────────────────────────────────────┤
+│ 📌 │ CONFIG  │  MENU NAVIGATION (header thème, si >1 page)                                  │
+│ 📄 │ PAGES   ├─────────────────────────────────────────────────────────────────────────────┤
+│ 🎨 │ STYLES  │                                                                              │
+│ …  │ …       │  ZONE D’ÉDITION (sections full-width)                                        │
+│    │         │  Clic section → barre inline uniquement ; « Éditer le contenu » → modale     │
+├────┴─────────┴─────────────────────────────────────────────────────────────────────────────┤
 │  ✓ Modifications en temps réel           [Régénérer lien] Thème: X                         │
 └────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Modale accordéon (420px)
+### Menu de gauche (deux colonnes)
 
-**Structure** :
-```
-┌────────────────────────────────────────────────────────────────┐
-│  Paramètres du site                                    [✕]    │
-│  Personnalisez votre site                                      │
-├────────────────────────────────────────────────────────────────┤
-│                                                                │
-│  ▼ 📄 Pages & Menu          (section ouverte = bordure bleue) │
-│     Gérer les pages et la navigation                           │
-│     ┌────────────────────────────────────────────────────┐     │
-│     │ Liste des pages avec drag reorder                  │     │
-│     │ [+ Ajouter une page]                               │     │
-│     │ Chaque page : titre, 🏠 home, 👁️ menu, 🗑️ suppr    │     │
-│     └────────────────────────────────────────────────────┘     │
-│                                                                │
-│  ▶ 📝 Sections & Contenu   (section fermée)                  │
-│     Créer et gérer les sections de la page                     │
-│                                                                │
-│  ▶ 🎨 Design du site        (section fermée)                  │
-│     Couleurs, polices et styles                                │
-│                                                                │
-│  ▶ 🖼️ Médiathèque           (section fermée)                  │
-│     Images, vidéos et fichiers                                 │
-│                                                                │
-├────────────────────────────────────────────────────────────────┤
-│  Les modifications sont appliquées en temps réel               │
-└────────────────────────────────────────────────────────────────┘
-```
+**Structure** : Barre d’icônes fixe (72px) + panneau de contenu (360px) qui s’affiche à droite quand un onglet est sélectionné.
 
-### Section Pages & Menu
+| Onglet | Contenu |
+|--------|--------|
+| Configuration | Checklist d’onboarding (étapes avec indicateur de progression) |
+| Éléments | Liste d’éléments draggables ; drop possible sur **n’importe quelle section** du canvas |
+| Pages | Liste des pages (nav principale + pages masquées), drag & drop, menu contextuel (renommer, dupliquer, masquer, accueil, supprimer), bouton **Ajouter une page** → AddPageModal |
+| Styles | Thèmes, couleurs, polices (temps réel) |
+| Outils IA | Fonctionnalités IA |
+| Bibliothèque | Médiathèque (upload, galerie, drag & drop global) |
+| Plus | Sous-panneaux : Paramètres généraux, Intégrations, Médiathèque, Sauvegardes, Aide, etc. |
+
+### Modales niveau 2 (style unifié)
+
+Toutes les modales de « niveau 2 » (qui s’ouvrent au-dessus de l’éditeur) ont le **même style** :
+- Rendu en **portal** (overlay plein écran, fond semi-transparent).
+- Modale **centrée**, `rounded-2xl`, shadow, dimensions type 90vw × 80vh max.
+- Header : titre + sous-titre + bouton fermer.
+
+**Modales concernées** : AddPageModal (ajouter une page), SectionEditorModal (éditer le contenu d’une section), AddSectionModal (ajouter une section), et les media pickers ouverts depuis SectionEditorModal.
+
+### Section Pages (onglet Pages)
 
 | Fonction | Description | UX |
 |----------|-------------|-----|
-| Liste des pages | Toutes les pages du site | Liste verticale |
-| Réordonner | Changer l'ordre | Flèches haut/bas |
-| Créer une page | Nouvelle page | Bouton + input titre |
-| Renommer | Modifier le titre | Clic sur le nom |
-| Supprimer | Retirer (avec confirm) | Icône poubelle |
+| Liste des pages | Nav principale + pages masquées | Liste verticale, drag handles |
+| Réordonner | Changer l'ordre | Drag & drop |
+| Créer une page | Nouvelle page | Bouton → **AddPageModal** (templates, page vide, IA) |
+| Renommer / Dupliquer / Masquer / Accueil / Supprimer | Actions sur une page | Menu contextuel |
 | Page d'accueil | Définir home | Icône maison |
-| Menu visibility | Afficher/masquer | Icône œil |
+| Menu visibility | Afficher/masquer dans le menu | Icône œil |
 
 ### Section Design
 
@@ -239,10 +229,9 @@ Site public (/s/<slug>) - Menu navigation si multipage
 
 #### Édition d'une section
 
-**Modale d'édition de section** :
-- **Déclencheur** : Clic sur une section dans la zone d'édition
-- **Position** : Modale à droite (420px), s'ajoute à la modale paramètres si ouverte
-- **Contenu** : Formulaire pour éditer les propriétés de la section
+**Comportement** :
+- **Clic sur une section** : Ouvre uniquement la **barre inline** (SectionInlineSettingsModal) en haut à droite de la section (paramètres rapides : mise en page, image, design, dupliquer, supprimer, réordonner).
+- **Modale d’édition complète** (SectionEditorModal) : **Déclencheur** = bouton **« Éditer le contenu »** dans la barre inline. **Style** : modale niveau 2 (portal centré, même style que AddPageModal). **Contenu** : onglets Contenu (blocs) / Style (mise en page, images, couleurs, polices).
 
 **Champs disponibles selon le type** :
 - **Titre** : Champ texte (tous les types sauf footer)
@@ -424,10 +413,8 @@ Permettre à l’utilisateur d’ajouter des images par simple glisser-déposer,
 
 ### Navigation dans l'éditeur
 
-- **Onglets** en haut de la zone d'édition
-- Chaque page = un onglet cliquable
-- Page active = fond coloré
-- Icône 🏠 pour la page d'accueil
+- **Pas d’onglets de pages** au-dessus du canvas : éviter la redondance avec le menu du site.
+- La **navigation entre pages** se fait via le **menu du site** (header du thème) affiché dans la zone d’édition.
 
 ### Menu de navigation (preview)
 
@@ -478,8 +465,9 @@ Je veux une modale de paramétrage complète,
 Afin de personnaliser mon site facilement.
 
 Critères :
-- Modale 420px, accordéon
-- 3 sections : Pages, Design, Médias
+- Menu gauche deux colonnes (icônes + panneau)
+- Onglets : Configuration, Éléments, Pages, Styles, IA, Bibliothèque, Plus
+- Modales niveau 2 (portal centré) pour Ajouter page, Éditer section, Ajouter section
 - Modifications temps réel
 ```
 
@@ -514,10 +502,10 @@ Je veux créer plusieurs pages,
 Afin d'organiser mon contenu.
 
 Critères :
-- Création pages depuis modale
-- Menu navigation automatique
-- Onglets pour naviguer dans l'éditeur
-- Réorganisation possible
+- Création pages depuis AddPageModal (templates, page vide, IA)
+- Menu navigation (header) automatique
+- Navigation entre pages via le menu du site dans l’éditeur
+- Réorganisation par drag & drop dans l’onglet Pages
 ```
 
 ### US-07 : Drag & Drop images
@@ -640,4 +628,4 @@ Critères :
 
 ---
 
-*Dernière mise à jour : 3 février 2026*
+*Dernière mise à jour : 25 février 2026*

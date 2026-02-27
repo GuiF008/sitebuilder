@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { computeTheme, generateThemeStyles } from '@/lib/themes'
 import { Header } from '@/components/shared/Header'
 import { ComputedTheme, SectionStyles } from '@/lib/types'
-import { safeJsonParse } from '@/lib/utils'
+import { safeJsonParse, getReadableTextColor } from '@/lib/utils'
 import { BlockRenderer } from '@/components/shared/BlockRenderer'
 import { getThemeBranding } from '@/lib/themes/branding'
 
@@ -43,6 +43,7 @@ interface Snapshot {
 
 export default function PublicSitePage() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const slug = params.slug as string
 
   const [loading, setLoading] = useState(true)
@@ -69,19 +70,18 @@ export default function PublicSitePage() {
         setSnapshot(data.snapshot)
         setSiteInfo({ name: data.site.name, isPremium: data.site.isPremium })
 
-        // Compute theme
         const computedTheme = computeTheme(
           data.site.themeFamily,
           data.site.siteTheme
         )
         setTheme(computedTheme)
 
-        // Find home page index
         if (data.snapshot?.pages) {
-          const homeIndex = data.snapshot.pages.findIndex((p: { isHome: boolean }) => p.isHome)
-          if (homeIndex !== -1) {
-            setCurrentPageIndex(homeIndex)
-          }
+          const pageSlug = searchParams.get('page')
+          const idx = pageSlug
+            ? data.snapshot.pages.findIndex((p: { slug: string }) => p.slug === pageSlug)
+            : data.snapshot.pages.findIndex((p: { isHome: boolean }) => p.isHome)
+          setCurrentPageIndex(idx !== -1 ? idx : 0)
         }
       } catch (err) {
         setError('Erreur de connexion')
@@ -91,7 +91,17 @@ export default function PublicSitePage() {
     }
 
     loadSite()
-  }, [slug])
+  }, [slug, searchParams])
+
+  // Sync page index when ?page= changes (client navigation)
+  useEffect(() => {
+    if (!snapshot?.pages) return
+    const pageSlug = searchParams.get('page')
+    const idx = pageSlug
+      ? snapshot.pages.findIndex((p: { slug: string }) => p.slug === pageSlug)
+      : snapshot.pages.findIndex((p: { isHome: boolean }) => p.isHome)
+    if (idx !== -1) setCurrentPageIndex(idx)
+  }, [snapshot, searchParams])
 
   if (loading) {
     return (
@@ -145,30 +155,35 @@ export default function PublicSitePage() {
         />
       )}
 
-      {/* Single page header if no navigation */}
+      {/* Single page header if no navigation - couleur liée au thème */}
       {menuPages.length <= 1 && (
         <header
           className="px-6 py-4"
-          style={{ backgroundColor: branding.headerBg }}
+          style={{
+            backgroundColor: theme.colors.primary,
+            color: getReadableTextColor(theme.colors.primary),
+          }}
         >
-          <span className="font-bold" style={{ fontFamily: theme.fonts.heading, color: branding.headerText }}>
+          <span className="font-bold" style={{ fontFamily: theme.fonts.heading }}>
             {snapshot.name}
           </span>
         </header>
       )}
 
-      {/* Page content */}
+      {/* Page content - sections pleine largeur */}
       <main style={{ backgroundColor: theme.colors.background }}>
         {currentPage && (
-          <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="w-full px-4 py-8">
             {currentPage.sections
               .sort((a, b) => a.order - b.order)
-              .map((section) => (
+              .map((section, index) => (
                 <PublicSection
                   key={section.id}
                   section={section}
+                  sectionIndex={index}
                   theme={theme}
                   themeFamily={snapshot.themeFamily}
+                  siteSlug={slug}
                 />
               ))}
           </div>
@@ -195,24 +210,32 @@ export default function PublicSitePage() {
   )
 }
 
+/** Couleur de fond rythmée selon l'index (alternance thème) */
+function getRhythmBackground(index: number, theme: ComputedTheme): string {
+  const colors = [theme.colors.background, theme.colors.muted]
+  return colors[index % colors.length]
+}
+
 function PublicSection({
   section,
+  sectionIndex,
   theme,
   themeFamily,
+  siteSlug,
 }: {
   section: { id: string; type: string; dataJson: string }
+  sectionIndex: number
   theme: ComputedTheme
   themeFamily: string
+  siteSlug: string
 }) {
   const data = safeJsonParse<Record<string, unknown>>(section.dataJson, {}) || {}
   const branding = getThemeBranding(themeFamily, theme)
   
-  // Helper pour accéder aux propriétés de data de manière sécurisée
   const getDataValue = (key: string): string => {
     return (data[key] as string) || ''
   }
   
-  // Styles personnalisés de la section ou thème par défaut
   const sectionStyles: SectionStyles = (data.sectionStyles as SectionStyles) || {
     backgroundColor: theme.colors.background,
     headingFont: theme.fonts.heading,
@@ -222,26 +245,44 @@ function PublicSection({
     buttonStyle: theme.buttonStyle,
   }
 
-  // Si la section a des blocs de contenu, les afficher
+  const sectionId = `section-${section.id}`
+  const rhythmBg = getRhythmBackground(sectionIndex, theme)
+  const contentAlignment = (data.contentAlignment as 'left' | 'center' | 'right') || 'left'
+  const sectionImages: string[] = Array.isArray(data.sectionImages) ? (data.sectionImages as string[]) : []
+  const alignmentClass = contentAlignment === 'center' ? 'text-center' : contentAlignment === 'right' ? 'text-right' : 'text-left'
+
   if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0) {
     return (
-      <section className="py-8 mb-4 px-4 rounded-lg" style={{ backgroundColor: sectionStyles.backgroundColor }}>
-        <BlockRenderer 
-          blocks={data.blocks as Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>} 
-          sectionStyles={sectionStyles} 
-          theme={theme}
-          isPublic={true}
-        />
+      <section id={sectionId} className="py-8 mb-4 px-4 rounded-lg scroll-mt-16" style={{ backgroundColor: sectionStyles.backgroundColor || rhythmBg }}>
+        {sectionImages.length > 0 && (
+          <div className={`grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 ${alignmentClass}`}>
+            {sectionImages.slice(0, 4).map((url, i) => (
+              <img key={i} src={url} alt="" className="w-full aspect-video object-cover rounded-lg" />
+            ))}
+          </div>
+        )}
+        <div className={alignmentClass}>
+          <BlockRenderer 
+            blocks={data.blocks as Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>} 
+            sectionStyles={sectionStyles} 
+            theme={theme}
+            isPublic={true}
+            publicBasePath={`/s/${siteSlug}`}
+          />
+        </div>
       </section>
     )
   }
 
   switch (section.type) {
-    case 'hero':
+    case 'hero': {
+      const ctaLink = (data.ctaLink as string) || '#'
+      const isExternalCta = ctaLink.startsWith('http://') || ctaLink.startsWith('https://')
       return (
         <section
-          className="py-20 text-center mb-8 rounded-lg"
-          style={{ backgroundColor: sectionStyles.backgroundColor || theme.colors.primary }}
+          id={sectionId}
+          className="py-20 text-center mb-8 rounded-lg scroll-mt-16"
+          style={{ backgroundColor: sectionStyles.backgroundColor || branding.heroBg }}
         >
           <h1
             className="text-4xl font-bold mb-4 text-white"
@@ -257,7 +298,7 @@ function PublicSection({
           </p>
           {getDataValue('ctaText') && (
             <a
-              href={(data.ctaLink as string) || '#'}
+              href={ctaLink}
               className="inline-block px-6 py-3 font-semibold text-white transition-transform hover:scale-105"
               style={{
                 backgroundColor: branding.heroCtaBg,
@@ -269,18 +310,21 @@ function PublicSection({
                       ? '0'
                       : theme.borderRadius,
               }}
-              >
-                {getDataValue('ctaText')}
-              </a>
+              {...(isExternalCta ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            >
+              {getDataValue('ctaText')}
+            </a>
           )}
         </section>
       )
+    }
 
     case 'about':
       return (
         <section 
-          className="py-12 mb-8 rounded-lg"
-          style={{ backgroundColor: sectionStyles.backgroundColor }}
+          id={sectionId}
+          className="py-12 mb-8 rounded-lg scroll-mt-16"
+          style={{ backgroundColor: sectionStyles.backgroundColor || rhythmBg }}
         >
           <h2
             className="text-3xl font-bold mb-6"
@@ -300,8 +344,9 @@ function PublicSection({
     case 'services':
       return (
         <section 
-          className="py-12 mb-8 rounded-lg"
-          style={{ backgroundColor: sectionStyles.backgroundColor }}
+          id={sectionId}
+          className="py-12 mb-8 rounded-lg scroll-mt-16"
+          style={{ backgroundColor: sectionStyles.backgroundColor || rhythmBg }}
         >
           <h2
             className="text-3xl font-bold mb-8 text-center"
@@ -350,8 +395,9 @@ function PublicSection({
     case 'gallery':
       return (
         <section 
-          className="py-12 mb-8 rounded-lg"
-          style={{ backgroundColor: sectionStyles.backgroundColor }}
+          id={sectionId}
+          className="py-12 mb-8 rounded-lg scroll-mt-16"
+          style={{ backgroundColor: sectionStyles.backgroundColor || rhythmBg }}
         >
           <h2
             className="text-3xl font-bold mb-8 text-center"
@@ -381,8 +427,9 @@ function PublicSection({
     case 'testimonials':
       return (
         <section 
-          className="py-12 mb-8 rounded-lg"
-          style={{ backgroundColor: sectionStyles.backgroundColor }}
+          id={sectionId}
+          className="py-12 mb-8 rounded-lg scroll-mt-16"
+          style={{ backgroundColor: sectionStyles.backgroundColor || rhythmBg }}
         >
           <h2
             className="text-3xl font-bold mb-8 text-center"
@@ -427,8 +474,9 @@ function PublicSection({
     case 'contact':
       return (
         <section 
-          className="py-12 mb-8 rounded-lg"
-          style={{ backgroundColor: sectionStyles.backgroundColor }}
+          id={sectionId}
+          className="py-12 mb-8 rounded-lg scroll-mt-16"
+          style={{ backgroundColor: sectionStyles.backgroundColor || rhythmBg }}
         >
           <h2
             className="text-3xl font-bold mb-8 text-center"
@@ -466,7 +514,8 @@ function PublicSection({
     case 'footer':
       return (
         <footer
-          className="py-8 mt-8 rounded-lg"
+          id={sectionId}
+          className="py-8 mt-8 rounded-lg scroll-mt-16"
           style={{ backgroundColor: branding.footerBg }}
         >
           <p

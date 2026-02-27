@@ -2,6 +2,7 @@
 
 import { ComputedTheme } from '@/lib/types'
 import { getThemePreset } from '@/lib/themes/presets'
+import { getReadableTextColor } from '@/lib/utils'
 
 interface HeaderProps {
   siteName: string
@@ -26,12 +27,13 @@ export function Header({
     showLogo: true,
     showNav: true,
     backgroundColor: theme.colors.primary,
-    textColor: '#FFFFFF',
+    textColor: '',
     layout: 'horizontal',
   }
 
-  const bgColor = headerStyle.backgroundColor || theme.colors.primary
-  const textColor = headerStyle.textColor || '#FFFFFF'
+  // Toujours lier le header au thème (couleur primaire)
+  const bgColor = theme.colors.primary
+  const textColor = getReadableTextColor(bgColor)
 
   return (
     <header

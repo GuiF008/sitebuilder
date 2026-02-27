@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { themePresets } from '@/lib/themes/presets'
+import { themePresets, getThemesForGoal } from '@/lib/themes/presets'
 import { Button, Input, Card, ProgressSteps } from '@/components/ui'
 
-const STEPS = ['Identité', 'Objectif', 'Thème', 'Contenu', 'Besoins']
+const STEPS = ['Identité', 'Objectif', 'Thème', 'Contenu']
 
 const GOALS = [
   { id: 'vitrine', iconSrc: '/pictos/house.png', label: 'Vitrine', description: 'Présenter mon activité' },
@@ -25,14 +25,6 @@ const SECTIONS = [
   { id: 'hours', label: 'Horaires & localisation', defaultChecked: false },
 ]
 
-const OPTIONS = [
-  { id: 'domain', label: 'Nom de domaine' },
-  { id: 'mail', label: 'Mails professionnels' },
-  { id: 'ssl', label: 'SSL' },
-  { id: 'cdn', label: 'CDN' },
-  { id: 'other', label: 'Autres options' },
-]
-
 export default function LandingPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
@@ -46,17 +38,8 @@ export default function LandingPage() {
   const [sections, setSections] = useState<string[]>(
     SECTIONS.filter(s => s.defaultChecked).map(s => s.id)
   )
-  const [needs, setNeeds] = useState<string[]>([])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [builderThemes, setBuilderThemes] = useState<Array<{
-    id: string
-    name: string
-    description?: string
-    preview?: { primary?: string; secondary?: string; accent?: string; background?: string }
-  }>>([])
-  const [builderThemesLoading, setBuilderThemesLoading] = useState(false)
-  const [themesLoadError, setThemesLoadError] = useState<string | null>(null)
 
   const validateStep = () => {
     const newErrors: Record<string, string> = {}
@@ -80,47 +63,6 @@ export default function LandingPage() {
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
-
-  // Charger le catalogue de thèmes à l'entrée sur l'étape Thème (step 3)
-  useEffect(() => {
-    if (currentStep !== 3) return
-    const controller = new AbortController()
-    setBuilderThemesLoading(true)
-    setThemesLoadError(null)
-    fetch('/api/themes/catalog', { signal: controller.signal })
-      .then((res) => res.json())
-      .then((data) => {
-        const list = data.themes || []
-        setBuilderThemes(list)
-        setThemeFamily((prev) => {
-          if (prev) return prev
-          return list.length ? list[0].id : 'ovh-modern'
-        })
-      })
-      .catch(() => {
-        // Fallback immédiat pour éviter un spinner infini
-        setBuilderThemes(themePresets.slice(0, 10).map((preset) => ({
-          id: preset.id,
-          name: preset.name,
-          description: preset.description,
-          preview: {
-            primary: preset.colors.primary,
-            secondary: preset.colors.secondary,
-            accent: preset.colors.accent,
-            background: preset.colors.background,
-          },
-        })))
-        setThemesLoadError('Le catalogue distant est indisponible. Affichage des thèmes locaux.')
-        setThemeFamily((prev) => prev || 'ovh-modern')
-      })
-      .finally(() => setBuilderThemesLoading(false))
-
-    const timeout = setTimeout(() => controller.abort(), 6000)
-    return () => {
-      clearTimeout(timeout)
-      controller.abort()
-    }
-  }, [currentStep])
 
   const handleNext = () => {
     if (!validateStep()) return
@@ -155,7 +97,6 @@ export default function LandingPage() {
           goal,
           themeFamily: themeToSend,
           sections,
-          needs,
         }),
       })
 
@@ -185,11 +126,6 @@ export default function LandingPage() {
     )
   }
 
-  const toggleNeed = (id: string) => {
-    setNeeds(prev =>
-      prev.includes(id) ? prev.filter(n => n !== id) : [...prev, id]
-    )
-  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -344,7 +280,7 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Step 3: Choix du thème (10 thèmes) */}
+            {/* Step 3: Choisir votre thème (lié à l'objectif étape 2) */}
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div className="text-center mb-8">
@@ -352,67 +288,41 @@ export default function LandingPage() {
                     Choisir votre thème
                   </h1>
                   <p className="text-ovh-gray-600 mt-2">
-                    Choisissez 1 thème parmi 10. Ce thème servira de base à toutes les modifications dans le builder.
+                    {goal
+                      ? 'Thèmes adaptés à votre objectif : couleurs, typographie et style des boutons.'
+                      : 'Sélectionnez un thème pour personnaliser couleurs, polices et coins (arrondis / carrés).'}
                   </p>
                 </div>
-                {themesLoadError && (
-                  <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-ovh px-3 py-2">
-                    {themesLoadError}
-                  </p>
-                )}
 
-                {builderThemesLoading ? (
-                  <div className="flex justify-center py-12">
-                    <div className="w-10 h-10 border-4 border-ovh-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : builderThemes.length > 0 ? (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {builderThemes.map((theme) => (
-                      <Card
-                        key={theme.id}
-                        selected={themeFamily === theme.id}
-                        onClick={() => setThemeFamily(theme.id)}
-                        className="p-5 cursor-pointer"
-                      >
-                        <div className="font-semibold text-ovh-gray-900">{theme.name}</div>
-                        <div className="text-sm text-ovh-gray-500 mt-1">{theme.description || `Thème ${theme.name}`}</div>
-                        <div className="flex gap-2 mt-3">
-                          <div className="w-5 h-5 rounded border border-ovh-gray-200" style={{ background: theme.preview?.primary || '#000E9C' }} />
-                          <div className="w-5 h-5 rounded border border-ovh-gray-200" style={{ background: theme.preview?.secondary || '#0050D7' }} />
-                          <div className="w-5 h-5 rounded border border-ovh-gray-200" style={{ background: theme.preview?.accent || '#00D4AA' }} />
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-sm text-ovh-gray-500 mb-3">
-                      Aucun thème du catalogue n'est disponible. Choisissez un style par défaut :
-                    </p>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {themePresets.map((preset) => (
-                        <Card
-                          key={preset.id}
-                          selected={themeFamily === preset.id}
-                          onClick={() => setThemeFamily(preset.id)}
-                          className="p-4 cursor-pointer"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-ovh-gray-900">{preset.name}</div>
-                              <div className="text-sm text-ovh-gray-500">{preset.description}</div>
-                            </div>
-                            <div className="flex gap-2">
-                              <div className="w-6 h-6 rounded" style={{ background: preset.colors.primary }} />
-                              <div className="w-6 h-6 rounded" style={{ background: preset.colors.secondary }} />
-                              <div className="w-6 h-6 rounded" style={{ background: preset.colors.accent }} />
-                            </div>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {(goal ? getThemesForGoal(goal) : themePresets).map((preset) => (
+                    <Card
+                      key={preset.id}
+                      selected={themeFamily === preset.id}
+                      onClick={() => setThemeFamily(preset.id)}
+                      className="p-4 cursor-pointer"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-medium text-ovh-gray-900">{preset.name}</div>
+                            <div className="text-sm text-ovh-gray-500 mt-0.5">{preset.description}</div>
                           </div>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                          <div className="flex gap-1 flex-shrink-0">
+                            <div className="w-6 h-6 rounded" style={{ background: preset.colors.primary }} title="Primaire" />
+                            <div className="w-6 h-6 rounded" style={{ background: preset.colors.secondary }} title="Secondaire" />
+                            <div className="w-6 h-6 rounded" style={{ background: preset.colors.accent }} title="Accent" />
+                          </div>
+                        </div>
+                        {preset.styleLabel && (
+                          <p className="text-xs text-ovh-gray-500 border-t border-ovh-gray-100 pt-2 mt-2">
+                            {preset.styleLabel}
+                          </p>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
                 {errors.theme && (
                   <p className="text-red-600 text-sm text-center">{errors.theme}</p>
                 )}
@@ -450,45 +360,6 @@ export default function LandingPage() {
                         className="w-5 h-5 text-ovh-primary rounded border-ovh-gray-300 focus:ring-ovh-primary"
                       />
                       <span className="font-medium text-ovh-gray-800">{section.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Step 5: Options */}
-            {currentStep === 5 && (
-              <div className="space-y-6">
-                <div className="text-center mb-8">
-                  <h1 className="text-2xl font-bold text-ovh-gray-900">
-                    Quelles options souhaitez-vous ?
-                  </h1>
-                  <p className="text-ovh-gray-600 mt-2">
-                    Sélectionnez les options à activer pour votre projet
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {OPTIONS.map((need) => (
-                    <label
-                      key={need.id}
-                      className={`
-                        flex items-center justify-between p-4 rounded-ovh border-2 cursor-pointer
-                        transition-all duration-200
-                        ${needs.includes(need.id)
-                          ? 'border-ovh-primary bg-ovh-primary/5'
-                          : 'border-ovh-gray-200 hover:border-ovh-gray-300'}
-                      `}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={needs.includes(need.id)}
-                          onChange={() => toggleNeed(need.id)}
-                          className="w-5 h-5 text-ovh-primary rounded border-ovh-gray-300 focus:ring-ovh-primary"
-                        />
-                        <span className="font-medium text-ovh-gray-800">{need.label}</span>
-                      </div>
                     </label>
                   ))}
                 </div>

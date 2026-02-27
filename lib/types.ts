@@ -116,7 +116,7 @@ export type SectionData =
 // SYSTÈME DE BLOCS DE CONTENU MODULAIRE
 // ============================================
 
-export type ContentBlockType = 'title' | 'subtitle' | 'text' | 'image' | 'video' | 'audio' | 'button'
+export type ContentBlockType = 'title' | 'subtitle' | 'text' | 'image' | 'video' | 'audio' | 'button' | 'shape' | 'gallery' | 'contact-form' | 'social-icons'
 
 export interface ContentBlock {
   id: string
@@ -126,7 +126,11 @@ export interface ContentBlock {
   settings?: {
     alignment?: 'left' | 'center' | 'right'
     size?: 'small' | 'medium' | 'large'
-    link?: string // Pour boutons et images cliquables
+    link?: string // URL pour linkMode === 'url'
+    linkMode?: 'url' | 'page' | 'section'
+    pageId?: string
+    pageSlug?: string
+    sectionId?: string
     alt?: string // Pour images
   }
 }
@@ -158,4 +162,8 @@ export const CONTENT_BLOCK_TYPES = [
   { type: 'video' as ContentBlockType, label: 'Vidéo', iconSrc: '/pictos/play.png', description: 'Vidéo depuis la médiathèque' },
   { type: 'audio' as ContentBlockType, label: 'Audio', iconSrc: '/pictos/microphone.png', description: 'Fichier audio' },
   { type: 'button' as ContentBlockType, label: 'Bouton', iconSrc: '/pictos/cursors.png', description: 'Bouton d\'action' },
+  { type: 'shape' as ContentBlockType, label: 'Forme', iconSrc: '/pictos/brush.png', description: 'Forme décorative' },
+  { type: 'gallery' as ContentBlockType, label: 'Galerie', iconSrc: '/pictos/camera.png', description: 'Grille d\'images' },
+  { type: 'contact-form' as ContentBlockType, label: 'Formulaire de contact', iconSrc: '/pictos/contacts.png', description: 'Formulaire de contact' },
+  { type: 'social-icons' as ContentBlockType, label: 'Icônes sociales', iconSrc: '/pictos/settings.png', description: 'Liens réseaux sociaux' },
 ]

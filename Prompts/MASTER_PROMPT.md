@@ -49,7 +49,7 @@ Tu es un système multi-agents pour développer "OVHcloud Site Builder v2".
 
 Créateur de sites web simple permettant à un utilisateur non technique de :
 - Créer un site en 5 étapes (onboarding) avec galerie de thèmes
-- Modifier via un éditeur avec modale accordéon (420px)
+- Modifier via un éditeur avec menu de gauche deux colonnes (icônes 72px + panneau 360px) et modales niveau 2 (portal centré)
 - Voir les modifications en temps réel
 - Ajouter des images par drag & drop
 - Créer plusieurs pages avec navigation
@@ -73,15 +73,20 @@ Créateur de sites web simple permettant à un utilisateur non technique de :
 - Étape 4 : Sections à inclure
 - Étape 5 : Besoins complémentaires
 
-### 2. Éditeur avec modale accordéon (420px)
+### 2. Éditeur avec menu de gauche (deux colonnes)
 
-**Structure accordéon** (sections dépliables) :
+**Structure** : Barre d’icônes (72px) + panneau coulissant (360px). Onglets : Configuration, Éléments, Pages, Styles, Outils IA, Bibliothèque, Plus.
 
-| Section | Fonctionnalités |
-|---------|-----------------|
-| 📄 Pages & Menu | CRUD pages, réordonner, page d'accueil, visibilité menu |
-| 🎨 Design | Thèmes, couleurs, polices - **TEMPS RÉEL** |
-| 🖼️ Médiathèque | Upload, galerie, **drag & drop global** |
+| Onglet | Fonctionnalités |
+|--------|-----------------|
+| Configuration | Checklist d’onboarding, progression |
+| Éléments | Glisser-déposer d’éléments sur toute section |
+| Pages | Liste pages, drag & drop, menu contextuel, **AddPageModal** (templates, page vide, IA) |
+| Styles | Thèmes, couleurs, polices - **TEMPS RÉEL** |
+| Bibliothèque | Upload, galerie, **drag & drop global** |
+| Plus | Sous-panneaux (Paramètres généraux, Médiathèque, etc.) |
+
+**Modales niveau 2** (style unifié) : toutes en **portal centré** (fond semi-transparent, modale `rounded-2xl`, z-[200]) : AddPageModal, SectionEditorModal (édition section), AddSectionModal. **Clic sur une section** ouvre uniquement la barre inline ; la modale d’édition s’ouvre via le bouton « Éditer le contenu ».
 
 ### 3. Fonctionnalités avancées
 
@@ -142,7 +147,7 @@ model Media {
 1. **Application Next.js** fonctionnelle
 2. **Schema Prisma** complet avec migrations
 3. **6 thèmes préenregistrés** avec preview
-4. **Modale accordéon 420px** complète
+4. **Menu de gauche deux colonnes** + **modales niveau 2** (portal) complètes
 5. **Temps réel** pour design
 6. **Drag & drop** global
 7. **Multipage** avec navigation
@@ -154,7 +159,7 @@ model Media {
 
 - [ ] Utilisateur peut créer un site sans compte
 - [ ] Galerie de thèmes avec preview dans onboarding
-- [ ] Modale accordéon fonctionnelle (3 sections)
+- [ ] Menu de gauche (onglets) et modales niveau 2 (portal) fonctionnels
 - [ ] Modifications design en temps réel
 - [ ] Drag & drop images avec overlay
 - [ ] Sites multipages avec onglets et menu
@@ -203,6 +208,12 @@ Toute modification fonctionnelle doit mettre à jour :
 | 2026-02-02 | 2.0 | Temps réel |
 | 2026-02-02 | 2.0 | Drag & drop global |
 | 2026-02-02 | 2.0 | Multipage avec navigation |
+| 2026-02-25 | 2.1 | Menu gauche deux colonnes (icônes + panneau) |
+| 2026-02-25 | 2.1 | Modales niveau 2 unifiées (portal centré) |
+| 2026-02-25 | 2.1 | Clic section → barre inline uniquement ; « Éditer le contenu » → modale |
+| 2026-02-25 | 2.1 | Thèmes : hero/footer dynamiques (contraste), presets enrichis |
+| 2026-02-25 | 2.1 | AddPageModal, AddSectionModal, SectionEditorModal en portal |
+| 2026-02-25 | 2.1 | Sections full-width (fond perdu) ; alignement appliqué à toute la section |
 
 ---
 

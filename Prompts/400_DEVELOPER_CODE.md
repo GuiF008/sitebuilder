@@ -122,22 +122,21 @@ Le header de l'onboarding affiche le logo OVHcloud en haut à droite :
 
 #### Layout complet
 
+- **Menu de gauche** : deux colonnes (barre icônes 72px + panneau 360px). Onglets : Configuration, Éléments, Pages, Styles, Outils IA, Bibliothèque, Plus.
+- **Pas d’onglets de pages** au-dessus du canvas ; navigation via le menu du site (header).
+- **Clic section** : `selectedSectionId` → affiche uniquement SectionInlineSettingsModal (barre inline). **Modale d’édition** : `editingSectionId` → ouverte via bouton « Éditer le contenu » dans la barre inline.
+- **Sections** : rendu full-width (fond perdu). Alignement (gauche/centre/droite) appliqué à tout le contenu de la section.
+
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │  [☰]  [←] {site.name}                   [Lien] [Upgrade] [Publier]  │
-├─────────────────────┬────────────────────────────────────────────────┤
-│                     │  [Page1] [Page2] [Page3]  ← Onglets navigation │
-│  MODALE ACCORDÉON   ├────────────────────────────────────────────────┤
-│  (420px)            │  ┌─────────────────────────────────────────┐   │
-│                     │  │   MENU NAVIGATION (si >1 page)          │   │
-│  ▼ 📄 Pages & Menu  │  └─────────────────────────────────────────┘   │
-│                     │                                                │
-│  ▶ 🎨 Design        │         SECTIONS ÉDITABLES                    │
-│                     │         (contentEditable)                      │
-│  ▶ 🖼️ Médiathèque   │                                                │
-│                     │    🖼️ DRAG & DROP OVERLAY (si dragging)       │
-├─────────────────────┴────────────────────────────────────────────────┤
-│  ✓ Modifications temps réel                  [Régénérer] Thème: X   │
+├────┬──────────┬─────────────────────────────────────────────────────┤
+│ 📌 │ CONFIG   │  MENU NAVIGATION (header thème)                       │
+│ 📄 │ PAGES    │  SECTIONS (full-width)                                │
+│ 🎨 │ STYLES   │  Clic section → barre inline ; « Éditer le contenu »  │
+│ …  │ …        │  → SectionEditorModal (portal)                        │
+├────┴──────────┴─────────────────────────────────────────────────────┤
+│  ✓ Modifications temps réel                  [Régénérer] Thème: X    │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -147,52 +146,41 @@ Le header de l'onboarding affiche le logo OVHcloud en haut à droite :
 const [site, setSite] = useState<Site | null>(null)
 const [settingsOpen, setSettingsOpen] = useState(false)
 const [currentPageIndex, setCurrentPageIndex] = useState(0)
+const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null)  // barre inline
+const [editingSectionId, setEditingSectionId] = useState<string | null>(null)     // modale édition
 const [isDraggingFile, setIsDraggingFile] = useState(false)
 const [pendingChanges, setPendingChanges] = useState<Record<string, Record<string, unknown>>>({})
 ```
 
-#### Modale accordéon (420px)
+#### Modales niveau 2 (style unifié)
+
+Toutes en **portal** (`createPortal(modal, document.body)`), fond `bg-black/50`, modale centrée `rounded-2xl shadow-2xl`, z-[200]. Exemples : AddPageModal, SectionEditorModal, AddSectionModal.
 
 ```tsx
-// components/editor/SettingsModal.tsx
-<aside className={`
-  fixed top-[60px] bottom-[52px] left-0 w-[420px] bg-ovh-gray-50
-  transform transition-transform duration-300
-  ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-`}>
-  {/* Header */}
-  <div className="px-5 py-4 bg-white border-b">
-    <h2 className="font-bold text-lg">Paramètres du site</h2>
-    <p className="text-sm text-ovh-gray-500">Personnalisez votre site</p>
-  </div>
-
-  {/* Sections accordéon */}
-  {sections.map(section => (
-    <div key={section.id} className="border-b">
-      <button
-        onClick={() => toggleSection(section.id)}
-        className={`w-full px-5 py-4 flex items-center justify-between
-          ${openSections.has(section.id) ? 'border-l-4 border-l-ovh-primary' : ''}`}
-      >
-        <span>{section.icon} {section.label}</span>
-        <ChevronIcon rotated={openSections.has(section.id)} />
-      </button>
-      
-      <div className={`overflow-hidden transition-all
-        ${openSections.has(section.id) ? 'max-h-[2000px]' : 'max-h-0'}`}>
-        {section.id === 'pages' && <PagesPanel ... />}
-        {section.id === 'design' && <DesignPanel ... />}
-        {section.id === 'media' && <MediaPanel ... />}
+// Exemple structure modale niveau 2
+const modal = (
+  <div className="fixed inset-0 z-[200] flex items-center justify-center">
+    <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+    <div className="relative bg-white rounded-2xl shadow-2xl w-[90vw] max-w-[880px] h-[80vh] max-h-[640px] flex flex-col overflow-hidden">
+      <div className="flex items-start justify-between px-6 py-4 border-b ...">
+        <div>
+          <h2 className="text-lg font-bold ...">Titre</h2>
+          <p className="text-sm text-ovh-gray-500 mt-0.5">Sous-titre</p>
+        </div>
+        <button type="button" onClick={onClose} className="p-2 hover:bg-ovh-gray-100 rounded-lg ...">×</button>
       </div>
+      {/* contenu */}
     </div>
-  ))}
-
-  {/* Footer */}
-  <div className="px-5 py-3 bg-white border-t">
-    <p className="text-xs text-center">Les modifications sont appliquées en temps réel</p>
   </div>
-</aside>
+)
+return createPortal(modal, document.body)
 ```
+
+#### Menu de gauche (SettingsModal)
+
+- Barre d’icônes fixe (72px) + panneau coulissant (360px).
+- `activeTab` : config | elements | pages | styles | ai | library | more.
+- Pas d’accordéon ; un onglet = un panneau de contenu.
 
 #### Temps réel (Design)
 
@@ -465,12 +453,16 @@ app/
     └── themes/presets/route.ts
 
 components/
-├── ui/                                # Button, Input, Card, ProgressSteps
+├── ui/                                # Button, Input, Card, ProgressSteps, ColorPicker
 ├── editor/
-│   ├── SettingsModal.tsx              # Modale accordéon 420px
-│   ├── PagesPanel.tsx                 # CRUD pages
+│   ├── SettingsModal.tsx              # Menu deux colonnes (icônes + panneau)
+│   ├── PagesPanel.tsx                 # Onglet Pages, AddPageModal
+│   ├── AddPageModal.tsx               # Modale niveau 2 (portal) — ajouter page
+│   ├── SectionEditorModal.tsx        # Modale niveau 2 (portal) — éditer section
+│   ├── SectionInlineSettingsModal.tsx # Barre inline au clic section ; onEdit → modale
 │   ├── DesignPanel.tsx                # Thèmes, couleurs, fonts
-│   └── MediaPanel.tsx                 # Upload, galerie
+│   ├── MediaPanel.tsx                 # Upload, galerie
+│   └── ...
 └── public-site/                       # Sections (Hero, About, etc.)
 
 lib/
@@ -480,7 +472,8 @@ lib/
 ├── types.ts
 └── themes/
     ├── index.ts
-    └── presets.ts
+    ├── presets.ts       # getThemesForGoal, presets enrichis
+    └── branding.ts      # getThemeBranding, heroBg/footerBg dynamiques
 ```
 
 ---
@@ -490,7 +483,7 @@ lib/
 - [ ] Code source complet
 - [ ] Prisma schema + migrations
 - [ ] 6 thèmes préenregistrés avec preview
-- [ ] Modale accordéon fonctionnelle
+- [ ] Menu gauche (deux colonnes) + modales niveau 2 (portal) fonctionnels
 - [ ] Temps réel pour design
 - [ ] Drag & drop global
 - [ ] Navigation multipage
@@ -507,4 +500,4 @@ lib/
 
 ---
 
-*Dernière mise à jour : 2 février 2026*
+*Dernière mise à jour : 25 février 2026*
