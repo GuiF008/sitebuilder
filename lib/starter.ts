@@ -153,6 +153,31 @@ export function generateStarterSections(
 }
 
 /**
+ * Génère une section simple Texte + Image pour les pages secondaires
+ */
+export function generateSimpleTextImageSection(
+  siteName: string,
+  pageTitle: string,
+  variant: 1 | 2
+): SectionTemplate[] {
+  const contents: [string, string] = [
+    `Cette page présente les activités de ${siteName}. Personnalisez ce contenu selon vos besoins.`,
+    `Découvrez nos engagements et notre expertise. ${siteName} vous accompagne dans tous vos projets.`,
+  ]
+  return [
+    {
+      type: 'about',
+      dataJson: JSON.stringify({
+        title: pageTitle,
+        content: contents[variant - 1],
+        image: '',
+      }),
+      order: 0,
+    },
+  ]
+}
+
+/**
  * Mappe les objectifs aux sections recommandées
  */
 export function getSuggestedSections(goal: string): string[] {

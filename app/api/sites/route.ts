@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generateToken, hashToken, generateSlug } from '@/lib/token'
-import { generateStarterSections } from '@/lib/starter'
+import { generateStarterSections, generateSimpleTextImageSection } from '@/lib/starter'
 import { getThemePreset, getDefaultTheme } from '@/lib/themes/presets'
 import { apiHandler, ApiError, validateBody } from '@/lib/api-helpers'
 import { createSiteSchema } from '@/lib/validations'
@@ -82,16 +82,32 @@ export async function POST(request: NextRequest) {
           },
         },
         pages: {
-          create: {
-            title: 'Accueil',
-            slug: 'accueil',
-            order: 0,
-            isHome: true,
-            showInMenu: true,
-            sections: {
-              create: starterSections,
+          create: [
+            {
+              title: 'Accueil',
+              slug: 'accueil',
+              order: 0,
+              isHome: true,
+              showInMenu: true,
+              sections: { create: starterSections },
             },
-          },
+            {
+              title: 'À propos',
+              slug: 'a-propos',
+              order: 1,
+              isHome: false,
+              showInMenu: true,
+              sections: { create: generateSimpleTextImageSection(name, 'À propos', 1) },
+            },
+            {
+              title: 'En savoir plus',
+              slug: 'en-savoir-plus',
+              order: 2,
+              isHome: false,
+              showInMenu: true,
+              sections: { create: generateSimpleTextImageSection(name, 'En savoir plus', 2) },
+            },
+          ],
         },
       },
       include: {

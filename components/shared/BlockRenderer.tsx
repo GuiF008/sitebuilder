@@ -2,20 +2,22 @@
 
 import { ComputedTheme, SectionStyles } from '@/lib/types'
 
+export type BlockData = {
+  id: string
+  type: string
+  order: number
+  content: string
+  settings?: Record<string, unknown>
+}
+
 interface BlockRendererProps {
-  blocks: Array<{
-    id: string
-    type: string
-    order: number
-    content: string
-    settings?: Record<string, unknown>
-  }>
+  blocks: BlockData[]
   theme: ComputedTheme
   sectionStyles?: SectionStyles
   className?: string
   isPublic?: boolean
-  /** Base path du site public (ex. /s/monsite) pour résoudre les liens Page / Section */
   publicBasePath?: string
+  onBlockClick?: (block: BlockData) => void
 }
 
 /**
@@ -45,6 +47,7 @@ export function BlockRenderer({
   className = '',
   isPublic = false,
   publicBasePath = '',
+  onBlockClick,
 }: BlockRendererProps) {
   const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order)
 
@@ -57,12 +60,32 @@ export function BlockRenderer({
 
   const roundedClass = isPublic ? 'rounded-lg' : 'rounded-ovh'
 
+  const wrapClickable = (block: BlockData, element: React.ReactNode) => {
+    if (!onBlockClick || isPublic) return element
+    return (
+      <div
+        key={`wrap-${block.id}`}
+        className="relative group/block cursor-pointer rounded-ovh transition-all hover:outline hover:outline-2 hover:outline-ovh-primary/50 hover:outline-offset-2"
+        onClick={(e) => { e.stopPropagation(); onBlockClick(block) }}
+        title="Cliquer pour paramétrer"
+      >
+        {element}
+        <div className="absolute -top-2 -right-2 opacity-0 group-hover/block:opacity-100 transition-opacity z-10">
+          <span className="bg-ovh-primary text-white text-[10px] px-1.5 py-0.5 rounded-full shadow">
+            Modifier
+          </span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={`space-y-4 ${className}`}>
       {sortedBlocks.map((block) => {
+        let rendered: React.ReactNode = null
         switch (block.type) {
           case 'title':
-            return (
+            rendered = (
               <h2
                 key={block.id}
                 className={`text-3xl font-bold ${
@@ -77,8 +100,9 @@ export function BlockRenderer({
                 {block.content}
               </h2>
             )
+            break
           case 'subtitle':
-            return (
+            rendered = (
               <h3
                 key={block.id}
                 className={`text-xl ${
@@ -93,8 +117,9 @@ export function BlockRenderer({
                 {block.content}
               </h3>
             )
+            break
           case 'text':
-            return (
+            rendered = (
               <p
                 key={block.id}
                 className="text-base leading-relaxed whitespace-pre-wrap"
@@ -103,34 +128,72 @@ export function BlockRenderer({
                 {block.content}
               </p>
             )
-          case 'image':
-            return block.content ? (
-              <img
-                key={block.id}
-                src={block.content}
-                alt={(block.settings?.alt as string) || 'Image'}
-                className={`w-full h-auto ${roundedClass} object-cover`}
-              />
-            ) : null
+            break
+          case 'image': {
+            const imgSize = (block.settings?.imageSize as string) || 'full'
+            const sizeClasses: Record<string, string> = {
+              small: 'max-w-[200px]',
+              medium: 'max-w-[400px]',
+              large: 'max-w-[600px]',
+              full: 'w-full',
+            }
+            const sizeClass = sizeClasses[imgSize] || 'w-full'
+            const alignImg = block.settings?.alignment as string
+            const alignWrap = alignImg === 'center' ? 'mx-auto' : alignImg === 'right' ? 'ml-auto' : ''
+            const imagePlaceholder = (
+              <div key={block.id} className={`w-full min-h-[160px] bg-ovh-gray-50/80 ${roundedClass} flex flex-col items-center justify-center border-2 border-dashed border-ovh-gray-300 hover:border-ovh-primary transition-colors`}>
+                <svg className="w-12 h-12 mb-2 text-ovh-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-sm text-ovh-gray-500">Cliquez pour ajouter une image</span>
+              </div>
+            )
+            const imageWithOverlay = (
+              <div key={block.id} className={`relative group ${sizeClass} ${alignWrap}`}>
+                <img
+                  src={block.content}
+                  alt={(block.settings?.alt as string) || 'Image'}
+                  className={`w-full h-auto ${roundedClass} object-cover`}
+                />
+                {!isPublic && onBlockClick && (
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[inherit]">
+                    <span className="text-sm font-medium text-white">Changer l&apos;image</span>
+                  </div>
+                )}
+              </div>
+            )
+            rendered = block.content ? imageWithOverlay : imagePlaceholder
+            break
+          }
           case 'video':
-            return block.content ? (
+            rendered = block.content ? (
               <video
                 key={block.id}
                 src={block.content}
                 controls
                 className={`w-full ${roundedClass}`}
               />
-            ) : null
+            ) : (
+              <div key={block.id} className={`w-full h-40 bg-ovh-gray-100 ${roundedClass} flex items-center justify-center border-2 border-dashed border-ovh-gray-300`}>
+                <span className="text-sm text-ovh-gray-400">Cliquez pour choisir une vidéo</span>
+              </div>
+            )
+            break
           case 'audio':
-            return block.content ? (
+            rendered = block.content ? (
               <audio key={block.id} src={block.content} controls className="w-full" />
-            ) : null
+            ) : (
+              <div key={block.id} className={`w-full h-16 bg-ovh-gray-100 ${roundedClass} flex items-center justify-center border-2 border-dashed border-ovh-gray-300`}>
+                <span className="text-sm text-ovh-gray-400">Cliquez pour ajouter un audio</span>
+              </div>
+            )
+            break
           case 'button': {
             const { href, isExternal } = getButtonHref(block, isPublic ? publicBasePath : undefined)
-            return (
+            rendered = (
               <a
                 key={block.id}
-                href={href}
+                href={isPublic ? href : undefined}
                 className={`inline-block px-6 py-3 font-semibold text-white ${
                   isPublic ? 'transition-transform hover:scale-105' : ''
                 }`}
@@ -144,29 +207,32 @@ export function BlockRenderer({
                         : borderRadius,
                 }}
                 {...(isPublic && isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                onClick={isPublic ? undefined : (e) => e.preventDefault()}
               >
                 {block.content}
               </a>
             )
+            break
           }
-          case 'shape':
-            return (
-              <div
-                key={block.id}
-                className="w-24 h-24 rounded-lg"
-                style={{ backgroundColor: theme.colors.primary, opacity: 0.3 }}
-              />
-            )
-          case 'gallery':
-            return (
-              <div key={block.id} className="grid grid-cols-3 gap-2 py-4">
-                <div className="aspect-square bg-ovh-gray-200 rounded-lg" />
-                <div className="aspect-square bg-ovh-gray-200 rounded-lg" />
-                <div className="aspect-square bg-ovh-gray-200 rounded-lg" />
+          case 'gallery': {
+            let galleryImages: string[] = []
+            try { galleryImages = JSON.parse(block.content || '[]') } catch { galleryImages = [] }
+            const cols = (block.settings?.columns as number) || 3
+            rendered = (
+              <div key={block.id} className={`grid gap-2 py-4`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+                {galleryImages.length > 0 ? galleryImages.map((url, gi) => (
+                  <img key={gi} src={url} alt="" className={`w-full aspect-square object-cover ${roundedClass}`} />
+                )) : (
+                  Array.from({ length: cols }).map((_, i) => (
+                    <div key={i} className={`aspect-square bg-ovh-gray-200 ${roundedClass} flex items-center justify-center text-ovh-gray-400 text-xs`}>Image</div>
+                  ))
+                )}
               </div>
             )
+            break
+          }
           case 'contact-form':
-            return (
+            rendered = (
               <div key={block.id} className="py-4 space-y-2 max-w-md">
                 <input type="text" placeholder="Nom" className="w-full px-3 py-2 border border-ovh-gray-300 rounded-ovh" readOnly />
                 <input type="email" placeholder="Email" className="w-full px-3 py-2 border border-ovh-gray-300 rounded-ovh" readOnly />
@@ -174,17 +240,34 @@ export function BlockRenderer({
                 <button type="button" className="px-4 py-2 bg-ovh-primary text-white rounded-ovh text-sm">Envoyer</button>
               </div>
             )
-          case 'social-icons':
-            return (
+            break
+          case 'social-icons': {
+            const icons = (() => {
+              try { return JSON.parse(block.content || '[]') } catch { return [] }
+            })() as Array<{ platform: string; url: string }>
+            const defaultIcons = ['facebook', 'twitter', 'instagram']
+            const platforms = icons.length > 0 ? icons.map(i => i.platform) : defaultIcons
+            const platformColors: Record<string, string> = {
+              facebook: '#1877F2', twitter: '#1DA1F2', instagram: '#E4405F',
+              linkedin: '#0A66C2', youtube: '#FF0000', tiktok: '#000000',
+              pinterest: '#BD081C', github: '#181717',
+            }
+            rendered = (
               <div key={block.id} className="flex gap-3 py-2">
-                <span className="w-8 h-8 rounded-full bg-ovh-gray-300" title="Réseau social" />
-                <span className="w-8 h-8 rounded-full bg-ovh-gray-300" title="Réseau social" />
-                <span className="w-8 h-8 rounded-full bg-ovh-gray-300" title="Réseau social" />
+                {platforms.map((p, i) => (
+                  <span key={i} className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: platformColors[p] || '#6B7280' }}>
+                    {p.charAt(0).toUpperCase()}
+                  </span>
+                ))}
               </div>
             )
+            break
+          }
           default:
-            return null
+            break
         }
+        if (!rendered) return null
+        return onBlockClick && !isPublic ? wrapClickable(block, rendered) : rendered
       })}
     </div>
   )

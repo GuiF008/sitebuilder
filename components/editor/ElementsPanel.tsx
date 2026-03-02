@@ -8,12 +8,10 @@ import { ContentBlockType } from '@/lib/types'
 const ELEMENTS = [
   { id: 'text', label: 'Texte', blockType: 'text' as ContentBlockType, iconSrc: '/pictos/page-query.png' },
   { id: 'button', label: 'Bouton', blockType: 'button' as ContentBlockType, iconSrc: '/pictos/cursors.png' },
-  { id: 'affiliate', label: 'Lien d\'affiliation', blockType: 'button' as ContentBlockType, iconSrc: '/pictos/page-script.png' },
-  { id: 'add-to-cart', label: 'Ajouter au panier', blockType: 'button' as ContentBlockType, iconSrc: '/pictos/cart.png' },
   { id: 'image', label: 'Image', blockType: 'image' as ContentBlockType, iconSrc: '/pictos/camera.png' },
   { id: 'gallery', label: 'Galerie', blockType: 'gallery' as ContentBlockType, iconSrc: '/pictos/camera.png' },
   { id: 'video', label: 'Vidéo', blockType: 'video' as ContentBlockType, iconSrc: '/pictos/play.png' },
-  { id: 'shape', label: 'Forme', blockType: 'shape' as ContentBlockType, iconSrc: '/pictos/brush.png' },
+  { id: 'audio', label: 'Audio', blockType: 'audio' as ContentBlockType, iconSrc: '/pictos/microphone.png' },
   { id: 'contact-form', label: 'Formulaire de contact', blockType: 'contact-form' as ContentBlockType, iconSrc: '/pictos/contacts.png' },
   { id: 'social-icons', label: 'Icônes sociales', blockType: 'social-icons' as ContentBlockType, iconSrc: '/pictos/settings.png' },
 ]

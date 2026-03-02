@@ -18,8 +18,8 @@ export type ThemeBranding = {
  */
 export function getThemeBranding(themeFamily: string, theme: ComputedTheme): ThemeBranding {
   const preset = getThemePreset(themeFamily)
-  const headerBg = theme.colors.primary
-  const headerText = preset?.headerStyle?.textColor || '#FFFFFF'
+  const headerBg = preset?.headerStyle?.backgroundColor || '#FFFFFF'
+  const headerText = preset?.headerStyle?.textColor || theme.colors.text || '#1F2937'
 
   const siteBackground = preset?.colors?.background ?? theme.colors.background
 
@@ -33,11 +33,11 @@ export function getThemeBranding(themeFamily: string, theme: ComputedTheme): The
     return brightness > 160
   }
 
+  // Hero = première couleur en préview sur le thème (obligatoire)
+  const heroBg = preset?.heroBg ?? preset?.colors?.primary ?? theme.colors.primary
   const baseDark = preset?.colors?.primary ?? theme.colors.primary
   const baseLight = preset?.colors?.secondary ?? '#FFFFFF'
   const heroFooterColor = isLight(siteBackground) ? baseDark : baseLight
-
-  const heroBg = heroFooterColor
   const footerBg = heroFooterColor
   const footerText = '#FFFFFF'
   const heroCtaBg = preset?.colors?.accent ?? theme.colors.accent

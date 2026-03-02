@@ -3,10 +3,11 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import { PageWithSections } from '@/lib/types'
+import { SECTION_LAYOUTS, getSectionTypeById, type LayoutId } from '@/lib/section-layouts'
 
 interface SectionsPanelProps {
   currentPage: PageWithSections | null
-  onSectionCreate: (type: string) => Promise<void>
+  onSectionCreate: (type: string, layout?: string) => Promise<void>
   onSectionUpdate: (sectionId: string, data: Record<string, unknown>) => Promise<void>
   onSectionDelete: (sectionId: string) => Promise<void>
   onSectionReorder: (sectionId: string, direction: 'up' | 'down') => Promise<void>
@@ -16,15 +17,20 @@ interface SectionsPanelProps {
   showElementsList?: boolean
 }
 
-// Types de sections (bibliothèque)
-const SECTION_TYPES = [
-  { id: 'hero', label: 'Hero', iconSrc: '/pictos/trophy.png', description: 'En-tête avec titre et image' },
-  { id: 'about', label: 'À propos', iconSrc: '/pictos/page-script.png', description: 'Texte et image' },
-  { id: 'text', label: 'Texte', iconSrc: '/pictos/page-query.png', description: 'Contenu textuel simple' },
-  { id: 'image-text', label: 'Image + Texte', iconSrc: '/pictos/camera.png', description: 'Contenu mixte' },
-  { id: 'services', label: 'Services', iconSrc: '/pictos/settings.png', description: 'Liste de services' },
-  { id: 'gallery', label: 'Galerie', iconSrc: '/pictos/camera.png', description: 'Grille d\'images' },
-  { id: 'contact', label: 'Contact', iconSrc: '/pictos/contacts.png', description: 'Informations de contact' },
+// Types de sections avec icônes
+const SECTION_TYPES_UI = [
+  { id: 'hero', label: 'Hero', iconSrc: '/pictos/trophy.png' },
+  { id: 'about', label: 'À propos', iconSrc: '/pictos/page-script.png' },
+  { id: 'text', label: 'Texte', iconSrc: '/pictos/page-query.png' },
+  { id: 'image-text', label: 'Image + Texte', iconSrc: '/pictos/camera.png' },
+  { id: 'services', label: 'Services', iconSrc: '/pictos/settings.png' },
+  { id: 'gallery', label: 'Galerie', iconSrc: '/pictos/camera.png' },
+  { id: 'contact', label: 'Contact', iconSrc: '/pictos/contacts.png' },
+  { id: 'testimonials', label: 'Témoignages', iconSrc: '/pictos/contacts.png' },
+  { id: 'team', label: 'Équipe', iconSrc: '/pictos/page-script.png' },
+  { id: 'features', label: 'Fonctionnalités', iconSrc: '/pictos/settings.png' },
+  { id: 'blog', label: 'Blog', iconSrc: '/pictos/book.png' },
+  { id: 'process', label: 'Processus', iconSrc: '/pictos/settings.png' },
 ]
 
 // Éléments (composants) selon le spec : Texte, Bouton, Image, Galerie, Vidéo, Forme, Carte, Feed Instagram, etc.
@@ -57,6 +63,8 @@ export function SectionsPanel({
   showElementsList = false,
 }: SectionsPanelProps) {
   const [showTypeModal, setShowTypeModal] = useState(false)
+  const [selectedType, setSelectedType] = useState<string | null>(null)
+  const [selectedLayout, setSelectedLayout] = useState<LayoutId | null>(null)
   const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null)
 
   if (!currentPage) {
@@ -69,10 +77,23 @@ export function SectionsPanel({
 
   const sortedSections = [...currentPage.sections].sort((a, b) => a.order - b.order)
 
-  const handleCreate = async (type: string) => {
-    await onSectionCreate(type)
-    setShowTypeModal(false)
+  const handleTypeSelect = (typeId: string) => {
+    setSelectedType(typeId)
+    const st = getSectionTypeById(typeId as import('@/lib/section-layouts').SectionTypeId)
+    setSelectedLayout(st?.defaultLayout || 'bravo')
   }
+
+  const handleCreate = async () => {
+    if (selectedType) {
+      await onSectionCreate(selectedType, selectedLayout || undefined)
+      setShowTypeModal(false)
+      setSelectedType(null)
+      setSelectedLayout(null)
+    }
+  }
+
+  const typeInfo = selectedType ? getSectionTypeById(selectedType as import('@/lib/section-layouts').SectionTypeId) : null
+  const availableLayouts = typeInfo ? SECTION_LAYOUTS.filter(l => typeInfo.recommendedLayouts.includes(l.id)) : []
 
   return (
     <div className="space-y-4">
@@ -111,7 +132,7 @@ export function SectionsPanel({
           </div>
         ) : (
           sortedSections.map((section, index) => {
-            const sectionType = SECTION_TYPES.find(t => t.id === section.type)
+            const sectionType = SECTION_TYPES_UI.find(t => t.id === section.type)
             const isDragging = draggedSectionId === section.id
             
             return (
@@ -236,49 +257,58 @@ export function SectionsPanel({
           Ajouter une section
         </button>
 
-        {/* Modal de sélection du type */}
+        {/* Modal de sélection type + mise en page (10 layouts) */}
         {showTypeModal && (
           <>
-            <div
-              className="fixed inset-0 z-40 bg-black/50"
-              onClick={() => setShowTypeModal(false)}
-            />
+            <div className="fixed inset-0 z-40 bg-black/50" onClick={() => { setShowTypeModal(false); setSelectedType(null); setSelectedLayout(null) }} />
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-ovh shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white border-b border-ovh-gray-200 p-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-ovh-gray-900">Choisir un type de section</h2>
-                    <button
-                      onClick={() => setShowTypeModal(false)}
-                      className="p-1 hover:bg-ovh-gray-100 rounded transition-colors"
-                    >
-                      <svg className="w-6 h-6 text-ovh-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+              <div className="bg-white rounded-ovh shadow-lg max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between p-4 border-b border-ovh-gray-200">
+                  <h2 className="text-lg font-bold text-ovh-gray-900">
+                    {selectedType ? `Mise en page pour « ${typeInfo?.label} »` : 'Choisir un type de section'}
+                  </h2>
+                  <button onClick={() => { setShowTypeModal(false); setSelectedType(null); setSelectedLayout(null) }} className="p-1 hover:bg-ovh-gray-100 rounded">
+                    <svg className="w-6 h-6 text-ovh-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4">
+                  {!selectedType ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      {SECTION_TYPES_UI.map((t) => (
+                        <button key={t.id} onClick={() => handleTypeSelect(t.id)} className="p-4 text-left hover:bg-ovh-gray-50 flex gap-3 border border-ovh-gray-200 rounded-ovh hover:border-ovh-primary">
+                          <Image src={t.iconSrc} alt={t.label} width={24} height={24} className="w-6 h-6 object-contain" />
+                          <span className="font-medium text-sm text-ovh-gray-800">{t.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <button onClick={() => { setSelectedType(null); setSelectedLayout(null) }} className="text-sm text-ovh-primary hover:underline mb-2">← Retour aux types</button>
+                      {availableLayouts.map((layout) => (
+                        <button
+                          key={layout.id}
+                          onClick={() => setSelectedLayout(layout.id)}
+                          className={`w-full p-4 text-left border rounded-xl transition-all ${
+                            selectedLayout === layout.id ? 'border-ovh-primary bg-ovh-primary/5' : 'border-ovh-gray-200 hover:border-ovh-primary/50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className={`font-semibold ${selectedLayout === layout.id ? 'text-ovh-primary' : 'text-ovh-gray-800'}`}>{layout.name}</span>
+                            {typeInfo?.defaultLayout === layout.id && <span className="text-[10px] text-ovh-primary bg-ovh-primary/10 px-1.5 py-0.5 rounded">Recommandé</span>}
+                          </div>
+                          <p className="text-xs text-ovh-gray-500 mt-0.5">{layout.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {selectedType && (
+                  <div className="p-4 border-t border-ovh-gray-200 flex justify-end">
+                    <button onClick={handleCreate} disabled={!selectedLayout} className="px-6 py-2.5 bg-ovh-primary text-white font-semibold rounded-lg hover:bg-ovh-primary/90 disabled:opacity-50">
+                      Ajouter la section
                     </button>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3 p-4">
-                  {SECTION_TYPES.map((type) => (
-                    <button
-                      key={type.id}
-                      onClick={() => handleCreate(type.id)}
-                      className="p-4 text-left hover:bg-ovh-gray-50 transition-colors flex flex-col gap-2 border border-ovh-gray-200 rounded-ovh hover:border-ovh-primary"
-                    >
-                      <Image
-                        src={type.iconSrc}
-                        alt={type.label}
-                        width={24}
-                        height={24}
-                        className="w-6 h-6 object-contain"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-ovh-gray-800 text-sm">{type.label}</div>
-                        <div className="text-xs text-ovh-gray-500">{type.description}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                )}
               </div>
             </div>
           </>

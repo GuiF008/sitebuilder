@@ -2,7 +2,7 @@
 
 import { ComputedTheme } from '@/lib/types'
 import { getThemePreset } from '@/lib/themes/presets'
-import { getReadableTextColor } from '@/lib/utils'
+import { getThemeBranding } from '@/lib/themes/branding'
 
 interface HeaderProps {
   siteName: string
@@ -22,22 +22,23 @@ export function Header({
   onPageClick,
 }: HeaderProps) {
   const preset = getThemePreset(themeFamily)
+  const branding = getThemeBranding(themeFamily, theme)
   const headerStyle = preset?.headerStyle || {
     type: 'modern',
     showLogo: true,
     showNav: true,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#FFFFFF',
     textColor: '',
     layout: 'horizontal',
   }
 
-  // Toujours lier le header au thème (couleur primaire)
-  const bgColor = theme.colors.primary
-  const textColor = getReadableTextColor(bgColor)
+  // Couleur de fond du header : preset > branding (thème)
+  const bgColor = headerStyle.backgroundColor ?? branding.headerBg
+  const textColor = (headerStyle.textColor && headerStyle.textColor !== '') ? headerStyle.textColor : branding.headerText
 
   return (
     <header
-      className="w-full"
+      className="w-full border-b border-ovh-gray-200"
       style={{
         backgroundColor: bgColor,
         color: textColor,

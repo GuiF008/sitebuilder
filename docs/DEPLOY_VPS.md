@@ -241,6 +241,18 @@ docker compose down -v
 docker compose up -d --build
 ```
 
+## Images sur le VPS
+
+Les images uploadées sont stockées dans le volume `sitebuilder-uploads` (monté sur `/app/uploads`).  
+Elles sont servies via la route `/uploads/{siteId}/{filename}` (rewrite vers `/api/uploads/`).
+
+**Important** : Le volume doit être correctement monté pour que les images persistent entre redémarrages. Vérifiez que votre `docker-compose.yml` contient :
+
+```yaml
+volumes:
+  - sitebuilder-uploads:/app/uploads
+```
+
 ## Architecture de production recommandée
 
 ```

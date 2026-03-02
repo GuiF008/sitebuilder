@@ -61,7 +61,7 @@ export const themePresets: ThemePreset[] = [
     heroBg: '#000E9C',
     footerBg: '#00167A',
     defaultSections: ['hero', 'about', 'services', 'contact', 'footer'],
-    headerStyle: { type: 'modern', showLogo: true, showNav: true, backgroundColor: '#000E9C', textColor: '#FFFFFF', layout: 'horizontal' },
+    headerStyle: { type: 'modern', showLogo: true, showNav: true, backgroundColor: '#FFFFFF', textColor: '#212529', layout: 'horizontal' },
   },
   {
     id: 'classic-elegant',
@@ -84,7 +84,7 @@ export const themePresets: ThemePreset[] = [
     heroBg: '#1E3A5F',
     footerBg: '#2A4A70',
     defaultSections: ['hero', 'about', 'services', 'testimonials', 'contact', 'footer'],
-    headerStyle: { type: 'classic', showLogo: true, showNav: true, backgroundColor: '#1E3A5F', textColor: '#FFFFFF', layout: 'horizontal' },
+    headerStyle: { type: 'classic', showLogo: true, showNav: true, backgroundColor: '#FFFFFF', textColor: '#293241', layout: 'horizontal' },
   },
   {
     id: 'creative-bold',
@@ -107,7 +107,7 @@ export const themePresets: ThemePreset[] = [
     heroBg: '#7C3AED',
     footerBg: '#9333EA',
     defaultSections: ['hero', 'gallery', 'about', 'testimonials', 'contact', 'footer'],
-    headerStyle: { type: 'bold', showLogo: true, showNav: true, backgroundColor: '#7C3AED', textColor: '#FFFFFF', layout: 'horizontal' },
+    headerStyle: { type: 'bold', showLogo: true, showNav: true, backgroundColor: '#FFFFFF', textColor: '#1F2937', layout: 'horizontal' },
   },
   {
     id: 'pro-business',
@@ -130,7 +130,7 @@ export const themePresets: ThemePreset[] = [
     heroBg: '#1B1B1B',
     footerBg: '#111827',
     defaultSections: ['hero', 'about', 'services', 'testimonials', 'contact', 'footer'],
-    headerStyle: { type: 'minimal', showLogo: true, showNav: true, backgroundColor: '#1B1B1B', textColor: '#FFFFFF', layout: 'horizontal' },
+    headerStyle: { type: 'minimal', showLogo: true, showNav: true, backgroundColor: '#FFFFFF', textColor: '#111827', layout: 'horizontal' },
   },
   {
     id: 'nature-zen',
@@ -153,7 +153,7 @@ export const themePresets: ThemePreset[] = [
     heroBg: '#059669',
     footerBg: '#047857',
     defaultSections: ['hero', 'about', 'services', 'gallery', 'contact', 'footer'],
-    headerStyle: { type: 'classic', showLogo: true, showNav: true, backgroundColor: '#059669', textColor: '#FFFFFF', layout: 'horizontal' },
+    headerStyle: { type: 'classic', showLogo: true, showNav: true, backgroundColor: '#FFFFFF', textColor: '#1F2937', layout: 'horizontal' },
   },
   {
     id: 'tech-moderne',
@@ -173,10 +173,10 @@ export const themePresets: ThemePreset[] = [
     fonts: { heading: 'Space Grotesk', body: 'Inter' },
     borderRadius: '8px',
     buttonStyle: 'rounded',
-    heroBg: '#0F172A',
+    heroBg: '#0891B2',
     footerBg: '#111827',
     defaultSections: ['hero', 'about', 'services', 'testimonials', 'contact', 'footer'],
-    headerStyle: { type: 'modern', showLogo: true, showNav: true, backgroundColor: '#0F172A', textColor: '#F1F5F9', layout: 'horizontal' },
+    headerStyle: { type: 'modern', showLogo: true, showNav: true, backgroundColor: '#FFFFFF', textColor: '#1F2937', layout: 'horizontal' },
   },
   {
     id: 'artisan-local',
@@ -199,7 +199,7 @@ export const themePresets: ThemePreset[] = [
     heroBg: '#8B4513',
     footerBg: '#6B3F24',
     defaultSections: ['hero', 'about', 'services', 'gallery', 'contact', 'footer'],
-    headerStyle: { type: 'classic', showLogo: true, showNav: true, backgroundColor: '#8B4513', textColor: '#FFFFFF', layout: 'horizontal' },
+    headerStyle: { type: 'classic', showLogo: true, showNav: true, backgroundColor: '#FFFFFF', textColor: '#2F2F2F', layout: 'horizontal' },
   },
   {
     id: 'restaurant-gourmet',
@@ -222,7 +222,7 @@ export const themePresets: ThemePreset[] = [
     heroBg: '#1F1F1F',
     footerBg: '#1F1F1F',
     defaultSections: ['hero', 'about', 'gallery', 'services', 'contact', 'footer'],
-    headerStyle: { type: 'minimal', showLogo: true, showNav: true, backgroundColor: '#1F1F1F', textColor: '#FFFFFF', layout: 'horizontal' },
+    headerStyle: { type: 'minimal', showLogo: true, showNav: true, backgroundColor: '#FFFFFF', textColor: '#222222', layout: 'horizontal' },
   },
   {
     id: 'freelance-creator',
@@ -245,7 +245,7 @@ export const themePresets: ThemePreset[] = [
     heroBg: '#4F46E5',
     footerBg: '#4338CA',
     defaultSections: ['hero', 'about', 'services', 'testimonials', 'contact', 'footer'],
-    headerStyle: { type: 'modern', showLogo: true, showNav: true, backgroundColor: '#4F46E5', textColor: '#FFFFFF', layout: 'horizontal' },
+    headerStyle: { type: 'modern', showLogo: true, showNav: true, backgroundColor: '#FFFFFF', textColor: '#111827', layout: 'horizontal' },
   },
   {
     id: 'medical-trust',
@@ -268,7 +268,7 @@ export const themePresets: ThemePreset[] = [
     heroBg: '#0F4C81',
     footerBg: '#0F4C81',
     defaultSections: ['hero', 'about', 'services', 'contact', 'hours', 'footer'],
-    headerStyle: { type: 'classic', showLogo: true, showNav: true, backgroundColor: '#0F4C81', textColor: '#FFFFFF', layout: 'horizontal' },
+    headerStyle: { type: 'classic', showLogo: true, showNav: true, backgroundColor: '#FFFFFF', textColor: '#1A2A33', layout: 'horizontal' },
   },
 ]
 

@@ -25,7 +25,7 @@ interface SettingsModalProps {
   onPageUpdate: (pageId: string, data: Partial<PageWithSections>) => Promise<void>
   onPageDelete: (pageId: string) => Promise<void>
   onPageReorder: (pageId: string, direction: 'up' | 'down') => Promise<void>
-  onSectionCreate: (pageId: string, type: string) => Promise<void>
+  onSectionCreate: (pageId: string, type: string, layout?: string) => Promise<void>
   onSectionUpdate: (sectionId: string, data: Record<string, unknown>) => Promise<void>
   onSectionDelete: (sectionId: string) => Promise<void>
   onSectionReorder: (sectionId: string, direction: 'up' | 'down') => Promise<void>
@@ -199,7 +199,7 @@ export function SettingsModal({
                 <h3 className="font-semibold text-ovh-gray-800 mb-3">Sections de la page</h3>
                 <SectionsPanel
                   currentPage={currentPage}
-                  onSectionCreate={(type) => onSectionCreate(currentPage.id, type)}
+                  onSectionCreate={(type, layout) => onSectionCreate(currentPage.id, type, layout)}
                   onSectionUpdate={onSectionUpdate}
                   onSectionDelete={onSectionDelete}
                   onSectionReorder={onSectionReorder}

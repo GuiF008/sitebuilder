@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { computeTheme, generateThemeStyles } from '@/lib/themes'
 import { Header } from '@/components/shared/Header'
 import { ComputedTheme, SectionStyles } from '@/lib/types'
-import { safeJsonParse, getReadableTextColor } from '@/lib/utils'
+import { safeJsonParse } from '@/lib/utils'
 import { BlockRenderer } from '@/components/shared/BlockRenderer'
 import { getThemeBranding } from '@/lib/themes/branding'
 
@@ -155,13 +155,13 @@ export default function PublicSitePage() {
         />
       )}
 
-      {/* Single page header if no navigation - couleur liée au thème */}
+      {/* Single page header if no navigation - blanc par défaut */}
       {menuPages.length <= 1 && (
         <header
-          className="px-6 py-4"
+          className="px-6 py-4 border-b border-ovh-gray-200"
           style={{
-            backgroundColor: theme.colors.primary,
-            color: getReadableTextColor(theme.colors.primary),
+            backgroundColor: '#FFFFFF',
+            color: theme.colors.text || '#1F2937',
           }}
         >
           <span className="font-bold" style={{ fontFamily: theme.fonts.heading }}>
@@ -237,7 +237,7 @@ function PublicSection({
   }
   
   const sectionStyles: SectionStyles = (data.sectionStyles as SectionStyles) || {
-    backgroundColor: theme.colors.background,
+    // Ne pas définir backgroundColor par défaut : Hero utilise branding.heroBg (1ère couleur du thème)
     headingFont: theme.fonts.heading,
     bodyFont: theme.fonts.body,
     headingColor: theme.colors.text,
@@ -251,9 +251,44 @@ function PublicSection({
   const sectionImages: string[] = Array.isArray(data.sectionImages) ? (data.sectionImages as string[]) : []
   const alignmentClass = contentAlignment === 'center' ? 'text-center' : contentAlignment === 'right' ? 'text-right' : 'text-left'
 
+  const hasBgImage = !!sectionStyles.backgroundImage
+  const hasBgVideo = !!sectionStyles.backgroundVideo
+  const hasBgMedia = hasBgImage || hasBgVideo
+  const bgOverlayColor = sectionStyles.overlayColor || '#000000'
+  const bgOverlayOpacity = sectionStyles.overlayOpacity ?? 0.5
+  const bgFixed = sectionStyles.bgFixed || false
+  const bgPosition = sectionStyles.bgPosition ?? 50
+  const isGradient = sectionStyles.bgMode === 'gradient'
+  const sectionBgStyle: React.CSSProperties = {
+    ...(isGradient ? {
+      background: `linear-gradient(${sectionStyles.gradientAngle ?? 135}deg, ${sectionStyles.gradientColor1 || '#3385b5'}, ${sectionStyles.gradientColor2 || '#7b2d8e'})`,
+    } : {
+      backgroundColor: sectionStyles.backgroundColor ?? (section.type === 'hero' ? branding.heroBg : rhythmBg),
+    }),
+    ...(hasBgImage ? {
+      backgroundImage: `url(${sectionStyles.backgroundImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: `center ${bgPosition}%`,
+      backgroundRepeat: 'no-repeat',
+      backgroundAttachment: bgFixed ? 'fixed' : 'scroll',
+    } : {}),
+  }
+  const BgOverlay = hasBgMedia ? (
+    <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: bgOverlayColor, opacity: bgOverlayOpacity }} />
+  ) : null
+  const BgVideo = hasBgVideo && !hasBgImage ? (
+    <video
+      src={sectionStyles.backgroundVideo}
+      autoPlay muted loop playsInline
+      className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      style={{ objectPosition: `center ${bgPosition}%` }}
+    />
+  ) : null
+
   if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0) {
     return (
-      <section id={sectionId} className="py-8 mb-4 px-4 rounded-lg scroll-mt-16" style={{ backgroundColor: sectionStyles.backgroundColor || rhythmBg }}>
+      <section id={sectionId} className={`py-8 mb-4 px-4 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+        {BgVideo}{BgOverlay}
         {sectionImages.length > 0 && (
           <div className={`grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 ${alignmentClass}`}>
             {sectionImages.slice(0, 4).map((url, i) => (
@@ -281,9 +316,11 @@ function PublicSection({
       return (
         <section
           id={sectionId}
-          className="py-20 text-center mb-8 rounded-lg scroll-mt-16"
-          style={{ backgroundColor: sectionStyles.backgroundColor || branding.heroBg }}
+          className={`py-20 text-center mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={{ ...sectionBgStyle, backgroundColor: sectionStyles.backgroundColor || branding.heroBg }}
         >
+          {BgVideo}{BgOverlay}
+          <div className={`${hasBgMedia ? 'relative z-10' : ''}`}>
           <h1
             className="text-4xl font-bold mb-4 text-white"
             style={{ fontFamily: sectionStyles.headingFont }}
@@ -315,6 +352,7 @@ function PublicSection({
               {getDataValue('ctaText')}
             </a>
           )}
+          </div>
         </section>
       )
     }
@@ -323,9 +361,11 @@ function PublicSection({
       return (
         <section 
           id={sectionId}
-          className="py-12 mb-8 rounded-lg scroll-mt-16"
-          style={{ backgroundColor: sectionStyles.backgroundColor || rhythmBg }}
+          className={`py-12 mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={sectionBgStyle}
         >
+          {BgVideo}{BgOverlay}
+          <div className={`${hasBgMedia ? 'relative z-10' : ''}`}>
           <h2
             className="text-3xl font-bold mb-6"
             style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
@@ -338,6 +378,7 @@ function PublicSection({
           >
             {getDataValue('content')}
           </p>
+          </div>
         </section>
       )
 
@@ -345,9 +386,10 @@ function PublicSection({
       return (
         <section 
           id={sectionId}
-          className="py-12 mb-8 rounded-lg scroll-mt-16"
-          style={{ backgroundColor: sectionStyles.backgroundColor || rhythmBg }}
+          className={`py-12 mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={sectionBgStyle}
         >
+          {BgVideo}{BgOverlay}
           <h2
             className="text-3xl font-bold mb-8 text-center"
             style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
@@ -396,9 +438,10 @@ function PublicSection({
       return (
         <section 
           id={sectionId}
-          className="py-12 mb-8 rounded-lg scroll-mt-16"
-          style={{ backgroundColor: sectionStyles.backgroundColor || rhythmBg }}
+          className={`py-12 mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={sectionBgStyle}
         >
+          {BgVideo}{BgOverlay}
           <h2
             className="text-3xl font-bold mb-8 text-center"
             style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
@@ -428,9 +471,10 @@ function PublicSection({
       return (
         <section 
           id={sectionId}
-          className="py-12 mb-8 rounded-lg scroll-mt-16"
-          style={{ backgroundColor: sectionStyles.backgroundColor || rhythmBg }}
+          className={`py-12 mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={sectionBgStyle}
         >
+          {BgVideo}{BgOverlay}
           <h2
             className="text-3xl font-bold mb-8 text-center"
             style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
@@ -475,9 +519,10 @@ function PublicSection({
       return (
         <section 
           id={sectionId}
-          className="py-12 mb-8 rounded-lg scroll-mt-16"
-          style={{ backgroundColor: sectionStyles.backgroundColor || rhythmBg }}
+          className={`py-12 mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={sectionBgStyle}
         >
+          {BgVideo}{BgOverlay}
           <h2
             className="text-3xl font-bold mb-8 text-center"
             style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}

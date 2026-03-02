@@ -18,12 +18,15 @@
 /* Base styles */
 html {
   scroll-behavior: smooth;
+  width: 100%;
 }
 
 body {
   font-family: var(--theme-body-font);
   color: var(--theme-text);
   background-color: var(--theme-background);
+  width: 100%;
+  min-height: 100vh;
 }
 
 /* Theme-aware utilities */

@@ -234,7 +234,14 @@ export function SectionEditorModal({
   // Sélectionner un média
   const handleMediaSelect = (url: string) => {
     if (activeBlockId) {
-      updateBlock(activeBlockId, { content: url })
+      const block = blocks.find(b => b.id === activeBlockId)
+      if (block?.type === 'gallery') {
+        let galleryImages: string[] = []
+        try { galleryImages = JSON.parse(block.content || '[]') } catch { galleryImages = [] }
+        updateBlock(activeBlockId, { content: JSON.stringify([...galleryImages, url]) })
+      } else {
+        updateBlock(activeBlockId, { content: url })
+      }
     }
     setShowMediaPicker(false)
     setActiveBlockId(null)
@@ -726,12 +733,12 @@ export function SectionEditorModal({
 
                   {/* Image */}
                   {block.type === 'image' && (
-                    <div>
+                    <div className="space-y-4">
                       {block.content ? (
                         <div className="relative group">
                           <img
                             src={block.content}
-                            alt="Image"
+                            alt={(block.settings?.alt as string) || 'Image'}
                             className="w-full h-32 object-cover rounded-ovh"
                           />
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-ovh">
@@ -768,6 +775,70 @@ export function SectionEditorModal({
                           <span className="text-sm text-ovh-gray-500">Ajouter une image</span>
                         </button>
                       )}
+                      {/* Taille de l'image */}
+                      <div>
+                        <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Taille de l&apos;image</label>
+                        <div className="grid grid-cols-4 gap-2">
+                          {[
+                            { value: 'small', label: 'Petite', desc: '200px' },
+                            { value: 'medium', label: 'Moyenne', desc: '400px' },
+                            { value: 'large', label: 'Grande', desc: '600px' },
+                            { value: 'full', label: 'Pleine', desc: '100%' },
+                          ].map((opt) => {
+                            const currentSize = (block.settings?.imageSize as string) || 'full'
+                            const imageSize = opt.value as 'small' | 'medium' | 'large' | 'full'
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => updateBlock(block.id, { settings: { ...block.settings, imageSize } })}
+                                className={`py-2 px-1 text-center rounded-lg border-2 transition-colors ${
+                                  currentSize === opt.value
+                                    ? 'border-ovh-primary bg-ovh-primary/10 text-ovh-primary'
+                                    : 'border-ovh-gray-200 text-ovh-gray-600 hover:border-ovh-gray-300'
+                                }`}
+                              >
+                                <span className="block text-xs font-medium">{opt.label}</span>
+                                <span className="block text-[10px] text-ovh-gray-400 mt-0.5">{opt.desc}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      {/* Alignement (maquette) */}
+                      <div>
+                        <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Alignement</label>
+                        <div className="flex gap-1">
+                          {(['left', 'center', 'right'] as const).map((align) => {
+                            const currentAlign = (block.settings?.alignment as string) || 'left'
+                            return (
+                              <button
+                                key={align}
+                                type="button"
+                                onClick={() => updateBlock(block.id, { settings: { ...block.settings, alignment: align } })}
+                                className={`flex-1 py-2 text-xs font-medium rounded-lg border ${
+                                  currentAlign === align
+                                    ? 'border-ovh-primary bg-ovh-primary text-white'
+                                    : 'border-ovh-gray-200 text-ovh-gray-700 hover:border-ovh-gray-300'
+                                }`}
+                              >
+                                {align === 'left' ? 'Gauche' : align === 'center' ? 'Centre' : 'Droite'}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      {/* Texte alternatif */}
+                      <div>
+                        <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Texte alternatif</label>
+                        <input
+                          type="text"
+                          value={(block.settings?.alt as string) || ''}
+                          onChange={(e) => updateBlock(block.id, { settings: { ...block.settings, alt: e.target.value } })}
+                          className="w-full px-3 py-2 border border-ovh-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ovh-primary text-sm"
+                          placeholder="Description de l'image (accessibilité)"
+                        />
+                      </div>
                     </div>
                   )}
 
@@ -923,8 +994,48 @@ export function SectionEditorModal({
                       )}
                     </div>
                   )}
-                  {/* Forme, Galerie, Formulaire contact, Icônes sociales */}
-                  {['shape', 'gallery', 'contact-form', 'social-icons'].includes(block.type) && (
+                  {/* Galerie */}
+                  {block.type === 'gallery' && (() => {
+                    let galleryImages: string[] = []
+                    try { galleryImages = JSON.parse(block.content || '[]') } catch { galleryImages = [] }
+                    return (
+                      <div className="space-y-2">
+                        <p className="text-xs text-ovh-gray-500">Images de la galerie</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {galleryImages.map((url, gi) => (
+                            <div key={gi} className="relative aspect-square rounded-ovh overflow-hidden border border-ovh-gray-200 group">
+                              <img src={url} alt="" className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = galleryImages.filter((_, idx) => idx !== gi)
+                                  updateBlock(block.id, { content: JSON.stringify(next) })
+                                }}
+                                className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveBlockId(block.id)
+                              setMediaType('image')
+                              setShowMediaPicker(true)
+                            }}
+                            className="aspect-square border-2 border-dashed border-ovh-gray-300 rounded-ovh flex items-center justify-center hover:border-ovh-primary transition-colors"
+                          >
+                            <svg className="w-6 h-6 text-ovh-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                  {/* Formulaire contact, Icônes sociales */}
+                  {['contact-form', 'social-icons'].includes(block.type) && (
                     <div className="space-y-2">
                       <p className="text-xs text-ovh-gray-500">Élément {block.type}</p>
                       <input

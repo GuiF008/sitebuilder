@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getDefaultBlocksForSection, getSectionTypeById, type LayoutId, type SectionTypeId } from '@/lib/section-layouts'
 
 // Créer une nouvelle section
 export async function POST(
@@ -8,7 +9,14 @@ export async function POST(
 ) {
   try {
     const { id: pageId } = await params
-    const { type } = await request.json()
+    const { type, layout } = await request.json()
+
+    const DEFAULT_LAYOUTS: Record<string, string> = {
+      hero: 'alpha', about: 'charlie', text: 'bravo', 'image-text': 'charlie', services: 'golf',
+      gallery: 'golf', contact: 'juliet', testimonials: 'foxtrot', team: 'golf', features: 'hotel',
+      blog: 'india', process: 'echo',
+    }
+    const sectionLayout = layout || DEFAULT_LAYOUTS[type] || 'bravo'
 
     // Vérifier que la page existe
     const page = await prisma.page.findUnique({
@@ -40,51 +48,41 @@ export async function POST(
       })
     }
 
-    // Données par défaut selon le type
-    const defaultData: Record<string, unknown> = {
-      hero: {
-        title: 'Titre principal',
-        subtitle: 'Sous-titre',
-        ctaText: 'En savoir plus',
-        ctaLink: '#',
-      },
-      about: {
-        title: 'À propos',
-        content: 'Votre texte ici...',
-      },
-      text: {
-        title: 'Titre',
-        subtitle: 'Sous-titre',
-        content: 'Votre contenu ici...',
-      },
-      'image-text': {
-        title: 'Titre',
-        subtitle: 'Sous-titre',
-        content: 'Votre contenu ici...',
-        image: '',
-      },
-      services: {
-        title: 'Nos services',
-        services: [
-          { icon: '⚙️', title: 'Service 1', description: 'Description' },
-        ],
-      },
-      gallery: {
-        title: 'Galerie',
-        images: [],
-      },
-      contact: {
-        title: 'Contact',
-        email: '',
-      },
+    // Données par défaut selon le type (avec layout pour le rendu)
+    const baseDefaults: Record<string, unknown> = {
+      hero: { title: 'Titre principal', subtitle: 'Sous-titre', ctaText: 'En savoir plus', ctaLink: '#' },
+      about: { title: 'À propos', content: 'Votre texte ici...', image: '' },
+      text: { title: 'Titre', subtitle: 'Sous-titre', content: 'Votre contenu ici...' },
+      'image-text': { title: 'Titre', subtitle: 'Sous-titre', content: 'Votre contenu ici...', image: '' },
+      services: { title: 'Nos services', services: [{ icon: '⚙️', title: 'Service 1', description: 'Description' }], images: [] },
+      gallery: { title: 'Galerie', images: [] },
+      contact: { title: 'Contact', email: '', image: '' },
+      testimonials: { title: 'Témoignages', testimonials: [], image: '' },
+      team: { title: 'Notre équipe', members: [], images: [] },
+      features: { title: 'Fonctionnalités', features: [] },
+      blog: { title: 'Blog', articles: [], image: '' },
+      process: { title: 'Processus', steps: [] },
+    }
+    const baseData = { ...(baseDefaults[type] || { title: 'Titre', content: 'Contenu' }) }
+
+    // Générer les blocs selon le type et la mise en page pour afficher le contenu
+    const sectionType = getSectionTypeById(type as SectionTypeId)
+    const layoutId = (sectionLayout || sectionType?.defaultLayout || 'bravo') as LayoutId
+    const blocks = getDefaultBlocksForSection(type as SectionTypeId, layoutId, baseData)
+
+    const defaults = {
+      ...baseData,
+      layout: sectionLayout,
+      contentAlignment: layoutId === 'bravo' || layoutId === 'echo' ? 'center' : 'left',
+      blocks,
     }
 
     const section = await prisma.section.create({
       data: {
         pageId,
         type,
-        order: 0, // Nouvelles sections en début
-        dataJson: JSON.stringify(defaultData[type] || {}),
+        order: 0,
+        dataJson: JSON.stringify(defaults),
       },
     })
 

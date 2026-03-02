@@ -13,7 +13,8 @@ import { Header } from '@/components/shared/Header'
 import { SiteWithRelations, PageWithSections, ComputedTheme, SectionStyles, ContentBlockType } from '@/lib/types'
 import { computeTheme, generateThemeStyles } from '@/lib/themes'
 import { safeJsonParse } from '@/lib/utils'
-import { BlockRenderer } from '@/components/shared/BlockRenderer'
+import { BlockRenderer, type BlockData } from '@/components/shared/BlockRenderer'
+import { BlockSettingsModal } from '@/components/editor/BlockSettingsModal'
 import { getThemeBranding } from '@/lib/themes/branding'
 
 export default function EditorPage() {
@@ -739,7 +740,10 @@ export default function EditorPage() {
           >
             {currentPage ? (
               <>
-                <div className="w-full pb-20">
+                <div 
+                  className="w-full pb-20"
+                  onClick={() => setSelectedSectionId(null)}
+                >
                   {currentPage.sections
                     .sort((a, b) => a.order - b.order)
                     .map((section) => (
@@ -748,7 +752,7 @@ export default function EditorPage() {
                         className="relative group transition-all"
                         onClick={(e) => {
                           e.stopPropagation()
-                          setSelectedSectionId(section.id)
+                          setSelectedSectionId(prev => prev === section.id ? null : section.id)
                         }}
                         onDragOver={(e) => {
                           e.preventDefault()
@@ -791,6 +795,7 @@ export default function EditorPage() {
                             section={section}
                             theme={theme}
                             site={site}
+                            currentPage={currentPage}
                             onSectionUpdate={handleSectionUpdate}
                             onMediaSelect={(mediaUrl) => {
                               handleSectionUpdate(section.id, { image: mediaUrl })
@@ -992,17 +997,20 @@ function SectionPreview({
   section, 
   theme,
   site,
+  currentPage,
   onSectionUpdate,
   onMediaSelect,
 }: { 
   section: { id: string; type: string; dataJson: string }
   theme: ComputedTheme
   site: SiteWithRelations
+  currentPage: PageWithSections | null
   onSectionUpdate: (sectionId: string, updates: Record<string, unknown>) => void
   onMediaSelect: (url: string) => void
 }) {
   const data = safeJsonParse<Record<string, unknown>>(section.dataJson, {}) || {}
   const [showMediaPicker, setShowMediaPicker] = useState(false)
+  const [selectedBlockForSettings, setSelectedBlockForSettings] = useState<BlockData | null>(null)
 
   const handleImageClick = () => {
     setShowMediaPicker(true)
@@ -1013,14 +1021,35 @@ function SectionPreview({
     setShowMediaPicker(false)
   }
 
+  const blocks = (data.blocks || []) as BlockData[]
+
+  const handleBlockClick = (block: BlockData) => {
+    if (block.type === 'image' || block.type === 'video' || block.type === 'audio') {
+      setSelectedBlockForSettings(block)
+    }
+  }
+
+  const handleBlockUpdate = (blockId: string, updates: Partial<BlockData>) => {
+    const updated = blocks.map((b) =>
+      b.id === blockId ? { ...b, ...updates } : b
+    )
+    onSectionUpdate(section.id, { blocks: updated })
+  }
+
+  const handleBlockDelete = (blockId: string) => {
+    const updated = blocks.filter((b) => b.id !== blockId)
+    onSectionUpdate(section.id, { blocks: updated })
+    setSelectedBlockForSettings(null)
+  }
+
   // Helper pour accéder aux propriétés de data de manière sécurisée
   const getDataValue = (key: string): string => {
     return (data[key] as string) || ''
   }
 
   // Styles personnalisés de la section ou thème par défaut
+  // Ne pas définir backgroundColor par défaut : Hero utilise branding.heroBg, les autres theme.colors.background
   const sectionStyles: SectionStyles = (data.sectionStyles as SectionStyles) || {
-    backgroundColor: theme.colors.background,
     headingFont: theme.fonts.heading,
     bodyFont: theme.fonts.body,
     headingColor: theme.colors.text,
@@ -1032,10 +1061,54 @@ function SectionPreview({
   const sectionImages: string[] = Array.isArray(data.sectionImages) ? (data.sectionImages as string[]) : []
   const alignmentClass = contentAlignment === 'center' ? 'text-center' : contentAlignment === 'right' ? 'text-right' : 'text-left'
 
+  // Styles d'arrière-plan (couleur, dégradé, image, vidéo, overlay) — preview en temps réel
+  const hasBgImage = !!sectionStyles.backgroundImage
+  const hasBgVideo = !!sectionStyles.backgroundVideo
+  const hasBgMedia = hasBgImage || hasBgVideo
+  const bgOverlayColor = sectionStyles.overlayColor || '#000000'
+  const bgOverlayOpacity = sectionStyles.overlayOpacity ?? 0.5
+  const bgFixed = sectionStyles.bgFixed ?? false
+  const bgPosition = sectionStyles.bgPosition ?? 50
+  const isGradient = sectionStyles.bgMode === 'gradient'
+  const sectionBgStyle: React.CSSProperties = {
+    ...(isGradient ? {
+      background: `linear-gradient(${sectionStyles.gradientAngle ?? 135}deg, ${sectionStyles.gradientColor1 || theme.colors.primary}, ${sectionStyles.gradientColor2 || theme.colors.secondary})`,
+    } : {
+      backgroundColor: sectionStyles.backgroundColor ?? theme.colors.background,
+    }),
+    ...(hasBgImage ? {
+      backgroundImage: `url(${sectionStyles.backgroundImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: `center ${bgPosition}%`,
+      backgroundRepeat: 'no-repeat',
+      backgroundAttachment: bgFixed ? 'fixed' : 'scroll',
+    } : {}),
+  }
+  const BgOverlay = hasBgMedia ? (
+    <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: bgOverlayColor, opacity: bgOverlayOpacity }} />
+  ) : null
+  const BgVideo = hasBgVideo && !hasBgImage ? (
+    <video
+      src={sectionStyles.backgroundVideo}
+      autoPlay
+      muted
+      loop
+      playsInline
+      className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      style={{ objectPosition: `center ${bgPosition}%` }}
+    />
+  ) : null
+
   // Si la section a des blocs de contenu, les afficher
   if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0) {
+    const pageList = currentPage?.id ? (site.pages || []).map((p) => ({ id: p.id, title: p.title, slug: p.slug || '' })) : []
+    const sectionList = (currentPage?.sections || []).map((s) => ({ id: s.id, type: s.type }))
+
     return (
-      <section className={`py-8 px-8 ${alignmentClass}`} style={{ backgroundColor: sectionStyles.backgroundColor }}>
+      <section className={`py-8 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+        {BgVideo}
+        {BgOverlay}
+        <div className={hasBgMedia ? 'relative z-10' : ''}>
         {sectionImages.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
             {sectionImages.slice(0, 4).map((url, i) => (
@@ -1044,23 +1117,42 @@ function SectionPreview({
           </div>
         )}
         <BlockRenderer 
-          blocks={(data.blocks || []) as Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>} 
+          blocks={blocks} 
           sectionStyles={sectionStyles} 
           theme={theme}
           isPublic={false}
+          onBlockClick={handleBlockClick}
         />
+        {selectedBlockForSettings && (
+          <BlockSettingsModal
+            block={selectedBlockForSettings}
+            media={site.media}
+            pages={pageList}
+            sections={sectionList}
+            onUpdate={handleBlockUpdate}
+            onDelete={handleBlockDelete}
+            onClose={() => setSelectedBlockForSettings(null)}
+          />
+        )}
+        </div>
       </section>
     )
   }
 
   // Sinon, afficher le rendu par défaut selon le type
   switch (section.type) {
-    case 'hero':
+    case 'hero': {
+      const heroBgStyle: React.CSSProperties = isGradient
+        ? sectionBgStyle
+        : { ...sectionBgStyle, backgroundColor: sectionStyles.backgroundColor || branding.heroBg }
       return (
         <section 
-          className={`py-20 px-8 ${alignmentClass}`}
-          style={{ backgroundColor: sectionStyles.backgroundColor || theme.colors.primary }}
+          className={`py-20 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={heroBgStyle}
         >
+          {BgVideo}
+          {BgOverlay}
+          <div className={hasBgMedia ? 'relative z-10' : ''}>
           <h1 
             className="text-4xl font-bold mb-4 text-white"
             style={{ fontFamily: sectionStyles.headingFont }}
@@ -1087,15 +1179,20 @@ function SectionPreview({
           >
             {getDataValue('ctaText')}
           </button>
+        </div>
         </section>
       )
+    }
 
     case 'about':
       return (
         <section 
-          className={`py-12 px-8 ${alignmentClass}`}
-          style={{ backgroundColor: sectionStyles.backgroundColor }}
+          className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={sectionBgStyle}
         >
+          {BgVideo}
+          {BgOverlay}
+          <div className={hasBgMedia ? 'relative z-10' : ''}>
           <h2 
             className="text-3xl font-bold mb-6"
             style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
@@ -1137,6 +1234,7 @@ function SectionPreview({
           >
             {getDataValue('content')}
           </p>
+          </div>
           {showMediaPicker && (
             <MediaPickerModal
               media={site.media.filter(m => m.type === 'image')}
@@ -1150,9 +1248,12 @@ function SectionPreview({
     case 'services':
       return (
         <section 
-          className={`py-12 px-8 ${alignmentClass}`}
-          style={{ backgroundColor: sectionStyles.backgroundColor }}
+          className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={sectionBgStyle}
         >
+          {BgVideo}
+          {BgOverlay}
+          <div className={hasBgMedia ? 'relative z-10' : ''}>
           <h2 
             className="text-3xl font-bold mb-8"
             style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
@@ -1199,12 +1300,16 @@ function SectionPreview({
               </div>
             ))}
           </div>
+          </div>
         </section>
       )
 
     case 'contact':
       return (
-        <section className={`py-12 px-8 ${alignmentClass}`}>
+        <section className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+          {BgVideo}
+          {BgOverlay}
+          <div className={hasBgMedia ? 'relative z-10' : ''}>
           <h2 
             className="text-3xl font-bold mb-8"
             style={{ fontFamily: theme.fonts.heading, color: theme.colors.text }}
@@ -1218,13 +1323,19 @@ function SectionPreview({
               Email : <span contentEditable suppressContentEditableWarning>{getDataValue('email')}</span>
             </p>
           </div>
+          </div>
         </section>
       )
 
-    case 'footer':
-      const branding = getThemeBranding(site.themeFamily, theme)
+    case 'footer': {
+      const footerBgStyle: React.CSSProperties = isGradient
+        ? sectionBgStyle
+        : { ...sectionBgStyle, backgroundColor: sectionStyles.backgroundColor || branding.footerBg }
       return (
-        <footer className={`py-8 px-8 ${alignmentClass}`} style={{ backgroundColor: branding.footerBg }}>
+        <footer className={`py-8 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={footerBgStyle}>
+          {BgVideo}
+          {BgOverlay}
+          <div className={hasBgMedia ? 'relative z-10' : ''}>
           <p 
             className="text-center text-sm"
             style={{ color: branding.footerText }}
@@ -1233,27 +1344,33 @@ function SectionPreview({
           >
             {getDataValue('copyright')}
           </p>
+          </div>
         </footer>
       )
+    }
 
     default:
       return (
-        <div className={`py-8 text-ovh-gray-400 border border-dashed border-ovh-gray-300 ${alignmentClass}`}>
-          Section : {section.type}
-        </div>
+        <section className={`py-8 px-8 text-ovh-gray-400 border border-dashed border-ovh-gray-300 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+          {BgVideo}
+          {BgOverlay}
+          <div className={hasBgMedia ? 'relative z-10' : ''}>Section : {section.type}</div>
+        </section>
       )
   }
 }
 
-// Composant pour sélectionner une image depuis la médiathèque
+// Composant pour sélectionner un média depuis la médiathèque
 function MediaPickerModal({
   media,
   onSelect,
   onClose,
+  title = 'Sélectionner une image',
 }: {
-  media: Array<{ id: string; url: string; filename: string }>
+  media: Array<{ id: string; url: string; filename: string; type?: string }>
   onSelect: (url: string) => void
   onClose: () => void
+  title?: string
 }) {
   return (
     <>
@@ -1261,7 +1378,7 @@ function MediaPickerModal({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-ovh-lg max-w-4xl w-full max-h-[80vh] overflow-hidden flex flex-col">
           <div className="px-6 py-4 border-b flex items-center justify-between">
-            <h3 className="font-bold text-lg">Sélectionner une image</h3>
+            <h3 className="font-bold text-lg">{title}</h3>
             <button onClick={onClose} className="p-2 hover:bg-ovh-gray-100 rounded-ovh">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1271,8 +1388,8 @@ function MediaPickerModal({
           <div className="flex-1 overflow-y-auto p-6">
             {media.length === 0 ? (
               <div className="text-center py-12 text-ovh-gray-500">
-                <p>Aucune image dans la médiathèque</p>
-                <p className="text-sm mt-2">Ajoutez des images via la médiathèque</p>
+                <p>Aucun média dans la médiathèque</p>
+                <p className="text-sm mt-2">Ajoutez des fichiers via la médiathèque</p>
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-4">
@@ -1280,9 +1397,20 @@ function MediaPickerModal({
                   <button
                     key={item.id}
                     onClick={() => onSelect(item.url)}
-                    className="aspect-square rounded-ovh overflow-hidden border-2 border-ovh-gray-200 hover:border-ovh-primary transition-colors"
+                    className="aspect-square rounded-ovh overflow-hidden border-2 border-ovh-gray-200 hover:border-ovh-primary transition-colors flex items-center justify-center bg-ovh-gray-100"
                   >
-                    <img src={item.url} alt={item.filename} className="w-full h-full object-cover" />
+                    {(item.type === 'video' || item.url.match(/\.(mp4|webm|ogg)$/i)) ? (
+                      <video src={item.url} className="w-full h-full object-cover" muted />
+                    ) : item.type === 'audio' ? (
+                      <div className="flex flex-col items-center gap-2 text-ovh-gray-500">
+                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                        </svg>
+                        <span className="text-xs truncate max-w-full px-2">{item.filename}</span>
+                      </div>
+                    ) : (
+                      <img src={item.url} alt={item.filename} className="w-full h-full object-cover" />
+                    )}
                   </button>
                 ))}
               </div>
