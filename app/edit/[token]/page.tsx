@@ -264,6 +264,12 @@ export default function EditorPage() {
       })
       const data = await response.json()
 
+      if (!response.ok) {
+        const msg = data?.error || `Erreur ${response.status}`
+        alert(`Échec de l'upload : ${msg}`)
+        return
+      }
+
       setSite((prev) => prev ? {
         ...prev,
         media: [...prev.media, data.media],
@@ -272,6 +278,7 @@ export default function EditorPage() {
       showSaveStatus()
     } catch (err) {
       console.error('Failed to upload media:', err)
+      alert(`Échec de l'upload : ${err instanceof Error ? err.message : 'Erreur réseau'}`)
     }
   }
 

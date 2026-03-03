@@ -270,6 +270,12 @@ volumes:
   - sitebuilder-uploads:/app/uploads
 ```
 
+### Dépannage : miniatures cassées / images invisibles
+
+1. **Permissions Docker** : L'image inclut un entrypoint qui fixe les permissions de `/app/uploads` au démarrage. Si les uploads échouent (erreur visible à l'écran), vérifiez les logs : `docker compose logs app`
+2. **Volume vide après rebuild** : Un `docker compose up -d --build` recrée l'image mais préserve les volumes. Les anciens fichiers restent.
+3. **Tester l'upload** : Glissez-déposez une petite image (< 1 Mo). Si une alerte s'affiche, lisez le message d'erreur.
+
 ## Architecture de production recommandée
 
 ```

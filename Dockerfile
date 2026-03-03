@@ -29,8 +29,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Install Prisma CLI 6.19.2 (npx would fetch v7 otherwise)
-RUN npm install -g prisma@6.19.2
+# Install Prisma CLI + su-exec (pour fix permissions des volumes Docker)
+RUN npm install -g prisma@6.19.2 && apk add --no-cache su-exec
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -49,7 +49,9 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 RUN mkdir -p /app/data /app/uploads
 RUN chown -R nextjs:nodejs /app
 
-USER nextjs
+# Entrypoint: fix permissions des volumes montés (root par défaut) avant de lancer l'app
+COPY docker/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 3000
 
@@ -57,5 +59,5 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV DATABASE_URL="file:/app/data/sitebuilder.db"
 
-# Run migrations and start server
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["sh", "-c", "prisma db push --skip-generate && node server.js"]
