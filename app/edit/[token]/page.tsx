@@ -1367,7 +1367,7 @@ function MediaPickerModal({
   onClose,
   title = 'Sélectionner une image',
 }: {
-  media: Array<{ id: string; url: string; filename: string; type?: string }>
+  media: Array<{ id: string; url: string; filename: string; originalName?: string | null; type?: string }>
   onSelect: (url: string) => void
   onClose: () => void
   title?: string
@@ -1393,7 +1393,9 @@ function MediaPickerModal({
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-4">
-                {media.map((item) => (
+                {media.map((item) => {
+                  const displayName = item.originalName ?? item.filename
+                  return (
                   <button
                     key={item.id}
                     onClick={() => onSelect(item.url)}
@@ -1406,13 +1408,14 @@ function MediaPickerModal({
                         <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                         </svg>
-                        <span className="text-xs truncate max-w-full px-2">{item.filename}</span>
+                        <span className="text-xs truncate max-w-full px-2">{displayName}</span>
                       </div>
                     ) : (
-                      <img src={item.url} alt={item.filename} className="w-full h-full object-cover" />
+                      <img src={item.url} alt={displayName} className="w-full h-full object-cover" />
                     )}
                   </button>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

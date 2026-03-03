@@ -173,6 +173,7 @@ export async function POST(
         siteId: id,
         type: fileType,
         filename,
+        originalName: file.name,
         url: `/uploads/${id}/${filename}`,
         mimeType: file.type,
         size: file.size,

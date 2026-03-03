@@ -110,14 +110,15 @@ model EditToken {
 // MEDIA (Drag & Drop)
 // ============================================
 model Media {
-  id        String   @id @default(uuid())
-  siteId    String
-  type      String   // image | video | audio
-  filename  String
-  url       String
-  mimeType  String?
-  size      Int?
-  createdAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  siteId       String
+  type         String   // image | video | audio
+  filename     String
+  originalName String?  // Nom original du fichier (pour affichage UX)
+  url          String
+  mimeType     String?
+  size         Int?
+  createdAt    DateTime @default(now())
 
-  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  site         Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
 }

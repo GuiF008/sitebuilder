@@ -1149,7 +1149,7 @@ export function SectionEditorModal({
                   className="aspect-square rounded-xl overflow-hidden border-2 border-ovh-gray-200 hover:border-ovh-primary transition-colors"
                 >
                   {mediaType === 'image' ? (
-                    <img src={item.url} alt={item.filename} className="w-full h-full object-cover" />
+                    <img src={item.url} alt={item.originalName ?? item.filename} className="w-full h-full object-cover" />
                   ) : mediaType === 'video' ? (
                     <video src={item.url} className="w-full h-full object-cover" />
                   ) : (

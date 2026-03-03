@@ -124,7 +124,9 @@ export function MediaPanel({
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-2">
-          {filteredMedia.map((m) => (
+          {filteredMedia.map((m) => {
+            const displayName = m.originalName ?? m.filename
+            return (
             <div
               key={m.id}
               className="relative group aspect-square bg-ovh-gray-100 rounded-ovh overflow-hidden"
@@ -132,7 +134,7 @@ export function MediaPanel({
               {m.type === 'image' ? (
                 <img
                   src={m.url}
-                  alt={m.filename}
+                  alt={displayName}
                   className="w-full h-full object-cover"
                 />
               ) : m.type === 'video' ? (
@@ -148,6 +150,11 @@ export function MediaPanel({
                   </svg>
                 </div>
               )}
+
+              {/* Nom du fichier (affichage) */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-2">
+                <p className="text-xs text-white truncate" title={displayName}>{displayName}</p>
+              </div>
 
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -177,7 +184,8 @@ export function MediaPanel({
                 </button>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

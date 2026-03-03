@@ -168,6 +168,14 @@ git pull
 docker compose up -d --build
 ```
 
+### Appliquer les changements de schéma Prisma (BDD)
+
+Lors d'une mise à jour qui modifie le schéma Prisma (ex: ajout du champ `originalName` sur Media), exécuter dans le container :
+
+```bash
+docker exec -it sitebuilder-app sh -lc "npx prisma db push"
+```
+
 ### Sauvegarde
 
 ```bash
