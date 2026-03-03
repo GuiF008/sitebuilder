@@ -14,7 +14,7 @@ type ColorPickerTarget = 'bg' | 'grad1' | 'grad2' | 'overlay'
 interface SectionInlineSettingsModalProps {
   section: { id: string; type: string; dataJson: string }
   theme: { colors: { primary: string; background: string; secondary: string; accent: string; text: string; muted: string } }
-  siteMedia: Array<{ id: string; url: string; filename: string; type?: string }>
+  siteMedia: Array<{ id: string; url: string; filename: string; originalName?: string | null; type?: string }>
   onUpdate: (sectionId: string, data: Record<string, unknown>) => void
   onDuplicate: (section: { id: string; type: string; dataJson: string }) => void
   onDelete: (sectionId: string) => void

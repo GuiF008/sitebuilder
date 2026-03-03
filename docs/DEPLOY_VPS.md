@@ -161,11 +161,18 @@ sudo systemctl restart caddy
 ```bash
 cd /opt/sitebuilder
 
+# Option 1 : script tout-en-un
+chmod +x scripts/update-vps.sh && ./scripts/update-vps.sh
+
+# Option 2 : commandes manuelles
 # Récupérer les dernières modifications
 git pull
 
 # Rebuild et redémarrage
 docker compose up -d --build
+
+# IMPORTANT : appliquer le schéma Prisma après toute modification du schéma
+docker exec -it sitebuilder-app sh -lc "npx prisma db push"
 ```
 
 ### Appliquer les changements de schéma Prisma (BDD)
@@ -175,6 +182,8 @@ Lors d'une mise à jour qui modifie le schéma Prisma (ex: ajout du champ `origi
 ```bash
 docker exec -it sitebuilder-app sh -lc "npx prisma db push"
 ```
+
+**Si les médias affichent encore des UUID** : les fichiers uploadés *avant* cette mise à jour ont `originalName = null`. Il faudra les re-télécharger pour voir leur nom original. Les nouveaux uploads afficheront correctement le nom.
 
 ### Sauvegarde
 

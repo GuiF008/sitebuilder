@@ -1399,20 +1399,24 @@ function MediaPickerModal({
                   <button
                     key={item.id}
                     onClick={() => onSelect(item.url)}
-                    className="aspect-square rounded-ovh overflow-hidden border-2 border-ovh-gray-200 hover:border-ovh-primary transition-colors flex items-center justify-center bg-ovh-gray-100"
+                    className="aspect-square rounded-ovh overflow-hidden border-2 border-ovh-gray-200 hover:border-ovh-primary transition-colors flex flex-col bg-ovh-gray-100"
                   >
-                    {(item.type === 'video' || item.url.match(/\.(mp4|webm|ogg)$/i)) ? (
-                      <video src={item.url} className="w-full h-full object-cover" muted />
-                    ) : item.type === 'audio' ? (
-                      <div className="flex flex-col items-center gap-2 text-ovh-gray-500">
-                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                        </svg>
-                        <span className="text-xs truncate max-w-full px-2">{displayName}</span>
-                      </div>
-                    ) : (
-                      <img src={item.url} alt={displayName} className="w-full h-full object-cover" />
-                    )}
+                    <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden">
+                      {(item.type === 'video' || item.url.match(/\.(mp4|webm|ogg)$/i)) ? (
+                        <video src={item.url} className="w-full h-full object-cover" muted />
+                      ) : item.type === 'audio' ? (
+                        <div className="flex flex-col items-center gap-2 text-ovh-gray-500">
+                          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <img src={item.url} alt={displayName} className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    <span className="text-xs text-ovh-gray-600 truncate px-2 py-1.5 bg-white text-center border-t border-ovh-gray-200">
+                      {displayName}
+                    </span>
                   </button>
                   )
                 })}
