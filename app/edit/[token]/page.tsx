@@ -34,7 +34,6 @@ export default function EditorPage() {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null)
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
-  const [isPublishing, setIsPublishing] = useState(false)
   const [showAddSectionModal, setShowAddSectionModal] = useState(false)
   const [copiedSectionData, setCopiedSectionData] = useState<{ type: string; dataJson: string } | null>(null)
   const [sectionMenuOpen, setSectionMenuOpen] = useState<string | null>(null)
@@ -509,32 +508,6 @@ export default function EditorPage() {
     }
   }
 
-  const handlePublish = async () => {
-    if (!site) return
-
-    setIsPublishing(true)
-    try {
-      const response = await fetch(`/api/sites/${site.id}/publish`, {
-        method: 'POST',
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setSite((prev) => prev ? {
-          ...prev,
-          publishState: data.publishState,
-        } : null)
-        
-        alert(`Site publié ! Accessible sur /s/${site.slug}`)
-      }
-    } catch (err) {
-      console.error('Failed to publish:', err)
-      alert('Erreur lors de la publication')
-    } finally {
-      setIsPublishing(false)
-    }
-  }
-
   // Drag & Drop
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -649,26 +622,22 @@ export default function EditorPage() {
               <span className="text-ovh-gray-400">Enregistré</span>
             )}
           </span>
-          {/* Aperçu - spec Top Bar */}
-          {site.publishState?.isPublished ? (
-            <Link href={`/s/${site.slug}`} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm">
-                Aperçu
-              </Button>
-            </Link>
-          ) : (
-            <Button variant="outline" size="sm" disabled title="Publiez pour prévisualiser">
+          {/* Aperçu - ouvre le site dans un nouvel onglet (publié ou prévisualisation) */}
+          <Link
+            href={site.publishState?.isPublished ? `/s/${site.slug}` : `/preview/${token}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline" size="sm">
               Aperçu
             </Button>
-          )}
-          {/* Publier - spec Top Bar */}
-          <Button
-            size="sm"
-            onClick={handlePublish}
-            disabled={isPublishing}
-          >
-            {isPublishing ? 'Publication...' : 'Publier'}
-          </Button>
+          </Link>
+          {/* Publier - flux One Page Order (freemium → payant) */}
+          <Link href={`/edit/${token}/publish`}>
+            <Button size="sm">
+              Publier mon site
+            </Button>
+          </Link>
         </div>
       </header>
 
