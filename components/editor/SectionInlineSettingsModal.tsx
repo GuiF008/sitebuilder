@@ -5,9 +5,9 @@ import { createPortal } from 'react-dom'
 import { safeJsonParse } from '@/lib/utils'
 import { SectionStyles } from '@/lib/types'
 import { ColorPickerModal } from '@/components/ui'
-import Image from 'next/image'
 import { SOCIAL_PLATFORMS } from '@/lib/social-platforms'
 import { SERVICE_PICTOS } from '@/lib/service-pictos'
+import { PictoIcon } from '@/components/shared/PictoIcon'
 
 type TabId = 'background' | 'content'
 type BgSubTab = 'color' | 'image' | 'video'
@@ -560,7 +560,7 @@ export function SectionInlineSettingsModal({
                         }`}
                         title={p.label}
                       >
-                        <Image src={p.iconSrc} alt={p.label} width={24} height={24} className="w-5 h-5 object-contain" unoptimized />
+                        <PictoIcon src={p.iconSrc} alt={p.label} width={24} height={24} className="w-5 h-5 object-contain" />
                       </button>
                     ))}
                   </div>

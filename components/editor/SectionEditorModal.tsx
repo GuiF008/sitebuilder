@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { SiteWithRelations, PageWithSections, ComputedTheme, ContentBlock, ContentBlockType, CONTENT_BLOCK_TYPES } from '@/lib/types'
 import { PICTOS } from '@/lib/pictos'
+import { PictoIcon } from '@/components/shared/PictoIcon'
 import { ColorPicker } from '@/components/ui'
 
 type EditorTab = 'content' | 'style'
@@ -539,23 +540,9 @@ export function SectionEditorModal({
                   {(() => {
                     const blockType = CONTENT_BLOCK_TYPES.find(t => t.type === block.type)
                     return blockType?.iconSrc ? (
-                      <Image
-                        src={blockType.iconSrc}
-                        alt={blockType.label}
-                        width={20}
-                        height={20}
-                        className="w-5 h-5 object-contain"
-                        unoptimized
-                      />
+                      <PictoIcon src={blockType.iconSrc} alt={blockType.label} width={20} height={20} className="w-5 h-5 object-contain" />
                     ) : (
-                      <Image
-                        src={PICTOS['page-query']}
-                        alt="Bloc"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5 object-contain"
-                        unoptimized
-                      />
+                      <PictoIcon src={PICTOS['page-query']} alt="Bloc" width={20} height={20} className="w-5 h-5 object-contain" />
                     )
                   })()}
                   <span className="text-sm font-medium text-ovh-gray-700 flex-1">
@@ -1080,23 +1067,9 @@ export function SectionEditorModal({
                       className="w-full px-4 py-3 text-left hover:bg-ovh-gray-50 transition-colors flex items-center gap-3 border-b border-ovh-gray-100 last:border-b-0"
                     >
                       {type.iconSrc ? (
-                        <Image
-                          src={type.iconSrc}
-                          alt={type.label}
-                          width={24}
-                          height={24}
-                          className="w-6 h-6 object-contain"
-                          unoptimized
-                        />
+                        <PictoIcon src={type.iconSrc} alt={type.label} width={24} height={24} className="w-6 h-6 object-contain" />
                       ) : (
-                        <Image
-                          src={PICTOS['page-query']}
-                          alt="Bloc"
-                          width={24}
-                          height={24}
-                          className="w-6 h-6 object-contain"
-                          unoptimized
-                        />
+                        <PictoIcon src={PICTOS['page-query']} alt="Bloc" width={24} height={24} className="w-6 h-6 object-contain" />
                       )}
                       <div>
                         <div className="font-medium text-ovh-gray-800">{type.label}</div>

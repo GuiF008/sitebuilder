@@ -1,8 +1,8 @@
 'use client'
 
-import Image from 'next/image'
 import { ComputedTheme, SectionStyles } from '@/lib/types'
 import { SocialIconLogo } from '@/components/shared/SocialIconLogo'
+import { PictoIcon } from '@/components/shared/PictoIcon'
 import { safeJsonParse } from '@/lib/utils'
 import { BlockRenderer } from '@/components/shared/BlockRenderer'
 import { getThemeBranding } from '@/lib/themes/branding'
@@ -182,8 +182,8 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
               (service, i: number) => (
                 <div key={i} className="p-6 rounded-lg text-center" style={{ backgroundColor: `${theme.colors.primary}10` }}>
                   {service.iconSrc ? (
-                    <div className="flex justify-center mb-4">
-                      <Image src={service.iconSrc.replace(/\/pictos\/(.+)\.png$/, '/pictos/$1.svg')} alt={service.title} width={48} height={48} className="w-12 h-12 object-contain" unoptimized />
+                    <div className="flex justify-center mb-4" style={{ color: sectionStyles.headingColor }}>
+                      <PictoIcon src={service.iconSrc} alt={service.title} width={48} height={48} className="w-12 h-12 object-contain" />
                     </div>
                   ) : service.icon ? (
                     <div className="text-4xl mb-4">{service.icon}</div>

@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { themePresets, getThemesForGoal } from '@/lib/themes/presets'
 import { Button, Input, Card, ProgressSteps } from '@/components/ui'
 import { PICTOS } from '@/lib/pictos'
+import { PictoIcon } from '@/components/shared/PictoIcon'
 
 const STEPS = ['Identité', 'Objectif', 'Thème', 'Contenu']
 
@@ -152,6 +153,7 @@ export function LandingPageClient({ initialStep = 0 }: LandingPageClientProps) {
                 width={120}
                 height={40}
                 className="h-8 w-auto"
+                priority
               />
               <span className="text-ovh-gray-300">|</span>
               <span className="font-semibold text-lg">Site Builder</span>
@@ -274,15 +276,8 @@ export function LandingPageClient({ initialStep = 0 }: LandingPageClientProps) {
                       onClick={() => setGoal(g.id)}
                       className="p-5"
                     >
-                      <div className="flex items-center gap-4">
-                        <Image
-                          src={g.iconSrc}
-                          alt={g.label}
-                          width={48}
-                          height={48}
-                          className="w-12 h-12 object-contain"
-                          unoptimized
-                        />
+                      <div className="flex items-center gap-4 text-ovh-gray-800">
+                        <PictoIcon src={g.iconSrc} alt={g.label} width={48} height={48} className="w-12 h-12 object-contain" />
                         <div>
                           <div className="font-semibold text-ovh-gray-900">{g.label}</div>
                           <div className="text-sm text-ovh-gray-500">{g.description}</div>
@@ -413,12 +408,12 @@ export function LandingPageClient({ initialStep = 0 }: LandingPageClientProps) {
 
         {/* Features Section - affichée seulement si on n'est pas dans le formulaire */}
         {currentStep === 0 && (
-          <section className="py-20 mt-20 w-full">
-            <div className="max-w-7xl mx-auto w-full">
+          <section className="py-20 mt-20 w-full overflow-visible">
+            <div className="max-w-7xl mx-auto w-full overflow-visible">
               <h2 className="text-3xl font-bold text-center text-ovh-gray-900 mb-12">
                 Simple, rapide, efficace
               </h2>
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid md:grid-cols-3 gap-8 overflow-visible">
                 <FeatureCard
                   iconSrc={PICTOS.speed}
                   title="En 5 minutes"
@@ -481,16 +476,9 @@ function FeatureCard({
   description: string 
 }) {
   return (
-    <div className="text-center p-6">
-      <div className="flex justify-center mb-4">
-        <Image
-          src={iconSrc}
-          alt={title}
-          width={64}
-          height={64}
-          className="w-16 h-16 object-contain"
-          unoptimized
-        />
+    <div className="text-center p-6 text-black">
+      <div className="flex justify-center mb-4 min-w-16 min-h-16 overflow-visible">
+        <PictoIcon src={iconSrc} alt={title} width={64} height={64} className="w-16 h-16 flex-shrink-0" />
       </div>
       <h3 className="text-xl font-semibold text-ovh-gray-900 mb-2">{title}</h3>
       <p className="text-ovh-gray-600">{description}</p>

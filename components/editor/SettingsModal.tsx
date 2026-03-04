@@ -11,6 +11,7 @@ import { ElementsPanel } from './ElementsPanel'
 import { SiteWithRelations, PageWithSections } from '@/lib/types'
 import { ComputedTheme, ContentBlockType } from '@/lib/types'
 import { PICTOS } from '@/lib/pictos'
+import { PictoIcon } from '@/components/shared/PictoIcon'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -185,14 +186,7 @@ export function SettingsModal({
                   : 'text-ovh-gray-600 hover:bg-ovh-gray-50 hover:text-ovh-gray-800'}
               `}
             >
-              <Image
-                src={tab.iconSrc}
-                alt={tab.label}
-                width={24}
-                height={24}
-                className={`w-6 h-6 object-contain transition-transform ${isActive ? 'scale-110' : ''}`}
-                unoptimized
-              />
+              <PictoIcon src={tab.iconSrc} alt={tab.label} width={24} height={24} className={`w-6 h-6 object-contain transition-transform ${isActive ? 'scale-110' : ''}`} />
               <span className={`text-[10px] leading-tight flex items-center gap-1 justify-center ${isActive ? 'font-semibold' : 'font-medium'}`}>
                 {tab.label}
                 {tab.badge && (

@@ -1,9 +1,9 @@
 'use client'
 
 import React from 'react'
-import Image from 'next/image'
 import { ContentBlockType } from '@/lib/types'
 import { PICTOS } from '@/lib/pictos'
+import { PictoIcon } from '@/components/shared/PictoIcon'
 
 // Éléments à afficher (même source pictos que le site)
 const ELEMENTS = [
@@ -48,7 +48,7 @@ export function ElementsPanel({ selectedSectionId, onAddElement }: ElementsPanel
             `}
           >
             <div className="w-8 h-8 flex-shrink-0 rounded border border-ovh-gray-200 flex items-center justify-center overflow-hidden bg-white">
-              <Image src={el.iconSrc} alt="" width={20} height={20} className="object-contain" unoptimized />
+              <PictoIcon src={el.iconSrc} alt="" width={20} height={20} className="object-contain" />
             </div>
             <span className="text-sm font-medium text-ovh-gray-800 truncate">{el.label}</span>
           </button>

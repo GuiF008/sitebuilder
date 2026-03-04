@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { PageWithSections } from '@/lib/types'
 import { SECTION_LAYOUTS, getSectionTypeById, type LayoutId } from '@/lib/section-layouts'
 import { PICTOS } from '@/lib/pictos'
+import { PictoIcon } from '@/components/shared/PictoIcon'
 
 interface SectionsPanelProps {
   currentPage: PageWithSections | null
@@ -205,23 +206,9 @@ export function SectionsPanel({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     {sectionType?.iconSrc ? (
-                      <Image
-                        src={sectionType.iconSrc}
-                        alt={sectionType.label}
-                        width={20}
-                        height={20}
-                        className="w-5 h-5 object-contain"
-                        unoptimized
-                      />
+                      <PictoIcon src={sectionType.iconSrc} alt={sectionType.label} width={20} height={20} className="w-5 h-5 object-contain" />
                     ) : (
-                      <Image
-                        src={PICTOS['page-query']}
-                        alt="Section"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5 object-contain"
-                        unoptimized
-                      />
+                      <PictoIcon src={PICTOS['page-query']} alt="Section" width={20} height={20} className="w-5 h-5 object-contain" />
                     )}
                     <span className="font-medium text-sm text-ovh-gray-800 truncate">
                       {sectionType?.label || section.type}
@@ -279,7 +266,7 @@ export function SectionsPanel({
                     <div className="grid grid-cols-2 gap-3">
                       {SECTION_TYPES_UI.map((t) => (
                         <button key={t.id} onClick={() => handleTypeSelect(t.id)} className="p-4 text-left hover:bg-ovh-gray-50 flex gap-3 border border-ovh-gray-200 rounded-ovh hover:border-ovh-primary">
-                          <Image src={t.iconSrc} alt={t.label} width={24} height={24} className="w-6 h-6 object-contain" />
+                          <PictoIcon src={t.iconSrc} alt={t.label} width={24} height={24} className="w-6 h-6 object-contain" />
                           <span className="font-medium text-sm text-ovh-gray-800">{t.label}</span>
                         </button>
                       ))}
