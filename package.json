@@ -13,7 +13,9 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "verify:uploads-route": "sh scripts/verify-uploads-route.sh"
+    "verify:uploads-route": "sh scripts/verify-uploads-route.sh",
+    "verify:uploads-after-build": "sh scripts/verify-uploads-after-build.sh",
+    "build:check": "npm run build && npm run verify:uploads-after-build"
   },
   "dependencies": {
     "@prisma/client": "6.19.2",

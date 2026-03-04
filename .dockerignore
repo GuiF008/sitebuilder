@@ -1,4 +1,4 @@
-# Dossier parasite (copie imbriquée)
+# Dossier parasite (copie imbriquée) — ne pas exclure app/ (routes Next.js)
 sitebuilder/
 
 # Dependencies

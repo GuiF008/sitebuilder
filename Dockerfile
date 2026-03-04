@@ -26,6 +26,9 @@ RUN npx prisma generate
 # Build Next.js
 RUN npm run build
 
+# Garde-fou post-build : les routes uploads doivent être dans le build
+RUN npm run verify:uploads-after-build
+
 # Production
 FROM base AS runner
 WORKDIR /app
