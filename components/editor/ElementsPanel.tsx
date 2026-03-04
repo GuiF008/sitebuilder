@@ -3,17 +3,18 @@
 import React from 'react'
 import Image from 'next/image'
 import { ContentBlockType } from '@/lib/types'
+import { PICTOS } from '@/lib/pictos'
 
-// Éléments à afficher (exclus : code incorporé, formulaire abonnement, recherche produit, carte, feed Instagram)
+// Éléments à afficher (même source pictos que le site)
 const ELEMENTS = [
-  { id: 'text', label: 'Texte', blockType: 'text' as ContentBlockType, iconSrc: '/pictos/page-query.png' },
-  { id: 'button', label: 'Bouton', blockType: 'button' as ContentBlockType, iconSrc: '/pictos/cursors.png' },
-  { id: 'image', label: 'Image', blockType: 'image' as ContentBlockType, iconSrc: '/pictos/camera.png' },
-  { id: 'gallery', label: 'Galerie', blockType: 'gallery' as ContentBlockType, iconSrc: '/pictos/camera.png' },
-  { id: 'video', label: 'Vidéo', blockType: 'video' as ContentBlockType, iconSrc: '/pictos/play.png' },
-  { id: 'audio', label: 'Audio', blockType: 'audio' as ContentBlockType, iconSrc: '/pictos/microphone.png' },
-  { id: 'contact-form', label: 'Formulaire de contact', blockType: 'contact-form' as ContentBlockType, iconSrc: '/pictos/contacts.png' },
-  { id: 'social-icons', label: 'Icônes sociales', blockType: 'social-icons' as ContentBlockType, iconSrc: '/pictos/settings.png' },
+  { id: 'text', label: 'Texte', blockType: 'text' as ContentBlockType, iconSrc: PICTOS['page-query'] },
+  { id: 'button', label: 'Bouton', blockType: 'button' as ContentBlockType, iconSrc: PICTOS.cursors },
+  { id: 'image', label: 'Image', blockType: 'image' as ContentBlockType, iconSrc: PICTOS.camera },
+  { id: 'gallery', label: 'Galerie', blockType: 'gallery' as ContentBlockType, iconSrc: PICTOS.camera },
+  { id: 'video', label: 'Vidéo', blockType: 'video' as ContentBlockType, iconSrc: PICTOS.play },
+  { id: 'audio', label: 'Audio', blockType: 'audio' as ContentBlockType, iconSrc: PICTOS.microphone },
+  { id: 'contact-form', label: 'Formulaire de contact', blockType: 'contact-form' as ContentBlockType, iconSrc: PICTOS.contacts },
+  { id: 'social-icons', label: 'Icônes sociales', blockType: 'social-icons' as ContentBlockType, iconSrc: PICTOS.settings },
 ]
 
 interface ElementsPanelProps {
@@ -47,7 +48,7 @@ export function ElementsPanel({ selectedSectionId, onAddElement }: ElementsPanel
             `}
           >
             <div className="w-8 h-8 flex-shrink-0 rounded border border-ovh-gray-200 flex items-center justify-center overflow-hidden bg-white">
-              <Image src={el.iconSrc} alt="" width={20} height={20} className="object-contain" />
+              <Image src={el.iconSrc} alt="" width={20} height={20} className="object-contain" unoptimized />
             </div>
             <span className="text-sm font-medium text-ovh-gray-800 truncate">{el.label}</span>
           </button>

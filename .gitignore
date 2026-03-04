@@ -39,3 +39,6 @@ data/
 
 # Uploads
 uploads/
+
+# Dossier parasite (copie imbriquée)
+sitebuilder/

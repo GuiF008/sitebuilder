@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Image from 'next/image'
 import { PageWithSections } from '@/lib/types'
 import { SECTION_LAYOUTS, getSectionTypeById, type LayoutId } from '@/lib/section-layouts'
+import { PICTOS } from '@/lib/pictos'
 
 interface SectionsPanelProps {
   currentPage: PageWithSections | null
@@ -17,20 +18,20 @@ interface SectionsPanelProps {
   showElementsList?: boolean
 }
 
-// Types de sections avec icônes
+// Types de sections avec icônes (même source pictos que le reste du site)
 const SECTION_TYPES_UI = [
-  { id: 'hero', label: 'Hero', iconSrc: '/pictos/trophy.png' },
-  { id: 'about', label: 'À propos', iconSrc: '/pictos/page-script.png' },
-  { id: 'text', label: 'Texte', iconSrc: '/pictos/page-query.png' },
-  { id: 'image-text', label: 'Image + Texte', iconSrc: '/pictos/camera.png' },
-  { id: 'services', label: 'Services', iconSrc: '/pictos/settings.png' },
-  { id: 'gallery', label: 'Galerie', iconSrc: '/pictos/camera.png' },
-  { id: 'contact', label: 'Contact', iconSrc: '/pictos/contacts.png' },
-  { id: 'testimonials', label: 'Témoignages', iconSrc: '/pictos/contacts.png' },
-  { id: 'team', label: 'Équipe', iconSrc: '/pictos/page-script.png' },
-  { id: 'features', label: 'Fonctionnalités', iconSrc: '/pictos/settings.png' },
-  { id: 'blog', label: 'Blog', iconSrc: '/pictos/book.png' },
-  { id: 'process', label: 'Processus', iconSrc: '/pictos/settings.png' },
+  { id: 'hero', label: 'Hero', iconSrc: PICTOS.trophy },
+  { id: 'about', label: 'À propos', iconSrc: PICTOS['page-script'] },
+  { id: 'text', label: 'Texte', iconSrc: PICTOS['page-query'] },
+  { id: 'image-text', label: 'Image + Texte', iconSrc: PICTOS.camera },
+  { id: 'services', label: 'Services', iconSrc: PICTOS.settings },
+  { id: 'gallery', label: 'Galerie', iconSrc: PICTOS.camera },
+  { id: 'contact', label: 'Contact', iconSrc: PICTOS.contacts },
+  { id: 'testimonials', label: 'Témoignages', iconSrc: PICTOS.contacts },
+  { id: 'team', label: 'Équipe', iconSrc: PICTOS['page-script'] },
+  { id: 'features', label: 'Fonctionnalités', iconSrc: PICTOS.settings },
+  { id: 'blog', label: 'Blog', iconSrc: PICTOS.book },
+  { id: 'process', label: 'Processus', iconSrc: PICTOS.settings },
 ]
 
 // Éléments (composants) selon le spec : Texte, Bouton, Image, Galerie, Vidéo, Forme, Carte, Feed Instagram, etc.
@@ -210,14 +211,16 @@ export function SectionsPanel({
                         width={20}
                         height={20}
                         className="w-5 h-5 object-contain"
+                        unoptimized
                       />
                     ) : (
                       <Image
-                        src="/pictos/page-query.png"
+                        src={PICTOS['page-query']}
                         alt="Section"
                         width={20}
                         height={20}
                         className="w-5 h-5 object-contain"
+                        unoptimized
                       />
                     )}
                     <span className="font-medium text-sm text-ovh-gray-800 truncate">

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { SiteWithRelations, PageWithSections, ComputedTheme, ContentBlock, ContentBlockType, CONTENT_BLOCK_TYPES } from '@/lib/types'
+import { PICTOS } from '@/lib/pictos'
 import { ColorPicker } from '@/components/ui'
 
 type EditorTab = 'content' | 'style'
@@ -544,14 +545,16 @@ export function SectionEditorModal({
                         width={20}
                         height={20}
                         className="w-5 h-5 object-contain"
+                        unoptimized
                       />
                     ) : (
                       <Image
-                        src="/pictos/page-query.png"
+                        src={PICTOS['page-query']}
                         alt="Bloc"
                         width={20}
                         height={20}
                         className="w-5 h-5 object-contain"
+                        unoptimized
                       />
                     )
                   })()}
@@ -1083,14 +1086,16 @@ export function SectionEditorModal({
                           width={24}
                           height={24}
                           className="w-6 h-6 object-contain"
+                          unoptimized
                         />
                       ) : (
                         <Image
-                          src="/pictos/page-query.png"
+                          src={PICTOS['page-query']}
                           alt="Bloc"
                           width={24}
                           height={24}
                           className="w-6 h-6 object-contain"
+                          unoptimized
                         />
                       )}
                       <div>

@@ -1,4 +1,5 @@
 import { Site, Page, Section, SiteTheme, Media, PublishState, EditToken } from '@prisma/client'
+import { PICTOS } from '@/lib/pictos'
 
 // Site avec toutes les relations
 export type SiteWithRelations = Site & {
@@ -164,16 +165,16 @@ export interface FlexibleSectionData {
   sectionStyles?: SectionStyles
 }
 
-// Types de blocs disponibles avec leurs métadonnées
+// Types de blocs disponibles avec leurs métadonnées (même source pictos que le site)
 export const CONTENT_BLOCK_TYPES = [
-  { type: 'title' as ContentBlockType, label: 'Titre', iconSrc: '/pictos/page-script.png', description: 'Titre principal' },
-  { type: 'subtitle' as ContentBlockType, label: 'Sous-titre', iconSrc: '/pictos/page-info.png', description: 'Sous-titre ou accroche' },
-  { type: 'text' as ContentBlockType, label: 'Texte', iconSrc: '/pictos/page-query.png', description: 'Paragraphe de texte' },
-  { type: 'image' as ContentBlockType, label: 'Image', iconSrc: '/pictos/camera.png', description: 'Image depuis la médiathèque' },
-  { type: 'video' as ContentBlockType, label: 'Vidéo', iconSrc: '/pictos/play.png', description: 'Vidéo depuis la médiathèque' },
-  { type: 'audio' as ContentBlockType, label: 'Audio', iconSrc: '/pictos/microphone.png', description: 'Fichier audio' },
-  { type: 'button' as ContentBlockType, label: 'Bouton', iconSrc: '/pictos/cursors.png', description: 'Bouton d\'action' },
-  { type: 'gallery' as ContentBlockType, label: 'Galerie', iconSrc: '/pictos/camera.png', description: 'Grille d\'images' },
-  { type: 'contact-form' as ContentBlockType, label: 'Formulaire de contact', iconSrc: '/pictos/contacts.png', description: 'Formulaire de contact' },
-  { type: 'social-icons' as ContentBlockType, label: 'Icônes sociales', iconSrc: '/pictos/settings.png', description: 'Liens réseaux sociaux' },
+  { type: 'title' as ContentBlockType, label: 'Titre', iconSrc: PICTOS['page-script'], description: 'Titre principal' },
+  { type: 'subtitle' as ContentBlockType, label: 'Sous-titre', iconSrc: PICTOS['page-info'], description: 'Sous-titre ou accroche' },
+  { type: 'text' as ContentBlockType, label: 'Texte', iconSrc: PICTOS['page-query'], description: 'Paragraphe de texte' },
+  { type: 'image' as ContentBlockType, label: 'Image', iconSrc: PICTOS.camera, description: 'Image depuis la médiathèque' },
+  { type: 'video' as ContentBlockType, label: 'Vidéo', iconSrc: PICTOS.play, description: 'Vidéo depuis la médiathèque' },
+  { type: 'audio' as ContentBlockType, label: 'Audio', iconSrc: PICTOS.microphone, description: 'Fichier audio' },
+  { type: 'button' as ContentBlockType, label: 'Bouton', iconSrc: PICTOS.cursors, description: 'Bouton d\'action' },
+  { type: 'gallery' as ContentBlockType, label: 'Galerie', iconSrc: PICTOS.camera, description: 'Grille d\'images' },
+  { type: 'contact-form' as ContentBlockType, label: 'Formulaire de contact', iconSrc: PICTOS.contacts, description: 'Formulaire de contact' },
+  { type: 'social-icons' as ContentBlockType, label: 'Icônes sociales', iconSrc: PICTOS.settings, description: 'Liens réseaux sociaux' },
 ]

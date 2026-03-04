@@ -1,0 +1,37 @@
+# Dossier parasite (copie imbriquée)
+sitebuilder/
+
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Next.js
+.next
+out
+build
+
+# Git
+.git
+.gitignore
+
+# IDE / misc
+.DS_Store
+*.md
+!README.md
+
+# Env
+.env
+.env*.local
+
+# Testing
+coverage
+*.test.*
+*.spec.*
+tests/
+
+# Prisma
+data/
+
+# Uploads locaux
+uploads/

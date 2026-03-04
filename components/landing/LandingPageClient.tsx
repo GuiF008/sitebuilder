@@ -6,14 +6,15 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { themePresets, getThemesForGoal } from '@/lib/themes/presets'
 import { Button, Input, Card, ProgressSteps } from '@/components/ui'
+import { PICTOS } from '@/lib/pictos'
 
 const STEPS = ['Identité', 'Objectif', 'Thème', 'Contenu']
 
 const GOALS = [
-  { id: 'vitrine', iconSrc: '/pictos/house.png', label: 'Vitrine', description: 'Présenter mon activité' },
-  { id: 'portfolio', iconSrc: '/pictos/camera.png', label: 'Portfolio', description: 'Montrer mes créations' },
-  { id: 'blog', iconSrc: '/pictos/book.png', label: 'Blog', description: 'Partager mes actualités' },
-  { id: 'ecommerce', iconSrc: '/pictos/cart.png', label: 'Boutique', description: 'Vendre en ligne' },
+  { id: 'vitrine', iconSrc: PICTOS.house, label: 'Vitrine', description: 'Présenter mon activité' },
+  { id: 'portfolio', iconSrc: PICTOS.camera, label: 'Portfolio', description: 'Montrer mes créations' },
+  { id: 'blog', iconSrc: PICTOS.book, label: 'Blog', description: 'Partager mes actualités' },
+  { id: 'ecommerce', iconSrc: PICTOS.cart, label: 'Boutique', description: 'Vendre en ligne' },
 ]
 
 const SECTIONS = [
@@ -173,10 +174,11 @@ export function LandingPageClient({ initialStep = 0 }: LandingPageClientProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center w-full">
             <div className="order-2 md:order-1 min-w-0">
               <Image
-                src="/hosting-hero.webp"
+                src="/hosting-hero.png"
+                unoptimized
                 alt="Créer votre site web"
                 width={600}
-                height={600}
+                height={400}
                 className="w-full h-auto rounded-lg object-contain"
                 priority
               />
@@ -279,6 +281,7 @@ export function LandingPageClient({ initialStep = 0 }: LandingPageClientProps) {
                           width={48}
                           height={48}
                           className="w-12 h-12 object-contain"
+                          unoptimized
                         />
                         <div>
                           <div className="font-semibold text-ovh-gray-900">{g.label}</div>
@@ -417,17 +420,17 @@ export function LandingPageClient({ initialStep = 0 }: LandingPageClientProps) {
               </h2>
               <div className="grid md:grid-cols-3 gap-8">
                 <FeatureCard
-                  iconSrc="/pictos/speed.png"
+                  iconSrc={PICTOS.speed}
                   title="En 5 minutes"
                   description="Un parcours guidé en 5 étapes pour créer votre site. Pas besoin d'être expert."
                 />
                 <FeatureCard
-                  iconSrc="/pictos/brush.png"
+                  iconSrc={PICTOS.brush}
                   title="Personnalisable"
                   description="Modifiez les couleurs, les polices et le contenu en temps réel."
                 />
                 <FeatureCard
-                  iconSrc="/pictos/mobile.png"
+                  iconSrc={PICTOS.mobile}
                   title="Responsive"
                   description="Votre site s'adapte automatiquement à tous les écrans."
                 />
@@ -486,6 +489,7 @@ function FeatureCard({
           width={64}
           height={64}
           className="w-16 h-16 object-contain"
+          unoptimized
         />
       </div>
       <h3 className="text-xl font-semibold text-ovh-gray-900 mb-2">{title}</h3>

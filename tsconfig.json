@@ -23,11 +23,10 @@
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": [
-  "node_modules",
-  "tests",
-  "test-results",
-  "sitebuilder/tests",
-  "sitebuilder/test-results",
-  "**/*.e2e.ts"
-]
+    "node_modules",
+    "tests",
+    "test-results",
+    "sitebuilder",
+    "**/*.e2e.ts"
+  ]
 }

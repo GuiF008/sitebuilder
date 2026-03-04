@@ -10,6 +10,7 @@ import { AiToolsPanel } from './AiToolsPanel'
 import { ElementsPanel } from './ElementsPanel'
 import { SiteWithRelations, PageWithSections } from '@/lib/types'
 import { ComputedTheme, ContentBlockType } from '@/lib/types'
+import { PICTOS } from '@/lib/pictos'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -39,11 +40,11 @@ interface SettingsModalProps {
 type TabId = 'pages' | 'elements' | 'styles' | 'ai' | 'library'
 
 const TABS: { id: TabId; iconSrc: string; label: string; badge?: string }[] = [
-  { id: 'pages', iconSrc: '/pictos/book.png', label: 'Pages' },
-  { id: 'elements', iconSrc: '/pictos/cursors.png', label: 'Éléments' },
-  { id: 'styles', iconSrc: '/pictos/brush.png', label: 'Styles' },
-  { id: 'ai', iconSrc: '/pictos/trophy.png', label: 'Outils IA', badge: 'SOON' },
-  { id: 'library', iconSrc: '/pictos/camera.png', label: 'Bibliothèque' },
+  { id: 'pages', iconSrc: PICTOS.book, label: 'Pages' },
+  { id: 'elements', iconSrc: PICTOS.cursors, label: 'Éléments' },
+  { id: 'styles', iconSrc: PICTOS.brush, label: 'Styles' },
+  { id: 'ai', iconSrc: PICTOS.trophy, label: 'Outils IA', badge: 'SOON' },
+  { id: 'library', iconSrc: PICTOS.camera, label: 'Bibliothèque' },
 ]
 
 
@@ -190,6 +191,7 @@ export function SettingsModal({
                 width={24}
                 height={24}
                 className={`w-6 h-6 object-contain transition-transform ${isActive ? 'scale-110' : ''}`}
+                unoptimized
               />
               <span className={`text-[10px] leading-tight flex items-center gap-1 justify-center ${isActive ? 'font-semibold' : 'font-medium'}`}>
                 {tab.label}

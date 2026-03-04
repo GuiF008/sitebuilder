@@ -27,21 +27,9 @@ function getDefaultSectionData(type: string, siteName: string): object {
       return {
         title: 'Nos services',
         services: [
-          {
-            iconSrc: '/pictos/trophy.png',
-            title: 'Conseil',
-            description: 'Un accompagnement personnalisé pour vos projets',
-          },
-          {
-            iconSrc: '/pictos/speed.png',
-            title: 'Réactivité',
-            description: 'Une équipe disponible et réactive',
-          },
-          {
-            iconSrc: '/pictos/star.png',
-            title: 'Qualité',
-            description: 'Un travail soigné et des finitions parfaites',
-          },
+          { iconSrc: '/pictos/trophy.svg', title: 'Conseil', description: 'Un accompagnement personnalisé pour vos projets' },
+          { iconSrc: '/pictos/speed.svg', title: 'Réactivité', description: 'Une équipe disponible et réactive' },
+          { iconSrc: '/pictos/star.svg', title: 'Qualité', description: 'Un travail soigné et des finitions parfaites' },
         ],
       }
     case 'gallery':
@@ -139,7 +127,7 @@ export function generateStarterSections(
             ...baseData,
             subtitle: 'Hébergé par OVHcloud — fiable et sécurisé',
             ctaText: 'Commencer',
-            imageSrc: '/hosting-hero.webp',
+            imageSrc: '/hosting-hero.png',
           }
         }
 

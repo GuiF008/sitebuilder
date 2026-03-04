@@ -560,7 +560,7 @@ export function SectionInlineSettingsModal({
                         }`}
                         title={p.label}
                       >
-                        <Image src={p.iconSrc} alt={p.label} width={24} height={24} className="w-5 h-5 object-contain" />
+                        <Image src={p.iconSrc} alt={p.label} width={24} height={24} className="w-5 h-5 object-contain" unoptimized />
                       </button>
                     ))}
                   </div>

@@ -16,6 +16,7 @@ import { safeJsonParse } from '@/lib/utils'
 import { BlockRenderer, type BlockData } from '@/components/shared/BlockRenderer'
 import { BlockSettingsModal } from '@/components/editor/BlockSettingsModal'
 import { getThemeBranding } from '@/lib/themes/branding'
+import { PICTOS } from '@/lib/pictos'
 import { SocialIconLogo } from '@/components/shared/SocialIconLogo'
 
 export default function EditorPage() {
@@ -876,11 +877,12 @@ export default function EditorPage() {
           {saveStatus === 'idle' && (
             <span className="text-ovh-gray-400 flex items-center gap-1">
               <Image
-                src="/pictos/check.png"
+                src={PICTOS.check}
                 alt=""
                 width={14}
                 height={14}
                 className="w-3.5 h-3.5 object-contain opacity-60"
+                unoptimized
               />
               Modifications en temps réel
             </span>
@@ -1259,7 +1261,7 @@ function SectionPreview({
                   >
                     {service.iconSrc ? (
                       <div className="flex justify-center mb-4">
-                        <Image src={service.iconSrc} alt={service.title} width={48} height={48} className="w-12 h-12 object-contain" />
+                        <Image src={service.iconSrc.replace(/\/pictos\/(.+)\.png$/, '/pictos/$1.svg')} alt={service.title} width={48} height={48} className="w-12 h-12 object-contain" unoptimized />
                       </div>
                     ) : service.icon ? (
                       <div className="text-4xl mb-4">{service.icon}</div>

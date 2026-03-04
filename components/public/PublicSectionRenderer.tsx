@@ -183,7 +183,7 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
                 <div key={i} className="p-6 rounded-lg text-center" style={{ backgroundColor: `${theme.colors.primary}10` }}>
                   {service.iconSrc ? (
                     <div className="flex justify-center mb-4">
-                      <Image src={service.iconSrc} alt={service.title} width={48} height={48} className="w-12 h-12 object-contain" />
+                      <Image src={service.iconSrc.replace(/\/pictos\/(.+)\.png$/, '/pictos/$1.svg')} alt={service.title} width={48} height={48} className="w-12 h-12 object-contain" unoptimized />
                     </div>
                   ) : service.icon ? (
                     <div className="text-4xl mb-4">{service.icon}</div>
