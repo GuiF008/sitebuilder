@@ -17,9 +17,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Copie explicite des routes uploads (au cas où "uploads/" les aurait exclues)
-COPY app/api/uploads ./app/api/uploads
-
 # Garde-fou : la route GET /api/uploads doit être présente avant le build
 RUN npm run verify:uploads-route
 

@@ -33,7 +33,5 @@ tests/
 # Prisma
 data/
 
-# Dossier uploads à la racine (fichiers utilisateur) — ne pas exclure app/api/uploads/ (routes API)
-uploads/
-!app/api/uploads/
-!app/api/uploads/**
+# Ne pas exclure "uploads" : ça exclurait aussi app/api/uploads/ (routes API).
+# Le dossier racine uploads/ sera dans le contexte mais pas dans l'image finale (runner ne le copie pas).
