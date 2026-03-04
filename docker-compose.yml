@@ -8,6 +8,7 @@ services:
     environment:
       - DATABASE_URL=file:/app/data/sitebuilder.db
       - NODE_ENV=production
+      - UPLOADS_DIR=/app/uploads
     volumes:
       - sitebuilder-data:/app/data
       - sitebuilder-uploads:/app/uploads

@@ -258,14 +258,23 @@ docker compose down -v
 docker compose up -d --build
 ```
 
-## Images sur le VPS
+## Médias (images, vidéos, audio) sur le VPS
 
-Les images uploadées sont stockées dans le volume `sitebuilder-uploads` (monté sur `/app/uploads`).  
-Elles sont servies via la route `/uploads/{siteId}/{filename}` (rewrite vers `/api/uploads/`).
+Les fichiers uploadés (drag & drop) sont stockés sur le storage persistant du VPS dans le dossier `/app/uploads` (volume Docker `sitebuilder-uploads`).
 
-**Important** : Le volume doit être correctement monté pour que les images persistent entre redémarrages. Vérifiez que votre `docker-compose.yml` contient :
+### Flux de requête
+- **Upload** : `POST /api/sites/<siteId>/media` → fichier écrit dans `UPLOADS_DIR/siteId/filename` (défini par `UPLOADS_DIR=/app/uploads` en prod).
+- **Lecture** : `GET /uploads/<siteId>/<filename>` → Next.js réécrit vers `/api/uploads/<siteId>/<filename>` qui stream le fichier depuis le dossier uploads du serveur.
+- Les URLs renvoyées sont du type `/uploads/<siteId>/<filename>` et fonctionnent en local et sur le VPS.
+
+### Variables d'environnement
+- `UPLOADS_DIR` : chemin du dossier d'uploads (ex: `/app/uploads` en prod). Si absent, fallback sur `process.cwd()/uploads`.
+
+**Important** : Le volume doit être correctement monté pour que les médias persistent entre redémarrages. Vérifiez que votre `docker-compose.yml` contient :
 
 ```yaml
+environment:
+  - UPLOADS_DIR=/app/uploads
 volumes:
   - sitebuilder-uploads:/app/uploads
 ```
@@ -275,6 +284,28 @@ volumes:
 1. **Permissions Docker** : L'image inclut un entrypoint qui fixe les permissions de `/app/uploads` au démarrage. Si les uploads échouent (erreur visible à l'écran), vérifiez les logs : `docker compose logs app`
 2. **Volume vide après rebuild** : Un `docker compose up -d --build` recrée l'image mais préserve les volumes. Les anciens fichiers restent.
 3. **Tester l'upload** : Glissez-déposez une petite image (< 1 Mo). Si une alerte s'affiche, lisez le message d'erreur.
+
+### Procédure manuelle de validation (curl)
+
+Pour vérifier que l'upload et le service des fichiers fonctionnent :
+
+```bash
+# 1. Obtenir un SITE_ID (ex: depuis prisma studio, ou via la BDD)
+#    npx prisma studio  → table Site → copier un id
+
+# 2. Lancer le smoke test (l'app doit être démarrée : npm run dev ou docker)
+SITE_ID=<votre-site-uuid> ./scripts/test-upload-smoke.sh
+
+# En prod (VPS) :
+BASE_URL=https://sitebuilder.votre-domaine.com SITE_ID=<uuid> ./scripts/test-upload-smoke.sh
+```
+
+Le script :
+1. Upload un mini PNG via `POST /api/sites/<id>/media`
+2. Récupère l'URL renvoyée (`media.url`)
+3. Fait un `GET` sur cette URL et vérifie status 200 + Content-Type `image/*`
+
+En cas de succès : `=== Smoke test réussi ===`
 
 ## Architecture de production recommandée
 

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
+import { getUploadsRoot } from '@/lib/uploads'
 import { v4 as uuidv4 } from 'uuid'
 import { apiHandler, ApiError } from '@/lib/api-helpers'
 import { sanitizeFilename } from '@/lib/utils'
@@ -149,8 +150,8 @@ export async function POST(
     const sanitizedExt = sanitizeFilename(originalExt)
     const filename = `${uuidv4()}.${sanitizedExt}`
 
-    // Create upload directory
-    const uploadDir = join(process.cwd(), 'uploads', id)
+    // Create upload directory (utilise UPLOADS_DIR en prod ou process.cwd()/uploads)
+    const uploadDir = join(getUploadsRoot(), id)
     await mkdir(uploadDir, { recursive: true })
 
     // Vérifier que le site existe
