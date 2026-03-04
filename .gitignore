@@ -37,8 +37,8 @@ next-env.d.ts
 # Prisma
 data/
 
-# Uploads
-uploads/
+# Uploads (dossier racine uniquement — ne pas ignorer app/api/uploads/)
+/uploads/
 
 # Dossier parasite (copie imbriquée)
 sitebuilder/
