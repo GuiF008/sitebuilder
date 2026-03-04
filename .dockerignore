@@ -33,5 +33,7 @@ tests/
 # Prisma
 data/
 
-# Uploads locaux (racine uniquement — ne pas exclure app/api/uploads/)
-/uploads/
+# Dossier uploads à la racine (fichiers utilisateur) — ne pas exclure app/api/uploads/ (routes API)
+uploads/
+!app/api/uploads/
+!app/api/uploads/**
