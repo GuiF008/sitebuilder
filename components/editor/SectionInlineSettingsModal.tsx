@@ -5,8 +5,11 @@ import { createPortal } from 'react-dom'
 import { safeJsonParse } from '@/lib/utils'
 import { SectionStyles } from '@/lib/types'
 import { ColorPickerModal } from '@/components/ui'
+import Image from 'next/image'
+import { SOCIAL_PLATFORMS } from '@/lib/social-platforms'
+import { SERVICE_PICTOS } from '@/lib/service-pictos'
 
-type TabId = 'background'
+type TabId = 'background' | 'content'
 type BgSubTab = 'color' | 'image' | 'video'
 type ColorMode = 'solid' | 'gradient'
 type ColorPickerTarget = 'bg' | 'grad1' | 'grad2' | 'overlay'
@@ -83,6 +86,13 @@ export function SectionInlineSettingsModal({
     })
   }
 
+  const updateFooterData = (updates: Record<string, unknown>) => {
+    onUpdate(section.id, { ...data, ...updates })
+  }
+
+  const updateSectionData = (updates: Record<string, unknown>) => {
+    onUpdate(section.id, { ...data, ...updates })
+  }
 
   const themeSwatches = [
     theme.colors.background, theme.colors.text, theme.colors.primary,
@@ -408,8 +418,43 @@ export function SectionInlineSettingsModal({
           </svg>
         </button>
 
-        {/* Éditer le contenu */}
-        {onEdit && (
+        {/* Contenu (footer, services, galerie) */}
+        {(section.type === 'footer' || section.type === 'services' || section.type === 'gallery') && (
+          <button
+            type="button"
+            onClick={() => setActiveTab(activeTab === 'content' ? null : 'content')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${
+              activeTab === 'content'
+                ? 'border-ovh-primary bg-ovh-primary/5'
+                : 'border-ovh-gray-200 hover:border-ovh-gray-300 hover:bg-ovh-gray-50'
+            }`}
+          >
+            <div className="w-10 h-10 rounded-lg bg-ovh-primary/10 border-2 border-ovh-primary/30 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-ovh-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className={`font-semibold block ${activeTab === 'content' ? 'text-ovh-primary' : 'text-ovh-gray-800'}`}>
+                Contenu
+              </span>
+              <p className="text-xs text-ovh-gray-500 mt-0.5">
+                {section.type === 'footer' ? 'Contact, réseaux sociaux' : section.type === 'services' ? 'Pictos, titres, descriptions' : 'Images de la galerie'}
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-ovh-gray-400 flex-shrink-0 transition-transform ${activeTab === 'content' ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        )}
+
+        {/* Éditer le contenu (blocs) - masqué pour services/galerie gérés par l'onglet Contenu */}
+        {onEdit && section.type !== 'services' && section.type !== 'gallery' && (
           <button
             type="button"
             onClick={onEdit}
@@ -466,6 +511,250 @@ export function SectionInlineSettingsModal({
                 <p className="text-[10px] text-ovh-gray-500 group-hover:text-red-600/80 leading-tight">Retirer la section</p>
               </div>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Contenu Services (pictos, titres, descriptions) */}
+      {activeTab === 'content' && section.type === 'services' && (
+        <div className="px-4 py-4 mt-2 border-t border-ovh-gray-100 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-ovh-gray-600 mb-2">Titre de section</label>
+            <input
+              type="text"
+              value={(data.title as string) || 'Nos services'}
+              onChange={(e) => updateSectionData({ title: e.target.value })}
+              placeholder="Nos services"
+              className="w-full px-3 py-2 text-sm border border-ovh-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ovh-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-ovh-gray-600 mb-2">Sous-titre</label>
+            <input
+              type="text"
+              value={(data.subtitle as string) || ''}
+              onChange={(e) => updateSectionData({ subtitle: e.target.value })}
+              placeholder="Sous-titre"
+              className="w-full px-3 py-2 text-sm border border-ovh-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ovh-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-ovh-gray-600 mb-2">Services</label>
+            {((data.services as Array<{ iconSrc?: string; icon?: string; title: string; description: string }>) || []).map((svc, i) => {
+              const services = (data.services as Array<{ iconSrc?: string; icon?: string; title: string; description: string }>) || []
+              return (
+                <div key={i} className="mb-4 p-3 border border-ovh-gray-200 rounded-lg space-y-2">
+                  <p className="text-[10px] font-medium text-ovh-gray-500 uppercase">Service {i + 1}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {SERVICE_PICTOS.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          const next = [...services]
+                          next[i] = { ...next[i], iconSrc: p.iconSrc, title: next[i]?.title || '', description: next[i]?.description || '' }
+                          updateSectionData({ services: next })
+                        }}
+                        className={`w-9 h-9 rounded-lg border-2 flex items-center justify-center overflow-hidden transition-all ${
+                          svc.iconSrc === p.iconSrc ? 'border-ovh-primary ring-2 ring-ovh-primary/30' : 'border-ovh-gray-200 hover:border-ovh-gray-300'
+                        }`}
+                        title={p.label}
+                      >
+                        <Image src={p.iconSrc} alt={p.label} width={24} height={24} className="w-5 h-5 object-contain" />
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={svc.title}
+                    onChange={(e) => {
+                      const next = [...services]
+                      next[i] = { ...next[i], title: e.target.value }
+                      updateSectionData({ services: next })
+                    }}
+                    placeholder="Titre du service"
+                    className="w-full px-2 py-1.5 text-sm border border-ovh-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-ovh-primary"
+                  />
+                  <input
+                    type="text"
+                    value={svc.description}
+                    onChange={(e) => {
+                      const next = [...services]
+                      next[i] = { ...next[i], description: e.target.value }
+                      updateSectionData({ services: next })
+                    }}
+                    placeholder="Description"
+                    className="w-full px-2 py-1.5 text-sm border border-ovh-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-ovh-primary"
+                  />
+                  {services.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = services.filter((_, idx) => idx !== i)
+                        updateSectionData({ services: next })
+                      }}
+                      className="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded"
+                    >
+                      Supprimer
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+            {((data.services as Array<unknown>) || []).length < 6 && (
+              <button
+                type="button"
+                onClick={() => updateSectionData({ services: [...((data.services as Array<{ iconSrc?: string; title: string; description: string }>) || []), { iconSrc: SERVICE_PICTOS[0].iconSrc, title: 'Nouveau service', description: '' }] })}
+                className="mt-2 text-sm text-ovh-primary hover:underline"
+              >
+                + Ajouter un service
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Contenu Galerie (images) */}
+      {activeTab === 'content' && section.type === 'gallery' && (
+        <div className="px-4 py-4 mt-2 border-t border-ovh-gray-100 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-ovh-gray-600 mb-2">Titre</label>
+            <input
+              type="text"
+              value={(data.title as string) || 'Galerie'}
+              onChange={(e) => updateSectionData({ title: e.target.value })}
+              placeholder="Galerie"
+              className="w-full px-3 py-2 text-sm border border-ovh-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ovh-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-ovh-gray-600 mb-2">Images ({((data.images as Array<{ url: string }>) || []).length})</label>
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              {((data.images as Array<{ url: string; alt?: string }>) || []).map((img, i) => (
+                <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-ovh-gray-200">
+                  <img src={img.url} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = ((data.images as Array<{ url: string; alt?: string }>) || []).filter((_, idx) => idx !== i)
+                      updateSectionData({ images: next })
+                    }}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-ovh-gray-500 mb-2">Ajoutez des images depuis la bibliothèque (onglet Bibliothèque)</p>
+            <div className="grid grid-cols-3 gap-2">
+              {siteMedia.filter(m => m.type === 'image' || !m.type).map((m) => {
+                const images = (data.images as Array<{ url: string }>) || []
+                const isInGallery = images.some(img => img.url === m.url)
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => {
+                      if (isInGallery) {
+                        updateSectionData({ images: images.filter(img => img.url !== m.url) })
+                      } else {
+                        updateSectionData({ images: [...images, { url: m.url, alt: m.originalName || m.filename || '' }] })
+                      }
+                    }}
+                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                      isInGallery ? 'border-ovh-primary ring-2 ring-ovh-primary/30' : 'border-ovh-gray-200 hover:border-ovh-gray-300'
+                    }`}
+                  >
+                    <img src={m.url} alt="" className="w-full h-full object-cover" />
+                    {isInGallery && <span className="absolute top-0.5 left-0.5 bg-ovh-primary text-white text-[10px] px-1 rounded">✓</span>}
+                  </button>
+                )
+              })}
+            </div>
+            {siteMedia.filter(m => m.type === 'image' || !m.type).length === 0 && (
+              <p className="text-xs text-ovh-gray-500">Aucune image. Uploadez des fichiers dans l&apos;onglet Bibliothèque.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Contenu Footer (contact, réseaux sociaux) */}
+      {activeTab === 'content' && section.type === 'footer' && (
+        <div className="px-4 py-4 mt-2 border-t border-ovh-gray-100 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-ovh-gray-600 mb-1">Email</label>
+            <input
+              type="text"
+              value={(data.email as string) || ''}
+              onChange={(e) => updateFooterData({ email: e.target.value })}
+              placeholder="contact@example.com"
+              className="w-full px-3 py-2 text-sm border border-ovh-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ovh-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-ovh-gray-600 mb-1">Téléphone</label>
+            <input
+              type="text"
+              value={(data.phone as string) || ''}
+              onChange={(e) => updateFooterData({ phone: e.target.value })}
+              placeholder="+33 1 23 45 67 89"
+              className="w-full px-3 py-2 text-sm border border-ovh-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ovh-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-ovh-gray-600 mb-2">Réseaux sociaux</label>
+            <div className="space-y-2">
+              {((data.socialIcons as Array<{ platform: string; url: string }>) || []).map((icon, i) => {
+                const platform = SOCIAL_PLATFORMS.find((p) => p.id === icon.platform)
+                return (
+                  <div key={i} className="flex items-center gap-2">
+                    <span
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                      style={{ backgroundColor: platform?.color || '#6B7280' }}
+                    >
+                      {icon.platform.charAt(0).toUpperCase()}
+                    </span>
+                    <input
+                      type="text"
+                      value={icon.url}
+                      onChange={(e) => {
+                        const next = [...((data.socialIcons as Array<{ platform: string; url: string }>) || [])]
+                        next[i] = { ...next[i], url: e.target.value }
+                        updateFooterData({ socialIcons: next })
+                      }}
+                      placeholder={`URL ${platform?.label || icon.platform}`}
+                      className="flex-1 px-2 py-1.5 text-sm border border-ovh-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-ovh-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = ((data.socialIcons as Array<{ platform: string; url: string }>) || []).filter((_, idx) => idx !== i)
+                        updateFooterData({ socialIcons: next })
+                      }}
+                      className="p-1 text-red-500 hover:bg-red-50 rounded"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {SOCIAL_PLATFORMS.filter((p) => !((data.socialIcons as Array<{ platform: string; url: string }>) || []).some((i) => i.platform === p.id)).map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => updateFooterData({ socialIcons: [...((data.socialIcons as Array<{ platform: string; url: string }>) || []), { platform: p.id, url: '' }] })}
+                  className="flex items-center gap-1 px-2 py-1 border border-ovh-gray-200 rounded-lg text-xs hover:border-ovh-primary transition-colors"
+                >
+                  <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getDefaultBlocksForSection, getSectionTypeById, type LayoutId, type SectionTypeId } from '@/lib/section-layouts'
+import { SERVICE_PICTOS } from '@/lib/service-pictos'
 
 // Créer une nouvelle section
 export async function POST(
@@ -54,8 +55,18 @@ export async function POST(
       about: { title: 'À propos', content: 'Votre texte ici...', image: '' },
       text: { title: 'Titre', subtitle: 'Sous-titre', content: 'Votre contenu ici...' },
       'image-text': { title: 'Titre', subtitle: 'Sous-titre', content: 'Votre contenu ici...', image: '' },
-      services: { title: 'Nos services', services: [{ icon: '⚙️', title: 'Service 1', description: 'Description' }], images: [] },
-      gallery: { title: 'Galerie', images: [] },
+      services: {
+        title: 'Nos services',
+        subtitle: 'Sous-titre',
+        content: 'Votre contenu ici...',
+        services: [
+          { iconSrc: SERVICE_PICTOS[0].iconSrc, title: 'Conseil', description: 'Un accompagnement personnalisé pour vos projets' },
+          { iconSrc: SERVICE_PICTOS[1].iconSrc, title: 'Réactivité', description: 'Une équipe disponible et réactive' },
+          { iconSrc: SERVICE_PICTOS[2].iconSrc, title: 'Qualité', description: 'Un travail soigné et des finitions parfaites' },
+        ],
+        images: [],
+      },
+      gallery: { title: 'Galerie', subtitle: 'Sous-titre', content: 'Votre contenu ici...', images: [] },
       contact: { title: 'Contact', email: '', image: '' },
       testimonials: { title: 'Témoignages', testimonials: [], image: '' },
       team: { title: 'Notre équipe', members: [], images: [] },
@@ -65,10 +76,14 @@ export async function POST(
     }
     const baseData = { ...(baseDefaults[type] || { title: 'Titre', content: 'Contenu' }) }
 
-    // Générer les blocs selon le type et la mise en page pour afficher le contenu
+    // Générer les blocs selon le type et la mise en page
+    // Services et Galerie : pas de blocs, contenu géré par data.services / data.images
     const sectionType = getSectionTypeById(type as SectionTypeId)
     const layoutId = (sectionLayout || sectionType?.defaultLayout || 'bravo') as LayoutId
-    const blocks = getDefaultBlocksForSection(type as SectionTypeId, layoutId, baseData)
+    const useBlocks = type !== 'services' && type !== 'gallery'
+    const blocks = useBlocks
+      ? getDefaultBlocksForSection(type as SectionTypeId, layoutId, baseData)
+      : []
 
     const defaults = {
       ...baseData,

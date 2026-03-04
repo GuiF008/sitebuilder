@@ -16,6 +16,7 @@ import { safeJsonParse } from '@/lib/utils'
 import { BlockRenderer, type BlockData } from '@/components/shared/BlockRenderer'
 import { BlockSettingsModal } from '@/components/editor/BlockSettingsModal'
 import { getThemeBranding } from '@/lib/themes/branding'
+import { SocialIconLogo } from '@/components/shared/SocialIconLogo'
 
 export default function EditorPage() {
   const params = useParams()
@@ -1075,8 +1076,8 @@ function SectionPreview({
     />
   ) : null
 
-  // Si la section a des blocs de contenu, les afficher
-  if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0) {
+  // Si la section a des blocs de contenu (hors services/galerie qui utilisent data direct)
+  if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0 && section.type !== 'services' && section.type !== 'gallery') {
     const pageList = currentPage?.id ? (site.pages || []).map((p) => ({ id: p.id, title: p.title, slug: p.slug || '' })) : []
     const sectionList = (currentPage?.sections || []).map((s) => ({ id: s.id, type: s.type }))
 
@@ -1235,47 +1236,112 @@ function SectionPreview({
             style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
             contentEditable
             suppressContentEditableWarning
+            onBlur={(e) => onSectionUpdate(section.id, { title: e.currentTarget.textContent || '' })}
           >
-            {getDataValue('title')}
+            {getDataValue('title') || 'Nos services'}
           </h2>
+          <p
+            className="text-lg mb-6 opacity-90 min-h-[1.5em]"
+            style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={(e) => onSectionUpdate(section.id, { content: e.currentTarget.textContent || '', subtitle: e.currentTarget.textContent || '' })}
+          >
+            {getDataValue('subtitle') || getDataValue('content') || 'Votre contenu ici...'}
+          </p>
           <div className="grid md:grid-cols-3 gap-6">
-            {(data.services as Array<{ icon?: string; iconSrc?: string; title: string; description: string }>)?.map((service, i: number) => (
-              <div 
-                key={i} 
-                className="p-6 rounded-ovh-lg text-center"
-                style={{ backgroundColor: `${theme.colors.primary}10` }}
-              >
-                {service.iconSrc ? (
-                  <div className="flex justify-center mb-4">
-                    <Image
-                      src={service.iconSrc}
-                      alt={service.title}
-                      width={48}
-                      height={48}
-                      className="w-12 h-12 object-contain"
-                    />
+            {((data.services as Array<{ icon?: string; iconSrc?: string; title: string; description: string }>) || []).length > 0
+              ? ((data.services as Array<{ icon?: string; iconSrc?: string; title: string; description: string }>) || []).map((service, i: number) => (
+                  <div
+                    key={i}
+                    className="p-6 rounded-ovh-lg text-center"
+                    style={{ backgroundColor: `${theme.colors.primary}10` }}
+                  >
+                    {service.iconSrc ? (
+                      <div className="flex justify-center mb-4">
+                        <Image src={service.iconSrc} alt={service.title} width={48} height={48} className="w-12 h-12 object-contain" />
+                      </div>
+                    ) : service.icon ? (
+                      <div className="text-4xl mb-4">{service.icon}</div>
+                    ) : null}
+                    <h3
+                      className="font-bold text-lg mb-2"
+                      style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) => {
+                        const svc = (data.services as Array<{ icon?: string; iconSrc?: string; title: string; description: string }>) || []
+                        const next = [...svc]
+                        if (next[i]) next[i] = { ...next[i], title: e.currentTarget.textContent || '' }
+                        onSectionUpdate(section.id, { services: next })
+                      }}
+                    >
+                      {service.title}
+                    </h3>
+                    <p
+                      style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) => {
+                        const svc = (data.services as Array<{ icon?: string; iconSrc?: string; title: string; description: string }>) || []
+                        const next = [...svc]
+                        if (next[i]) next[i] = { ...next[i], description: e.currentTarget.textContent || '' }
+                        onSectionUpdate(section.id, { services: next })
+                      }}
+                    >
+                      {service.description}
+                    </p>
                   </div>
-                ) : service.icon ? (
-                  <div className="text-4xl mb-4">{service.icon}</div>
-                ) : null}
-                <h3 
-                  className="font-bold text-lg mb-2"
-                  style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
-                  contentEditable
-                  suppressContentEditableWarning
-                >
-                  {service.title}
-                </h3>
-                <p 
-                  style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}
-                  contentEditable
-                  suppressContentEditableWarning
-                >
-                  {service.description}
-                </p>
-              </div>
-            ))}
+                ))
+              : (
+                <div className="col-span-full py-12 border-2 border-dashed border-ovh-gray-300 rounded-ovh-lg text-center">
+                  <p className="text-ovh-gray-500 text-sm mb-2">Aucun service</p>
+                  <p className="text-ovh-gray-400 text-xs">Cliquez sur « Modifier » puis onglet Contenu pour configurer vos services</p>
+                </div>
+              )}
           </div>
+          </div>
+        </section>
+      )
+
+    case 'gallery':
+      return (
+        <section className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+          {BgVideo}
+          {BgOverlay}
+          <div className={hasBgMedia ? 'relative z-10' : ''}>
+          <h2
+            className="text-3xl font-bold mb-8"
+            style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={(e) => onSectionUpdate(section.id, { title: e.currentTarget.textContent || '' })}
+          >
+            {getDataValue('title') || 'Galerie'}
+          </h2>
+          {getDataValue('subtitle') && (
+            <p
+              className="text-lg mb-6 opacity-90"
+              style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={(e) => onSectionUpdate(section.id, { subtitle: e.currentTarget.textContent || '' })}
+            >
+              {getDataValue('subtitle')}
+            </p>
+          )}
+          {((data.images as Array<{ url: string; alt?: string }>) || []).length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {((data.images as Array<{ url: string; alt?: string }>) || []).map((img, i: number) => (
+                <img key={i} src={img.url} alt={img.alt || ''} className="w-full h-48 object-cover rounded-ovh-lg" />
+              ))}
+            </div>
+          ) : (
+            <div className="py-12 border-2 border-dashed border-ovh-gray-300 rounded-ovh-lg text-center">
+              <p className="text-ovh-gray-500 text-sm mb-2">Aucune image</p>
+              <p className="text-ovh-gray-400 text-xs">Cliquez sur « Modifier » puis onglet Contenu pour ajouter des images depuis la bibliothèque</p>
+            </div>
+          )}
           </div>
         </section>
       )
@@ -1307,19 +1373,60 @@ function SectionPreview({
       const footerBgStyle: React.CSSProperties = isGradient
         ? sectionBgStyle
         : { ...sectionBgStyle, backgroundColor: sectionStyles.backgroundColor || branding.footerBg }
+      const socialIcons = (() => {
+        try {
+          return (data.socialIcons as Array<{ platform: string; url: string }>) || []
+        } catch { return [] }
+      })()
       return (
-        <footer className={`py-8 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={footerBgStyle}>
+        <footer className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={footerBgStyle}>
           {BgVideo}
           {BgOverlay}
-          <div className={hasBgMedia ? 'relative z-10' : ''}>
-          <p 
-            className="text-center text-sm"
-            style={{ color: branding.footerText }}
-            contentEditable
-            suppressContentEditableWarning
-          >
-            {getDataValue('copyright')}
-          </p>
+          <div className={`max-w-6xl mx-auto ${hasBgMedia ? 'relative z-10' : ''}`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <div>
+                <h3 className="text-lg font-bold mb-2" style={{ color: branding.footerText }} contentEditable suppressContentEditableWarning onBlur={(e) => onSectionUpdate(section.id, { contactTitle: e.currentTarget.textContent || '' })}>
+                  {getDataValue('contactTitle') || 'Contact'}
+                </h3>
+                <p className="text-sm mb-4 opacity-90" style={{ color: branding.footerText }} contentEditable suppressContentEditableWarning onBlur={(e) => onSectionUpdate(section.id, { contactDesc: e.currentTarget.textContent || '' })}>
+                  {getDataValue('contactDesc') || 'Une équipe à votre écoute, prête à vous aider.'}
+                </p>
+                {socialIcons.length > 0 && (
+                  <div className="flex gap-3">
+                    {socialIcons.map((icon, i) => (
+                      <a
+                        key={i}
+                        href={icon.url || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: branding.footerText }}
+                      >
+                        <SocialIconLogo platform={icon.platform} color={branding.footerText} size={20} />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold mb-2" style={{ color: branding.footerText }}>EMAIL</h3>
+                <p className="text-sm space-y-1" style={{ color: branding.footerText }}>
+                  {getDataValue('phone') && (
+                    <span className="block" contentEditable suppressContentEditableWarning onBlur={(e) => onSectionUpdate(section.id, { phone: e.currentTarget.textContent || '' })}>
+                      {getDataValue('phone')}
+                    </span>
+                  )}
+                  {getDataValue('email') && (
+                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onSectionUpdate(section.id, { email: e.currentTarget.textContent || '' })} className="hover:underline opacity-90 cursor-text">
+                      {getDataValue('email')}
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+            <p className="text-center text-sm" style={{ color: branding.footerText }} contentEditable suppressContentEditableWarning onBlur={(e) => onSectionUpdate(section.id, { copyright: e.currentTarget.textContent || '' })}>
+              {getDataValue('copyright')}
+            </p>
           </div>
         </footer>
       )

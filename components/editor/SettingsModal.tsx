@@ -7,8 +7,6 @@ import { SectionsPanel } from './SectionsPanel'
 import { DesignPanel } from './DesignPanel'
 import { MediaPanel } from './MediaPanel'
 import { AiToolsPanel } from './AiToolsPanel'
-import { AppsPanel } from './AppsPanel'
-import { ProjectOptionsPanel } from './ProjectOptionsPanel'
 import { ElementsPanel } from './ElementsPanel'
 import { SiteWithRelations, PageWithSections } from '@/lib/types'
 import { ComputedTheme, ContentBlockType } from '@/lib/types'
@@ -38,37 +36,16 @@ interface SettingsModalProps {
   onAddBlockToSection?: (sectionId: string, blockType: ContentBlockType, options?: { elementId?: string }) => void
 }
 
-type TabId = 'config' | 'elements' | 'pages' | 'styles' | 'ai' | 'library' | 'more'
+type TabId = 'pages' | 'elements' | 'styles' | 'ai' | 'library'
 
-const TABS: { id: TabId; iconSrc: string; label: string }[] = [
-  { id: 'config', iconSrc: '/pictos/settings.png', label: 'Configuration' },
-  { id: 'elements', iconSrc: '/pictos/cursors.png', label: 'Éléments' },
+const TABS: { id: TabId; iconSrc: string; label: string; badge?: string }[] = [
   { id: 'pages', iconSrc: '/pictos/book.png', label: 'Pages' },
+  { id: 'elements', iconSrc: '/pictos/cursors.png', label: 'Éléments' },
   { id: 'styles', iconSrc: '/pictos/brush.png', label: 'Styles' },
-  { id: 'ai', iconSrc: '/pictos/trophy.png', label: 'Outils IA' },
+  { id: 'ai', iconSrc: '/pictos/trophy.png', label: 'Outils IA', badge: 'SOON' },
   { id: 'library', iconSrc: '/pictos/camera.png', label: 'Bibliothèque' },
-  { id: 'more', iconSrc: '/pictos/page-script.png', label: 'Plus' },
 ]
 
-const CONFIG_STEPS = [
-  { id: 'create', label: 'Commencer la création de votre site web !', done: true },
-  { id: 'mobile', label: 'Visiter votre site sur mobile', done: false },
-  { id: 'images', label: 'Modifier les images', done: false },
-  { id: 'publish', label: 'Passer à la publication !', done: false },
-  { id: 'social', label: 'Mettre à jour les liens de réseaux sociaux', done: false },
-  { id: 'texts', label: 'Modifier les textes des paragraphes', done: false },
-  { id: 'header', label: 'Modifier le texte de l\'en-tête', done: false },
-]
-
-const MORE_ITEMS = [
-  { id: 'general', icon: '⚙️', label: 'Paramètres généraux' },
-  { id: 'integrations', icon: '🔗', label: 'Intégrations' },
-  { id: 'contact-messages', icon: '💬', label: 'Messages du formulaire' },
-  { id: 'analytics', icon: '📊', label: 'Analyses' },
-  { id: 'media', icon: '🖼️', label: 'Médiathèque' },
-  { id: 'backups', icon: '💾', label: 'Gérer les sauvegardes' },
-  { id: 'help', icon: '❓', label: 'Aide et ressources' },
-]
 
 export function SettingsModal({
   isOpen,
@@ -94,8 +71,7 @@ export function SettingsModal({
   selectedSectionId = null,
   onAddBlockToSection,
 }: SettingsModalProps) {
-  const [activeTab, setActiveTab] = useState<TabId | null>('config')
-  const [moreSubmenu, setMoreSubmenu] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<TabId | null>('pages')
 
   const currentPage = site.pages[currentPageIndex] || null
 
@@ -104,74 +80,11 @@ export function SettingsModal({
       setActiveTab(null)
     } else {
       setActiveTab(tabId)
-      setMoreSubmenu(null)
     }
   }
 
-  const completedSteps = CONFIG_STEPS.filter(s => s.done).length
-
   const renderPanelContent = () => {
     switch (activeTab) {
-      case 'config':
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-bold text-ovh-gray-900">Bonjour</h2>
-              <p className="text-sm text-ovh-gray-600 mt-1">
-                Commencez dès maintenant : suivez ces étapes pour préparer votre site web à accueillir vos visiteurs.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-ovh-lg border border-ovh-gray-200 p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-ovh-gray-900">Configuration du site web</h3>
-                <div className="relative w-10 h-10">
-                  <svg viewBox="0 0 36 36" className="w-10 h-10 -rotate-90">
-                    <circle cx="18" cy="18" r="15" fill="none" stroke="#E5E7EB" strokeWidth="3" />
-                    <circle
-                      cx="18" cy="18" r="15" fill="none" stroke="#00D4AA" strokeWidth="3"
-                      strokeDasharray={`${(completedSteps / CONFIG_STEPS.length) * 94.2} 94.2`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-ovh-gray-700">
-                    {completedSteps}/{CONFIG_STEPS.length}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                {CONFIG_STEPS.map((step) => (
-                  <button
-                    key={step.id}
-                    type="button"
-                    className="w-full flex items-center gap-3 p-3 rounded-ovh hover:bg-ovh-gray-50 transition-colors text-left group"
-                  >
-                    <div className={`
-                      w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0
-                      ${step.done
-                        ? 'bg-emerald-500 text-white'
-                        : 'border-2 border-ovh-gray-300'}
-                    `}>
-                      {step.done && (
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                    <span className={`text-sm flex-1 ${step.done ? 'text-ovh-gray-500' : 'text-ovh-gray-800 font-medium'}`}>
-                      {step.label}
-                    </span>
-                    <svg className="w-4 h-4 text-ovh-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )
-
       case 'elements':
         return (
           <ElementsPanel
@@ -239,52 +152,6 @@ export function SettingsModal({
           </div>
         )
 
-      case 'more':
-        if (moreSubmenu === 'general') {
-          return (
-            <div className="space-y-4">
-              <button type="button" onClick={() => setMoreSubmenu(null)} className="flex items-center gap-2 text-sm text-ovh-primary hover:underline">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                Retour
-              </button>
-              <ProjectOptionsPanel siteId={site.id} />
-            </div>
-          )
-        }
-        if (moreSubmenu === 'media') {
-          return (
-            <div className="space-y-4">
-              <button type="button" onClick={() => setMoreSubmenu(null)} className="flex items-center gap-2 text-sm text-ovh-primary hover:underline">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                Retour
-              </button>
-              <MediaPanel media={site.media} onUpload={onMediaUpload} onDelete={onMediaDelete} />
-            </div>
-          )
-        }
-        return (
-          <div className="space-y-2">
-            {MORE_ITEMS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  if (item.id === 'general' || item.id === 'media') {
-                    setMoreSubmenu(item.id)
-                  }
-                }}
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-ovh hover:bg-ovh-gray-50 transition-colors text-left"
-              >
-                <span className="text-lg w-6 text-center">{item.icon}</span>
-                <span className="text-sm font-medium text-ovh-gray-800 flex-1">{item.label}</span>
-                <svg className="w-4 h-4 text-ovh-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            ))}
-          </div>
-        )
-
       default:
         return null
     }
@@ -324,8 +191,13 @@ export function SettingsModal({
                 height={24}
                 className={`w-6 h-6 object-contain transition-transform ${isActive ? 'scale-110' : ''}`}
               />
-              <span className={`text-[10px] leading-tight ${isActive ? 'font-semibold' : 'font-medium'}`}>
+              <span className={`text-[10px] leading-tight flex items-center gap-1 justify-center ${isActive ? 'font-semibold' : 'font-medium'}`}>
                 {tab.label}
+                {tab.badge && (
+                  <span className="bg-blue-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-md shrink-0">
+                    {tab.badge}
+                  </span>
+                )}
               </span>
             </button>
           )

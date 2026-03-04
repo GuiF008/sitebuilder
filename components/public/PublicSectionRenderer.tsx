@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { ComputedTheme, SectionStyles } from '@/lib/types'
+import { SocialIconLogo } from '@/components/shared/SocialIconLogo'
 import { safeJsonParse } from '@/lib/utils'
 import { BlockRenderer } from '@/components/shared/BlockRenderer'
 import { getThemeBranding } from '@/lib/themes/branding'
@@ -81,7 +82,7 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
       />
     ) : null
 
-  if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0) {
+  if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0 && section.type !== 'services' && section.type !== 'gallery') {
     return (
       <section id={sectionId} className={`py-8 mb-4 px-4 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
         {BgVideo}
@@ -166,9 +167,16 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
         <section id={sectionId} className={`py-12 mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
           {BgVideo}
           {BgOverlay}
-          <h2 className="text-3xl font-bold mb-8 text-center" style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}>
+          <h2 className="text-3xl font-bold text-center" style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}>
             {getDataValue('title')}
           </h2>
+          {(getDataValue('subtitle') || getDataValue('content')) ? (
+            <p className="text-center mt-2 mb-8 opacity-90" style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}>
+              {getDataValue('subtitle') || getDataValue('content')}
+            </p>
+          ) : (
+            <div className="mb-8" />
+          )}
           <div className="grid md:grid-cols-3 gap-6">
             {((data.services as Array<{ icon?: string; iconSrc?: string; title: string; description: string }>) || []).map(
               (service, i: number) => (
@@ -274,14 +282,66 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
         </section>
       )
 
-    case 'footer':
+    case 'footer': {
+      const socialIcons = (() => {
+        try {
+          return (data.socialIcons as Array<{ platform: string; url: string }>) || []
+        } catch {
+          return []
+        }
+      })()
       return (
-        <footer id={sectionId} className="py-8 mt-8 rounded-lg scroll-mt-16" style={{ backgroundColor: branding.footerBg }}>
+        <footer id={sectionId} className="py-12 mt-8 rounded-lg scroll-mt-16" style={{ backgroundColor: branding.footerBg }}>
+          <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            {/* Contact + réseaux sociaux */}
+            <div>
+              <h3 className="text-lg font-bold mb-2" style={{ color: branding.footerText }}>
+                {getDataValue('contactTitle') || 'Contact'}
+              </h3>
+              {getDataValue('contactDesc') && (
+                <p className="text-sm mb-4 opacity-90" style={{ color: branding.footerText }}>
+                  {getDataValue('contactDesc')}
+                </p>
+              )}
+              {socialIcons.length > 0 && (
+                <div className="flex gap-3">
+                  {socialIcons.map((icon, i) => (
+                    <a
+                      key={i}
+                      href={icon.url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: branding.footerText }}
+                      title={icon.platform}
+                    >
+                      <SocialIconLogo platform={icon.platform} color={branding.footerText} size={20} />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Email / Téléphone */}
+            <div>
+              <h3 className="text-lg font-bold mb-2" style={{ color: branding.footerText }}>
+                EMAIL
+              </h3>
+              <p className="text-sm space-y-1" style={{ color: branding.footerText }}>
+                {getDataValue('phone') && <span className="block">{getDataValue('phone')}</span>}
+                {getDataValue('email') && (
+                  <a href={`mailto:${getDataValue('email')}`} className="hover:underline opacity-90">
+                    {getDataValue('email')}
+                  </a>
+                )}
+              </p>
+            </div>
+          </div>
           <p className="text-center text-sm" style={{ color: branding.footerText }}>
             {getDataValue('copyright')}
           </p>
         </footer>
       )
+    }
 
     default:
       return null

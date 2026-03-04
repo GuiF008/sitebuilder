@@ -1,6 +1,7 @@
 'use client'
 
 import { ComputedTheme, SectionStyles } from '@/lib/types'
+import { SocialIconLogo } from '@/components/shared/SocialIconLogo'
 
 export type BlockData = {
   id: string
@@ -245,18 +246,14 @@ export function BlockRenderer({
             const icons = (() => {
               try { return JSON.parse(block.content || '[]') } catch { return [] }
             })() as Array<{ platform: string; url: string }>
-            const defaultIcons = ['facebook', 'twitter', 'instagram']
+            const defaultIcons = ['facebook', 'instagram', 'tiktok', 'twitter']
             const platforms = icons.length > 0 ? icons.map(i => i.platform) : defaultIcons
-            const platformColors: Record<string, string> = {
-              facebook: '#1877F2', twitter: '#1DA1F2', instagram: '#E4405F',
-              linkedin: '#0A66C2', youtube: '#FF0000', tiktok: '#000000',
-              pinterest: '#BD081C', github: '#181717',
-            }
+            const iconColor = textColor
             rendered = (
               <div key={block.id} className="flex gap-3 py-2">
                 {platforms.map((p, i) => (
-                  <span key={i} className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: platformColors[p] || '#6B7280' }}>
-                    {p.charAt(0).toUpperCase()}
+                  <span key={i} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.08)', color: iconColor }}>
+                    <SocialIconLogo platform={p} color={iconColor} size={18} />
                   </span>
                 ))}
               </div>

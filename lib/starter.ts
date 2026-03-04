@@ -73,6 +73,16 @@ function getDefaultSectionData(type: string, siteName: string): object {
       }
     case 'footer':
       return {
+        contactTitle: 'Contact',
+        contactDesc: 'Une équipe à votre écoute, prête à vous aider.',
+        email: 'contact@example.com',
+        phone: '+33 1 23 45 67 89',
+        socialIcons: [
+          { platform: 'facebook', url: 'https://facebook.com' },
+          { platform: 'instagram', url: 'https://instagram.com' },
+          { platform: 'tiktok', url: 'https://tiktok.com' },
+          { platform: 'twitter', url: 'https://twitter.com' },
+        ],
         copyright: `© ${new Date().getFullYear()} ${siteName}. Tous droits réservés.`,
         links: [
           { label: 'Mentions légales', url: '#' },
