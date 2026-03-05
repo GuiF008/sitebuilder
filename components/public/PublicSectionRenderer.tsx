@@ -210,25 +210,13 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
           {BgOverlay}
           <div className={hasBgMedia ? 'relative z-10' : ''}>
             <h1
-              className={`font-bold mb-4 text-white ${
-                (sectionStyles.headingSize || 'large') === 'small'
-                  ? 'text-3xl'
-                  : (sectionStyles.headingSize || 'large') === 'medium'
-                    ? 'text-4xl'
-                    : 'text-5xl'
-              }`}
+              className="font-bold mb-4 text-white text-4xl"
               style={{ fontFamily: sectionStyles.headingFont }}
             >
               {getDataValue('title')}
             </h1>
             <p
-              className={`text-white/80 mb-8 ${
-                (sectionStyles.bodySize || 'medium') === 'small'
-                  ? 'text-base'
-                  : (sectionStyles.bodySize || 'medium') === 'large'
-                    ? 'text-2xl'
-                    : 'text-xl'
-              }`}
+              className="text-white/80 mb-8 text-xl"
               style={{ fontFamily: sectionStyles.bodyFont }}
             >
               {getDataValue('subtitle')}
@@ -260,25 +248,13 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
           {BgOverlay}
           <div className={hasBgMedia ? 'relative z-10' : ''}>
             <h2
-              className={`font-bold mb-6 ${
-                (sectionStyles.headingSize || 'medium') === 'small'
-                  ? 'text-2xl'
-                  : (sectionStyles.headingSize || 'medium') === 'large'
-                    ? 'text-4xl'
-                    : 'text-3xl'
-              }`}
+              className="font-bold mb-6 text-3xl"
               style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
             >
               {getDataValue('title')}
             </h2>
             <p
-              className={`leading-relaxed ${
-                (sectionStyles.bodySize || 'medium') === 'small'
-                  ? 'text-sm'
-                  : (sectionStyles.bodySize || 'medium') === 'large'
-                    ? 'text-xl'
-                    : 'text-lg'
-              }`}
+              className="leading-relaxed text-lg"
               style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}
             >
               {getDataValue('content')}

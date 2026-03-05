@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
-import { SiteWithRelations, PageWithSections, ComputedTheme, ContentBlock, ContentBlockType, CONTENT_BLOCK_TYPES } from '@/lib/types'
+import { SiteWithRelations, PageWithSections, ComputedTheme, ContentBlock, ContentBlockType, CONTENT_BLOCK_TYPES, SectionStyles } from '@/lib/types'
 import { PICTOS } from '@/lib/pictos'
 import { PictoIcon } from '@/components/shared/PictoIcon'
 import { ColorPicker } from '@/components/ui'
@@ -56,7 +56,7 @@ export function SectionEditorModal({
   const [activeTab, setActiveTab] = useState<EditorTab>('content')
   
   // Styles de section
-  const [sectionStyles, setSectionStyles] = useState({
+  const [sectionStyles, setSectionStyles] = useState<SectionStyles>({
     backgroundColor: theme.colors.background,
     headingFont: theme.fonts.heading,
     bodyFont: theme.fonts.body,
@@ -447,7 +447,7 @@ export function SectionEditorModal({
             </div>
             <ColorPicker
               label="Couleur de fond"
-              value={sectionStyles.backgroundColor}
+              value={sectionStyles.backgroundColor || theme.colors.background}
               onChange={(color) => saveSectionStyles({ ...sectionStyles, backgroundColor: color })}
               closeOnSelect
             />
@@ -569,13 +569,13 @@ export function SectionEditorModal({
             </div>
             <ColorPicker
               label="Couleur des titres"
-              value={sectionStyles.headingColor}
+              value={sectionStyles.headingColor || theme.colors.text}
               onChange={(color) => saveSectionStyles({ ...sectionStyles, headingColor: color })}
               closeOnSelect
             />
             <ColorPicker
               label="Couleur du texte"
-              value={sectionStyles.textColor}
+              value={sectionStyles.textColor || theme.colors.text}
               onChange={(color) => saveSectionStyles({ ...sectionStyles, textColor: color })}
               closeOnSelect
             />
