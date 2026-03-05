@@ -594,7 +594,7 @@ export function BlockSettingsModal({
             </svg>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 builder-selectable-text">
           {filteredMedia.length === 0 ? (
             <div className="text-center py-8 text-ovh-gray-500">
               <p className="text-sm">Aucun fichier disponible</p>
@@ -667,7 +667,7 @@ export function BlockSettingsModal({
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 builder-selectable-text">
           {renderContent()}
         </div>
       </div>

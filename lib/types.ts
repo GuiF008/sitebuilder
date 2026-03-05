@@ -141,6 +141,12 @@ export interface ContentBlock {
     pageSlug?: string
     sectionId?: string
     alt?: string // Pour images
+    /** Couleur du bouton (bloc button) */
+    buttonColor?: string
+    /** Couleur du texte du bouton (bloc button) */
+    buttonTextColor?: string
+    /** Forme du bouton (bloc button) */
+    buttonStyle?: 'square' | 'rounded' | 'pill'
   }
 }
 
@@ -164,6 +170,8 @@ export interface SectionStyles {
   headingColor?: string
   textColor?: string
   buttonStyle?: 'square' | 'rounded' | 'pill'
+  /** Espacement entre les blocs (titre, sous-titre, bouton, etc.) */
+  contentGap?: 'tight' | 'normal' | 'relaxed'
 }
 
 // Section avec blocs de contenu

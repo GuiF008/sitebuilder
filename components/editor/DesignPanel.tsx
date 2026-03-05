@@ -1,7 +1,7 @@
 'use client'
 
-import React from 'react'
-import { ColorPicker, Card } from '@/components/ui'
+import React, { useState } from 'react'
+import { ColorPickerModal, ColorSwatchButton, Card } from '@/components/ui'
 import { SiteWithRelations, ComputedTheme } from '@/lib/types'
 import { themePresets } from '@/lib/themes/presets'
 
@@ -27,11 +27,23 @@ const BUTTON_STYLES = [
   { value: 'pill', label: 'Pilule' },
 ]
 
+type ColorKey = 'primary' | 'secondary' | 'accent' | 'background' | 'text'
+
+const COLOR_KEYS: { key: ColorKey; label: string }[] = [
+  { key: 'primary', label: 'Primaire' },
+  { key: 'secondary', label: 'Secondaire' },
+  { key: 'accent', label: 'Accent' },
+  { key: 'background', label: 'Fond' },
+  { key: 'text', label: 'Texte' },
+]
+
 export function DesignPanel({
   site,
   theme,
   onThemeChange,
 }: DesignPanelProps) {
+  const [colorPickerKey, setColorPickerKey] = useState<ColorKey | null>(null)
+
   const handlePresetSelect = (presetId: string) => {
     const preset = themePresets.find(p => p.id === presetId)
     if (!preset) return
@@ -94,34 +106,37 @@ export function DesignPanel({
       {/* Colors */}
       <div>
         <h3 className="font-semibold text-ovh-gray-800 mb-3">Couleurs</h3>
-        <div className="space-y-3">
-          <ColorPicker
-            label="Primaire"
-            value={theme.colors.primary}
-            onChange={(color) => onThemeChange({ primaryColor: color })}
-          />
-          <ColorPicker
-            label="Secondaire"
-            value={theme.colors.secondary}
-            onChange={(color) => onThemeChange({ secondaryColor: color })}
-          />
-          <ColorPicker
-            label="Accent"
-            value={theme.colors.accent}
-            onChange={(color) => onThemeChange({ accentColor: color })}
-          />
-          <ColorPicker
-            label="Fond"
-            value={theme.colors.background}
-            onChange={(color) => onThemeChange({ backgroundColor: color })}
-          />
-          <ColorPicker
-            label="Texte"
-            value={theme.colors.text}
-            onChange={(color) => onThemeChange({ textColor: color })}
-          />
+        <div className="flex flex-wrap gap-3 items-center">
+          {COLOR_KEYS.map(({ key, label }) => (
+            <div key={key} className="flex items-center gap-2">
+              <span className="text-sm text-ovh-gray-700">{label}</span>
+              <ColorSwatchButton
+                value={theme.colors[key]}
+                onClick={() => setColorPickerKey(key)}
+                label={label}
+              />
+            </div>
+          ))}
         </div>
       </div>
+      {colorPickerKey && (
+        <ColorPickerModal
+          value={theme.colors[colorPickerKey]}
+          onChange={(color) => {
+            const map: Record<ColorKey, Record<string, string>> = {
+              primary: { primaryColor: color },
+              secondary: { secondaryColor: color },
+              accent: { accentColor: color },
+              background: { backgroundColor: color },
+              text: { textColor: color },
+            }
+            onThemeChange(map[colorPickerKey])
+          }}
+          onClose={() => setColorPickerKey(null)}
+          themeSwatches={[theme.colors.primary, theme.colors.secondary, theme.colors.accent, theme.colors.text, theme.colors.background, theme.colors.muted]}
+          title={`Couleur ${COLOR_KEYS.find((c) => c.key === colorPickerKey)?.label ?? ''}`}
+        />
+      )}
 
       {/* Fonts */}
       <div>

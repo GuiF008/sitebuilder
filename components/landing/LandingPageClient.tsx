@@ -406,26 +406,34 @@ export function LandingPageClient({ initialStep = 0 }: LandingPageClientProps) {
           </div>
         )}
 
-        {/* Features Section - affichée seulement si on n'est pas dans le formulaire */}
+        {/* Features Section - bandeau bleu en fond perdu avec titre intégré */}
         {currentStep === 0 && (
-          <section className="py-20 mt-20 w-full overflow-visible">
-            <div className="max-w-7xl mx-auto w-full overflow-visible">
-              <h2 className="text-3xl font-bold text-center text-ovh-gray-900 mb-12">
+          <section
+            className="w-full py-16 mt-20 overflow-hidden"
+            style={{
+              marginLeft: 'calc(-50vw + 50%)',
+              marginRight: 'calc(-50vw + 50%)',
+              width: '100vw',
+              backgroundColor: '#DEEBF7',
+            }}
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <h2 className="text-3xl font-bold text-center mb-12 text-ovh-primary">
                 Simple, rapide, efficace
               </h2>
-              <div className="grid md:grid-cols-3 gap-8 overflow-visible">
+              <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
                 <FeatureCard
-                  iconSrc={PICTOS.speed}
+                  iconImg="/onboarding-5min.png"
                   title="En 5 minutes"
                   description="Un parcours guidé en 5 étapes pour créer votre site. Pas besoin d'être expert."
                 />
                 <FeatureCard
-                  iconSrc={PICTOS.brush}
+                  iconImg="/onboarding-personnalisable.png"
                   title="Personnalisable"
                   description="Modifiez les couleurs, les polices et le contenu en temps réel."
                 />
                 <FeatureCard
-                  iconSrc={PICTOS.mobile}
+                  iconImg="/onboarding-responsive.png"
                   title="Responsive"
                   description="Votre site s'adapte automatiquement à tous les écrans."
                 />
@@ -468,17 +476,31 @@ export function LandingPageClient({ initialStep = 0 }: LandingPageClientProps) {
 
 function FeatureCard({ 
   iconSrc, 
+  iconImg,
   title, 
   description 
 }: { 
-  iconSrc: string
+  iconSrc?: string
+  iconImg?: string
   title: string
   description: string 
 }) {
   return (
-    <div className="text-center p-6 text-black">
+    <div className="bg-white border border-white/90 rounded-ovh-lg shadow-sm text-center p-6 text-ovh-gray-800">
       <div className="flex justify-center mb-4 min-w-16 min-h-16 overflow-visible">
-        <PictoIcon src={iconSrc} alt={title} width={64} height={64} className="w-16 h-16 flex-shrink-0" />
+        {iconImg ? (
+          <Image
+            src={iconImg}
+            alt={title}
+            width={64}
+            height={64}
+            className="w-16 h-16 flex-shrink-0 object-contain"
+          />
+        ) : (
+          iconSrc && (
+            <PictoIcon src={iconSrc} alt={title} width={64} height={64} className="w-16 h-16 flex-shrink-0" />
+          )
+        )}
       </div>
       <h3 className="text-xl font-semibold text-ovh-gray-900 mb-2">{title}</h3>
       <p className="text-ovh-gray-600">{description}</p>

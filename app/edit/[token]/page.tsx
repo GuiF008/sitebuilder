@@ -714,7 +714,7 @@ export default function EditorPage() {
 
           {/* Page content preview - Canvas central */}
           <div 
-            className="flex-1 overflow-auto editor-zone relative"
+            className="flex-1 overflow-auto editor-zone relative builder-selectable-text"
             style={{ backgroundColor: theme.colors.background }}
           >
             {currentPage ? (
@@ -1242,7 +1242,7 @@ function SectionPreview({
       >
         {BgVideo}
         {BgOverlay}
-        <div className={hasBgMedia ? 'relative z-10' : ''}>
+        <div className={hasBgMedia ? 'relative z-10 section-content-over-bg' : ''}>
         {sectionImages.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
             {sectionImages.slice(0, 4).map((url, i) => (
@@ -1309,7 +1309,10 @@ function SectionPreview({
           <div className={hasBgMedia ? 'relative z-10' : ''}>
           <h1 
             className="font-bold mb-4 text-white"
-            style={{ fontFamily: sectionStyles.headingFont }}
+            style={{
+              fontFamily: sectionStyles.headingFont,
+              ...(hasBgMedia ? { textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.5)' } : {}),
+            }}
             contentEditable
             suppressContentEditableWarning
           >
@@ -1317,7 +1320,10 @@ function SectionPreview({
           </h1>
           <p 
             className="text-white/80 mb-8 text-xl"
-            style={{ fontFamily: sectionStyles.bodyFont }}
+            style={{
+              fontFamily: sectionStyles.bodyFont,
+              ...(hasBgMedia ? { textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 0 16px rgba(0,0,0,0.5)' } : {}),
+            }}
             contentEditable
             suppressContentEditableWarning
           >

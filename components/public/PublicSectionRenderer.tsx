@@ -188,15 +188,17 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
       >
         {BgVideo}
         {BgOverlay}
-        {sectionImages.length > 0 && (
-          <div className={`grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 ${alignmentClass}`}>
-            {sectionImages.slice(0, 4).map((url, i) => (
-              <img key={i} src={url} alt="" className="w-full aspect-video object-cover rounded-lg" />
-            ))}
+        <div className={hasBgMedia ? 'relative z-10 section-content-over-bg' : ''}>
+          {sectionImages.length > 0 && (
+            <div className={`grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 ${alignmentClass}`}>
+              {sectionImages.slice(0, 4).map((url, i) => (
+                <img key={i} src={url} alt="" className="w-full aspect-video object-cover rounded-lg" />
+              ))}
+            </div>
+          )}
+          <div className={alignmentClass}>
+            {contentNode}
           </div>
-        )}
-        <div className={alignmentClass}>
-          {contentNode}
         </div>
       </section>
     )
@@ -221,13 +223,19 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
           <div className={hasBgMedia ? 'relative z-10' : ''}>
             <h1
               className="font-bold mb-4 text-white text-4xl"
-              style={{ fontFamily: sectionStyles.headingFont }}
+              style={{
+                fontFamily: sectionStyles.headingFont,
+                ...(hasBgMedia ? { textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.5)' } : {}),
+              }}
             >
               {getDataValue('title')}
             </h1>
             <p
               className="text-white/80 mb-8 text-xl"
-              style={{ fontFamily: sectionStyles.bodyFont }}
+              style={{
+                fontFamily: sectionStyles.bodyFont,
+                ...(hasBgMedia ? { textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 0 16px rgba(0,0,0,0.5)' } : {}),
+              }}
             >
               {getDataValue('subtitle')}
             </p>

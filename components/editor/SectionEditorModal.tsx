@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { SiteWithRelations, PageWithSections, ComputedTheme, ContentBlock, ContentBlockType, CONTENT_BLOCK_TYPES, SectionStyles } from '@/lib/types'
 import { PICTOS } from '@/lib/pictos'
 import { PictoIcon } from '@/components/shared/PictoIcon'
-import { ColorPicker } from '@/components/ui'
+import { ColorPickerModal, ColorSwatchButton } from '@/components/ui'
 
 type EditorTab = 'content' | 'layout'
 
@@ -63,12 +63,14 @@ export function SectionEditorModal({
     headingColor: theme.colors.text,
     textColor: theme.colors.text,
     buttonStyle: theme.buttonStyle,
+    contentGap: 'normal',
   })
   const [contentAlignment, setContentAlignment] = useState<'left' | 'center' | 'right'>('left')
   const [sectionImages, setSectionImages] = useState<string[]>([])
   const [showMediaPickerForImages, setShowMediaPickerForImages] = useState(false)
   const [mediaPickerImageIndex, setMediaPickerImageIndex] = useState(0)
   const [sectionLayout, setSectionLayout] = useState<'stacked' | 'media-left' | 'media-right' | 'title-top'>('stacked')
+  const [colorPickerFor, setColorPickerFor] = useState<string | null>(null)
 
   useEffect(() => {
     if (section) {
@@ -111,6 +113,7 @@ export function SectionEditorModal({
         headingColor: theme.colors.text,
         textColor: theme.colors.text,
         buttonStyle: theme.buttonStyle,
+        contentGap: 'normal',
       }
       if (data.sectionStyles) {
         setSectionStyles({
@@ -332,7 +335,7 @@ export function SectionEditorModal({
           
         {/* Panneau Maquette */}
         {activeTab === 'layout' && (
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white builder-selectable-text">
             <div>
               <h3 className="text-sm font-semibold text-ovh-gray-900 mb-1.5">Maquette de la section</h3>
               <p className="text-xs text-ovh-gray-500 mb-3">
@@ -404,13 +407,40 @@ export function SectionEditorModal({
                 )
               })}
             </div>
+            <div>
+              <h3 className="text-sm font-semibold text-ovh-gray-900 mb-1.5">Espacement titre / sous-titre / bouton</h3>
+              <p className="text-xs text-ovh-gray-500 mb-2">
+                Choisissez l&apos;espace vertical entre les blocs de contenu.
+              </p>
+              <div className="flex gap-2">
+                {[
+                  { value: 'tight' as const, label: 'Serré' },
+                  { value: 'normal' as const, label: 'Normal' },
+                  { value: 'relaxed' as const, label: 'Large' },
+                ].map((opt) => {
+                  const isActive = (sectionStyles.contentGap || 'normal') === opt.value
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => saveSectionStyles({ ...sectionStyles, contentGap: opt.value })}
+                      className={`flex-1 py-2 px-3 text-sm font-medium rounded-ovh border-2 transition-colors ${
+                        isActive ? 'border-ovh-primary bg-ovh-primary/10 text-ovh-primary' : 'border-ovh-gray-200 text-ovh-gray-600 hover:border-ovh-gray-300'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         )}
 
         {/* Liste des blocs (onglet Contenu) */}
         {activeTab === 'content' && (
         <>
-        <div className="flex-1 overflow-y-auto p-6 space-y-3">
+        <div className="flex-1 overflow-y-auto p-6 space-y-3 builder-selectable-text">
           {sortedBlocks.length === 0 ? (
             <div className="text-center py-12 text-ovh-gray-500 border-2 border-dashed border-ovh-gray-200 rounded-ovh">
               <p className="mb-2">Aucun contenu</p>
@@ -541,20 +571,15 @@ export function SectionEditorModal({
                         <span className="text-[10px] text-ovh-gray-500">pt</span>
                       </div>
                       {/* Couleur */}
-                      <input
-                        type="color"
+                      <ColorSwatchButton
                         value={
                           (block.settings?.textColor as string) ||
                           (block.type === 'text'
                             ? sectionStyles.textColor || '#111827'
                             : sectionStyles.headingColor || '#111827')
                         }
-                        onChange={(e) =>
-                          updateBlock(block.id, {
-                            settings: { ...block.settings, textColor: e.target.value },
-                          })
-                        }
-                        className="w-8 h-6 border border-ovh-gray-300 rounded cursor-pointer"
+                        onClick={() => setColorPickerFor(`${block.id}-textColor`)}
+                        label="Couleur du texte"
                       />
                       {/* Gras / Italique / Souligné */}
                       <div className="flex border border-ovh-gray-300 rounded-ovh overflow-hidden">
@@ -924,6 +949,90 @@ export function SectionEditorModal({
                         placeholder="Texte du bouton"
                       />
                       <div>
+                        <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Couleur du bouton</label>
+                        <ColorSwatchButton
+                          value={(block.settings?.buttonColor as string) || theme.colors.primary}
+                          onClick={() => setColorPickerFor(`${block.id}-buttonColor`)}
+                          label="Choisir la couleur du bouton"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Couleur du texte du bouton</label>
+                        <ColorSwatchButton
+                          value={(block.settings?.buttonTextColor as string) || '#ffffff'}
+                          onClick={() => setColorPickerFor(`${block.id}-buttonTextColor`)}
+                          label="Choisir la couleur du texte"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Forme du bouton</label>
+                        <div className="flex gap-1 border border-ovh-gray-300 rounded-ovh p-0.5">
+                          {BUTTON_STYLES.map((opt) => {
+                            const current = (block.settings?.buttonStyle as string) || sectionStyles.buttonStyle || 'rounded'
+                            const isActive = current === opt.value
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => updateBlock(block.id, { settings: { ...block.settings, buttonStyle: opt.value as 'square' | 'rounded' | 'pill' } })}
+                                className={`flex-1 py-2 text-xs font-medium rounded transition-colors ${
+                                  isActive ? 'bg-ovh-primary text-white' : 'text-ovh-gray-600 hover:bg-ovh-gray-100'
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Alignement</label>
+                        <div className="flex gap-1 border border-ovh-gray-300 rounded-ovh p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => updateBlock(block.id, { settings: { ...block.settings, alignment: 'left' } })}
+                            className={`p-2 rounded ${
+                              (block.settings?.alignment || 'left') === 'left'
+                                ? 'bg-ovh-primary text-white'
+                                : 'text-ovh-gray-600 hover:bg-ovh-gray-100'
+                            }`}
+                            title="Aligner à gauche"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h10" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateBlock(block.id, { settings: { ...block.settings, alignment: 'center' } })}
+                            className={`p-2 rounded ${
+                              block.settings?.alignment === 'center'
+                                ? 'bg-ovh-primary text-white'
+                                : 'text-ovh-gray-600 hover:bg-ovh-gray-100'
+                            }`}
+                            title="Centrer"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6h12M4 12h16M6 18h12" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateBlock(block.id, { settings: { ...block.settings, alignment: 'right' } })}
+                            className={`p-2 rounded ${
+                              block.settings?.alignment === 'right'
+                                ? 'bg-ovh-primary text-white'
+                                : 'text-ovh-gray-600 hover:bg-ovh-gray-100'
+                            }`}
+                            title="Aligner à droite"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M10 18h10" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div>
                         <label className="block text-xs font-medium text-ovh-gray-600 mb-1">Lien</label>
                         <select
                           value={(block.settings?.linkMode as string) || 'url'}
@@ -989,25 +1098,6 @@ export function SectionEditorModal({
                           ))}
                         </select>
                       )}
-                      <div>
-                        <label className="block text-xs font-medium text-ovh-gray-600 mb-1">Alignement du bouton</label>
-                        <div className="flex gap-1">
-                          {(['left', 'center', 'right'] as const).map((align) => (
-                            <button
-                              key={align}
-                              type="button"
-                              onClick={() => updateBlock(block.id, { settings: { ...block.settings, alignment: align } })}
-                              className={`flex-1 py-2 text-xs font-medium rounded-lg border ${
-                                (block.settings?.alignment || 'left') === align
-                                  ? 'border-ovh-primary bg-ovh-primary text-white'
-                                  : 'border-ovh-gray-200 text-ovh-gray-700 hover:border-ovh-gray-300'
-                              }`}
-                            >
-                              {align === 'left' ? 'Gauche' : align === 'center' ? 'Centre' : 'Droite'}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
                     </div>
                   )}
                   {/* Galerie */}
@@ -1210,10 +1300,69 @@ export function SectionEditorModal({
     </div>
   ) : null
 
+  const themeSwatches = [
+    theme.colors.primary,
+    theme.colors.secondary,
+    theme.colors.accent,
+    theme.colors.text,
+    theme.colors.background,
+    theme.colors.muted,
+    '#ffffff',
+    '#000000',
+  ]
+
+  const colorPickerModal =
+    colorPickerFor && colorPickerFor.endsWith('-textColor') ? (() => {
+      const blockId = colorPickerFor.replace(/-textColor$/, '')
+      const block = blocks.find((b) => b.id === blockId)
+      if (!block) return null
+      const value =
+        (block.settings?.textColor as string) ||
+        (block.type === 'text' ? sectionStyles.textColor || '#111827' : sectionStyles.headingColor || '#111827')
+      return (
+        <ColorPickerModal
+          value={value}
+          onChange={(c) => updateBlock(blockId, { settings: { ...block.settings, textColor: c } })}
+          onClose={() => setColorPickerFor(null)}
+          themeSwatches={themeSwatches}
+          title="Couleur du texte"
+        />
+      )
+    })() : colorPickerFor && colorPickerFor.endsWith('-buttonColor') ? (() => {
+      const blockId = colorPickerFor.replace(/-buttonColor$/, '')
+      const block = blocks.find((b) => b.id === blockId)
+      if (!block || block.type !== 'button') return null
+      const value = (block.settings?.buttonColor as string) || theme.colors.primary
+      return (
+        <ColorPickerModal
+          value={value}
+          onChange={(c) => updateBlock(blockId, { settings: { ...block.settings, buttonColor: c } })}
+          onClose={() => setColorPickerFor(null)}
+          themeSwatches={themeSwatches}
+          title="Couleur du bouton"
+        />
+      )
+    })() : colorPickerFor && colorPickerFor.endsWith('-buttonTextColor') ? (() => {
+      const blockId = colorPickerFor.replace(/-buttonTextColor$/, '')
+      const block = blocks.find((b) => b.id === blockId)
+      if (!block || block.type !== 'button') return null
+      const value = (block.settings?.buttonTextColor as string) || '#ffffff'
+      return (
+        <ColorPickerModal
+          value={value}
+          onChange={(c) => updateBlock(blockId, { settings: { ...block.settings, buttonTextColor: c } })}
+          onClose={() => setColorPickerFor(null)}
+          themeSwatches={themeSwatches}
+          title="Couleur du texte du bouton"
+        />
+      )
+    })() : null
+
   return createPortal(
     <>
       {modal}
       {mediaPicker}
+      {colorPickerModal}
     </>,
     document.body
   )

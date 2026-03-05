@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { safeJsonParse } from '@/lib/utils'
 import { SectionStyles } from '@/lib/types'
-import { ColorPickerModal } from '@/components/ui'
+import { ColorPickerModal, ColorSwatchButton } from '@/components/ui'
 import { SOCIAL_PLATFORMS } from '@/lib/social-platforms'
 import { SERVICE_PICTOS } from '@/lib/service-pictos'
 import { PictoIcon } from '@/components/shared/PictoIcon'
@@ -27,22 +27,6 @@ interface SectionInlineSettingsModalProps {
   canMoveDown: boolean
   onClose: () => void
   onEdit?: () => void
-}
-
-function ColorSwatchButton({
-  value,
-  onClick,
-  label,
-}: { value: string; onClick: () => void; label?: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="relative w-8 h-8 rounded-lg border-2 border-white shadow-md cursor-pointer overflow-hidden flex-shrink-0 hover:scale-105 transition-transform"
-      style={{ backgroundColor: value }}
-      title={label || 'Choisir une couleur'}
-    />
-  )
 }
 
 export function SectionInlineSettingsModal({
@@ -328,7 +312,7 @@ export function SectionInlineSettingsModal({
             </svg>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 builder-selectable-text">
           {(() => {
             const items = siteMedia.filter(m =>
               showMediaPicker === 'image' ? (m.type === 'image' || !m.type) : m.type === 'video'
