@@ -190,7 +190,7 @@ export function SettingsModal({
               <span className={`text-[10px] leading-tight flex items-center gap-1 justify-center ${isActive ? 'font-semibold' : 'font-medium'}`}>
                 {tab.label}
                 {tab.badge && (
-                  <span className="bg-blue-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-md shrink-0">
+                  <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-ovh-gray-200 text-ovh-gray-700 shrink-0 font-medium">
                     {tab.badge}
                   </span>
                 )}

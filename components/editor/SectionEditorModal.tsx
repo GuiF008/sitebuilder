@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { SiteWithRelations, PageWithSections, ComputedTheme, ContentBlock, ContentBlockType, CONTENT_BLOCK_TYPES, SectionStyles } from '@/lib/types'
 import { PICTOS } from '@/lib/pictos'
+import { SOCIAL_PLATFORMS } from '@/lib/social-platforms'
 import { PictoIcon } from '@/components/shared/PictoIcon'
 import { ColorPickerModal, ColorSwatchButton } from '@/components/ui'
 
@@ -63,7 +64,7 @@ export function SectionEditorModal({
     headingColor: theme.colors.text,
     textColor: theme.colors.text,
     buttonStyle: theme.buttonStyle,
-    contentGap: 'normal',
+    contentGap: 4,
   })
   const [contentAlignment, setContentAlignment] = useState<'left' | 'center' | 'right'>('left')
   const [sectionImages, setSectionImages] = useState<string[]>([])
@@ -106,6 +107,8 @@ export function SectionEditorModal({
       }
       
       // Charger les styles de section s'ils existent, sans perdre les props (image/vidéo de fond, overlay, etc.)
+      const legacyGap = (data.sectionStyles as SectionStyles)?.contentGap
+      const gapNum = typeof legacyGap === 'number' ? legacyGap : legacyGap === 'tight' ? 2 : legacyGap === 'relaxed' ? 6 : 4
       const defaultStyles: SectionStyles = {
         backgroundColor: theme.colors.background,
         headingFont: theme.fonts.heading,
@@ -113,13 +116,14 @@ export function SectionEditorModal({
         headingColor: theme.colors.text,
         textColor: theme.colors.text,
         buttonStyle: theme.buttonStyle,
-        contentGap: 'normal',
+        contentGap: 4,
       }
       if (data.sectionStyles) {
-        setSectionStyles({
-          ...defaultStyles,
-          ...(data.sectionStyles as SectionStyles),
-        })
+        const loaded = { ...defaultStyles, ...(data.sectionStyles as SectionStyles) }
+        if (typeof loaded.contentGap !== 'number') {
+          loaded.contentGap = gapNum
+        }
+        setSectionStyles(loaded)
       } else {
         setSectionStyles(defaultStyles)
       }
@@ -131,28 +135,31 @@ export function SectionEditorModal({
 
   if (!section) return null
 
-  // Sauvegarder les blocs
+  // Sauvegarder les blocs (fusion des sectionStyles pour ne jamais perdre le fond)
   const saveBlocks = (newBlocks: ContentBlock[]) => {
     setBlocks(newBlocks)
     const currentData = section ? JSON.parse(section.dataJson) : {}
+    const currentSectionStyles = (currentData.sectionStyles || {}) as SectionStyles
     const updatedData = {
       ...currentData,
       blocks: newBlocks,
-      sectionStyles: sectionStyles
+      sectionStyles: { ...currentSectionStyles, ...sectionStyles },
     }
     if (section) {
       onUpdate(section.id, updatedData)
     }
   }
 
-  // Sauvegarder les styles de section
-  const saveSectionStyles = (newStyles: typeof sectionStyles) => {
-    setSectionStyles(newStyles)
+  // Sauvegarder les styles de section (fusion avec les styles existants pour ne pas perdre fond, overlay, etc.)
+  const saveSectionStyles = (newStyles: Partial<SectionStyles>) => {
+    const merged = { ...sectionStyles, ...newStyles }
+    setSectionStyles(merged)
     const currentData = section ? JSON.parse(section.dataJson) : {}
+    const currentSectionStyles = (currentData.sectionStyles || {}) as SectionStyles
     const updatedData = {
       ...currentData,
       blocks: blocks,
-      sectionStyles: newStyles
+      sectionStyles: { ...currentSectionStyles, ...newStyles },
     }
     if (section) {
       onUpdate(section.id, updatedData)
@@ -336,6 +343,52 @@ export function SectionEditorModal({
         {/* Panneau Maquette */}
         {activeTab === 'layout' && (
           <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white builder-selectable-text">
+            {/* Espacement entre les éléments — option bien visible */}
+            <div className="p-4 rounded-xl border-2 border-ovh-primary/20 bg-ovh-primary/5">
+              <h3 className="text-base font-bold text-ovh-gray-900 mb-1">Espacement entre les éléments</h3>
+              <p className="text-xs text-ovh-gray-600 mb-3">
+                De 1 (très serré) à 20 (très aéré). Espace vertical entre titre, sous-titre, bouton, etc.
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const v = Math.max(1, (sectionStyles.contentGap ?? 4) - 1)
+                    saveSectionStyles({ contentGap: v })
+                  }}
+                  className="p-2 rounded-ovh border-2 border-ovh-gray-300 text-ovh-gray-700 hover:bg-ovh-gray-100 hover:border-ovh-primary transition-colors disabled:opacity-40"
+                  disabled={(sectionStyles.contentGap ?? 4) <= 1}
+                  title="Réduire"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={sectionStyles.contentGap ?? 4}
+                  onChange={(e) => {
+                    const v = Math.min(20, Math.max(1, Number(e.target.value) || 4))
+                    saveSectionStyles({ contentGap: v })
+                  }}
+                  className="w-14 text-center text-lg font-bold text-ovh-gray-900 border-2 border-ovh-gray-300 rounded-ovh px-1 py-2 focus:outline-none focus:ring-2 focus:ring-ovh-primary focus:border-ovh-primary"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const v = Math.min(20, (sectionStyles.contentGap ?? 4) + 1)
+                    saveSectionStyles({ contentGap: v })
+                  }}
+                  className="p-2 rounded-ovh border-2 border-ovh-gray-300 text-ovh-gray-700 hover:bg-ovh-gray-100 hover:border-ovh-primary transition-colors disabled:opacity-40"
+                  disabled={(sectionStyles.contentGap ?? 4) >= 20}
+                  title="Augmenter"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                </button>
+                <span className="text-sm text-ovh-gray-600">/ 20</span>
+              </div>
+            </div>
+
             <div>
               <h3 className="text-sm font-semibold text-ovh-gray-900 mb-1.5">Maquette de la section</h3>
               <p className="text-xs text-ovh-gray-500 mb-3">
@@ -406,33 +459,6 @@ export function SectionEditorModal({
                   </button>
                 )
               })}
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-ovh-gray-900 mb-1.5">Espacement titre / sous-titre / bouton</h3>
-              <p className="text-xs text-ovh-gray-500 mb-2">
-                Choisissez l&apos;espace vertical entre les blocs de contenu.
-              </p>
-              <div className="flex gap-2">
-                {[
-                  { value: 'tight' as const, label: 'Serré' },
-                  { value: 'normal' as const, label: 'Normal' },
-                  { value: 'relaxed' as const, label: 'Large' },
-                ].map((opt) => {
-                  const isActive = (sectionStyles.contentGap || 'normal') === opt.value
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => saveSectionStyles({ ...sectionStyles, contentGap: opt.value })}
-                      className={`flex-1 py-2 px-3 text-sm font-medium rounded-ovh border-2 transition-colors ${
-                        isActive ? 'border-ovh-primary bg-ovh-primary/10 text-ovh-primary' : 'border-ovh-gray-200 text-ovh-gray-600 hover:border-ovh-gray-300'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  )
-                })}
-              </div>
             </div>
           </div>
         )}
@@ -529,9 +555,35 @@ export function SectionEditorModal({
 
                 {/* Contenu du bloc */}
                 <div className="p-3 space-y-2">
-                  {/* Barre d'outils texte commune */}
+                  {/* Barre d'outils texte commune (titre, sous-titre, texte) */}
                   {['title', 'subtitle', 'text'].includes(block.type) && (
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <div className="space-y-2 mb-2">
+                      {/* Type de bloc : Titre / Sous-titre / Texte */}
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-medium text-ovh-gray-600 mr-1">Style :</span>
+                        <div className="flex gap-0.5 border border-ovh-gray-300 rounded-ovh p-0.5">
+                          {[
+                            { value: 'title' as const, label: 'Titre' },
+                            { value: 'subtitle' as const, label: 'Sous-titre' },
+                            { value: 'text' as const, label: 'Texte' },
+                          ].map((opt) => {
+                            const isActive = block.type === opt.value
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => updateBlock(block.id, { type: opt.value })}
+                                className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                                  isActive ? 'bg-ovh-primary text-white' : 'text-ovh-gray-600 hover:bg-ovh-gray-100'
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
                       {/* Police */}
                       <select
                         value={(block.settings?.textFont as string) || (block.type === 'text' ? sectionStyles.bodyFont : sectionStyles.headingFont)}
@@ -679,6 +731,7 @@ export function SectionEditorModal({
                           </button>
                         </div>
                       </div>
+                    </div>
                     </div>
                   )}
 
@@ -985,6 +1038,52 @@ export function SectionEditorModal({
                           })}
                         </div>
                       </div>
+                      <div className="p-4 rounded-xl border-2 border-ovh-primary/20 bg-ovh-primary/5">
+                        <h3 className="text-base font-bold text-ovh-gray-900 mb-1">Taille du bouton</h3>
+                        <p className="text-xs text-ovh-gray-600 mb-3">
+                          De 1 (petit) à 20 (très grand).
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const v = Math.max(1, ((block.settings?.buttonSize as number) ?? 10) - 1)
+                              updateBlock(block.id, { settings: { ...block.settings, buttonSize: v } })
+                            }}
+                            disabled={((block.settings?.buttonSize as number) ?? 10) <= 1}
+                            className="h-10 w-10 rounded-ovh border border-ovh-gray-300 bg-white flex items-center justify-center text-ovh-gray-700 hover:bg-ovh-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                            </svg>
+                          </button>
+                          <input
+                            type="number"
+                            min={1}
+                            max={20}
+                            value={(block.settings?.buttonSize as number) ?? 10}
+                            onChange={(e) => {
+                              const v = Math.min(20, Math.max(1, Number(e.target.value) || 10))
+                              updateBlock(block.id, { settings: { ...block.settings, buttonSize: v } })
+                            }}
+                            className="h-10 w-14 text-center border border-ovh-gray-300 rounded-ovh focus:outline-none focus:ring-2 focus:ring-ovh-primary font-medium"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const v = Math.min(20, ((block.settings?.buttonSize as number) ?? 10) + 1)
+                              updateBlock(block.id, { settings: { ...block.settings, buttonSize: v } })
+                            }}
+                            disabled={((block.settings?.buttonSize as number) ?? 10) >= 20}
+                            className="h-10 w-10 rounded-ovh border border-ovh-gray-300 bg-white flex items-center justify-center text-ovh-gray-700 hover:bg-ovh-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </button>
+                          <span className="text-sm text-ovh-gray-600">/ 20</span>
+                        </div>
+                      </div>
                       <div>
                         <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Alignement</label>
                         <div className="flex gap-1 border border-ovh-gray-300 rounded-ovh p-0.5">
@@ -1159,8 +1258,94 @@ export function SectionEditorModal({
                       </div>
                     )
                   })()}
-                  {/* Formulaire contact, Icônes sociales */}
-                  {['contact-form', 'social-icons'].includes(block.type) && (
+                  {/* Icônes sociales : liens vers les réseaux */}
+                  {block.type === 'social-icons' && (() => {
+                    let icons: Array<{ platform: string; url: string }> = []
+                    try { icons = JSON.parse(block.content || '[]') } catch { icons = [] }
+                    const updateIcons = (newIcons: typeof icons) => {
+                      updateBlock(block.id, { content: JSON.stringify(newIcons) })
+                    }
+                    return (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Alignement</label>
+                          <div className="flex gap-1 border border-ovh-gray-300 rounded-ovh p-0.5">
+                            {(['left', 'center', 'right'] as const).map((align) => (
+                              <button
+                                key={align}
+                                type="button"
+                                onClick={() => updateBlock(block.id, { settings: { ...block.settings, alignment: align } })}
+                                className={`flex-1 py-2 text-xs font-medium rounded transition-colors ${
+                                  (block.settings?.alignment || 'left') === align
+                                    ? 'bg-ovh-primary text-white'
+                                    : 'text-ovh-gray-600 hover:bg-ovh-gray-100'
+                                }`}
+                              >
+                                {align === 'left' ? 'Gauche' : align === 'center' ? 'Centre' : 'Droite'}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-ovh-gray-700 mb-2">Réseaux sociaux</label>
+                          <p className="text-xs text-ovh-gray-500 mb-2">Ajoutez les liens vers vos profils.</p>
+                          <div className="space-y-2">
+                            {icons.map((icon, i) => {
+                              const platform = SOCIAL_PLATFORMS.find((p) => p.id === icon.platform)
+                              return (
+                                <div key={i} className="flex items-center gap-2">
+                                  <span
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                                    style={{ backgroundColor: platform?.color || '#6B7280' }}
+                                  >
+                                    {icon.platform.charAt(0).toUpperCase()}
+                                  </span>
+                                  <input
+                                    type="url"
+                                    value={icon.url}
+                                    onChange={(e) => {
+                                      const next = [...icons]
+                                      next[i] = { ...next[i], url: e.target.value }
+                                      updateIcons(next)
+                                    }}
+                                    className="flex-1 px-2 py-1.5 border border-ovh-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ovh-primary"
+                                    placeholder={`URL ${platform?.label || icon.platform}`}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => updateIcons(icons.filter((_, idx) => idx !== i))}
+                                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-ovh-gray-600 mb-1.5">Ajouter un réseau</label>
+                          <div className="flex flex-wrap gap-2">
+                            {SOCIAL_PLATFORMS.filter((p) => !icons.some((i) => i.platform === p.id)).map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => updateIcons([...icons, { platform: p.id, url: '' }])}
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 border border-ovh-gray-200 rounded-lg text-xs hover:border-ovh-primary transition-colors"
+                              >
+                                <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
+                                {p.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                  {/* Formulaire contact */}
+                  {block.type === 'contact-form' && (
                     <div className="space-y-2">
                       <div>
                         <label className="block text-xs font-medium text-ovh-gray-600 mb-1">Alignement</label>
@@ -1181,14 +1366,7 @@ export function SectionEditorModal({
                           ))}
                         </div>
                       </div>
-                      <p className="text-xs text-ovh-gray-500">Élément {block.type}</p>
-                      <input
-                        type="text"
-                        value={block.content}
-                        onChange={(e) => updateBlock(block.id, { content: e.target.value })}
-                        className="w-full px-3 py-2 border border-ovh-gray-300 rounded-ovh text-sm"
-                        placeholder="Libellé ou contenu"
-                      />
+                      <p className="text-xs text-ovh-gray-500">Formulaire de contact (généré automatiquement)</p>
                     </div>
                   )}
                 </div>

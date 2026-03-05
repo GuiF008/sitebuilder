@@ -58,8 +58,8 @@ export function BlockRenderer({
   const textColor = sectionStyles?.textColor || theme.colors.text
   const buttonStyle = sectionStyles?.buttonStyle || theme.buttonStyle
   const borderRadius = theme.borderRadius
-  const contentGap = sectionStyles?.contentGap || 'normal'
-  const gapClass = contentGap === 'tight' ? 'space-y-2' : contentGap === 'relaxed' ? 'space-y-6' : 'space-y-4'
+  const contentGap = typeof sectionStyles?.contentGap === 'number' ? Math.min(20, Math.max(1, sectionStyles.contentGap)) : 4
+  const gapRem = contentGap * 0.25
 
   const roundedClass = isPublic ? 'rounded-lg' : 'rounded-ovh'
 
@@ -83,7 +83,7 @@ export function BlockRenderer({
   }
 
   return (
-    <div className={`${gapClass} ${className}`}>
+    <div className={className} style={{ display: 'flex', flexDirection: 'column', gap: `${gapRem}rem` }}>
       {sortedBlocks.map((block) => {
         let rendered: React.ReactNode = null
         switch (block.type) {
@@ -236,16 +236,24 @@ export function BlockRenderer({
             const btnColor = (block.settings?.buttonColor as string) || theme.colors.primary
             const btnTextColor = (block.settings?.buttonTextColor as string) || '#ffffff'
             const btnStyle = (block.settings?.buttonStyle as string) || buttonStyle
+            const btnSize = typeof block.settings?.buttonSize === 'number'
+              ? Math.min(20, Math.max(1, block.settings.buttonSize))
+              : 10
+            const paddingYRem = 0.375 + ((btnSize - 1) / 19) * 0.9
+            const paddingXRem = 0.75 + ((btnSize - 1) / 19) * 1.5
+            const fontSizeRem = 0.875 + ((btnSize - 1) / 19) * 0.66
             rendered = (
               <div key={block.id} className={alignClass}>
                 <a
                   href={isPublic ? href : undefined}
-                  className={`inline-block px-6 py-3 font-semibold ${
+                  className={`block-cta-link inline-block font-semibold ${
                     isPublic ? 'transition-transform hover:scale-105' : ''
                   }`}
                   style={{
                     backgroundColor: btnColor,
                     color: btnTextColor,
+                    padding: `${paddingYRem}rem ${paddingXRem}rem`,
+                    fontSize: `${fontSizeRem}rem`,
                     borderRadius:
                       btnStyle === 'pill'
                         ? '9999px'

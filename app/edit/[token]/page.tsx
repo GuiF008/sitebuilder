@@ -20,6 +20,86 @@ import { PICTOS } from '@/lib/pictos'
 import { PictoIcon } from '@/components/shared/PictoIcon'
 import { SocialIconLogo } from '@/components/shared/SocialIconLogo'
 
+/** Modale de connexion pour "Enregistrer un brouillon" – design type OVHcloud (capture) */
+function DraftLoginModal({ onClose }: { onClose: () => void }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [remember, setRemember] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[400px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="p-8">
+          <div className="flex justify-end -mt-2 -mr-2 mb-2">
+            <button type="button" onClick={onClose} className="p-2 hover:bg-ovh-gray-100 rounded-lg transition-colors text-ovh-gray-500">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <h2 className="text-xl font-bold text-center text-ovh-primary mb-1">Connectez-vous</h2>
+          <p className="text-center text-sm text-ovh-gray-500 mb-6">
+            Vous n&apos;avez pas de compte ?{' '}
+            <button type="button" className="text-ovh-primary font-medium hover:underline">Créer un compte</button>
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-ovh-gray-700 mb-1">Email ou identifiant *</label>
+              <input
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2.5 border border-ovh-gray-300 rounded-ovh focus:outline-none focus:ring-2 focus:ring-ovh-primary focus:border-ovh-primary text-ovh-gray-900"
+                placeholder="Email ou identifiant"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-ovh-gray-700 mb-1">Mot de passe *</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-ovh-gray-300 rounded-ovh focus:outline-none focus:ring-2 focus:ring-ovh-primary focus:border-ovh-primary text-ovh-gray-900 pr-10"
+                  placeholder="Mot de passe"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-ovh-gray-500 hover:text-ovh-gray-700 rounded"
+                  title={showPassword ? 'Masquer' : 'Afficher'}
+                >
+                  {showPassword ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  )}
+                </button>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="w-4 h-4 rounded border-ovh-gray-300 text-ovh-primary focus:ring-ovh-primary" />
+              <span className="text-sm text-ovh-gray-600">Se souvenir de ce compte</span>
+            </label>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full mt-6 px-4 py-3 bg-ovh-primary text-white font-semibold rounded-ovh hover:bg-ovh-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ovh-primary transition-colors"
+          >
+            Se connecter
+          </button>
+          <p className="text-center mt-4">
+            <button type="button" className="text-sm text-ovh-gray-500 hover:underline">Mot de passe oublié ?</button>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function EditorPage() {
   const params = useParams()
   const router = useRouter()
@@ -40,6 +120,7 @@ export default function EditorPage() {
   const [showAddSectionModal, setShowAddSectionModal] = useState(false)
   const [copiedSectionData, setCopiedSectionData] = useState<{ type: string; dataJson: string } | null>(null)
   const [sectionMenuOpen, setSectionMenuOpen] = useState<string | null>(null)
+  const [draftLoginModalOpen, setDraftLoginModalOpen] = useState(false)
 
   // Load site
   useEffect(() => {
@@ -404,7 +485,38 @@ export default function EditorPage() {
     const section = currentPage.sections.find(s => s.id === sectionId)
     if (!section) return
     const currentData = safeJsonParse<Record<string, unknown>>(section.dataJson, {}) || {}
-    const blocks = (currentData.blocks as Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>) || []
+    let blocks = (currentData.blocks as Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>) || []
+
+    // Si la section n'a pas encore de blocs mais a des champs legacy (title, content, etc.), les convertir en blocs pour ne rien perdre
+    if (blocks.length === 0) {
+      const initialBlocks: Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }> = []
+      let order = 0
+      if (currentData.title && typeof currentData.title === 'string') {
+        initialBlocks.push({ id: generateBlockId(), type: 'title', order: order++, content: currentData.title as string })
+      }
+      if (currentData.subtitle && typeof currentData.subtitle === 'string') {
+        initialBlocks.push({ id: generateBlockId(), type: 'subtitle', order: order++, content: currentData.subtitle as string })
+      }
+      if (currentData.image && typeof currentData.image === 'string') {
+        initialBlocks.push({ id: generateBlockId(), type: 'image', order: order++, content: currentData.image as string })
+      }
+      if (currentData.content && typeof currentData.content === 'string') {
+        initialBlocks.push({ id: generateBlockId(), type: 'text', order: order++, content: currentData.content as string })
+      }
+      if (currentData.ctaText && typeof currentData.ctaText === 'string') {
+        initialBlocks.push({
+          id: generateBlockId(),
+          type: 'button',
+          order: order++,
+          content: currentData.ctaText as string,
+          settings: { link: (currentData.ctaLink as string) || '#' },
+        })
+      }
+      if (initialBlocks.length > 0) {
+        blocks = initialBlocks
+      }
+    }
+
     const maxOrder = blocks.length > 0 ? Math.max(...blocks.map(b => b.order)) : -1
     const defaultContent: Record<string, string> = {
       title: 'Nouveau titre',
@@ -635,6 +747,14 @@ export default function EditorPage() {
               Aperçu
             </Button>
           </Link>
+          {/* Enregistrer un brouillon - ouvre la modale connexion OVHcloud */}
+          <button
+            type="button"
+            onClick={() => setDraftLoginModalOpen(true)}
+            className="inline-flex items-center justify-center font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 text-sm rounded-ovh border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+          >
+            Enregistrer un brouillon
+          </button>
           {/* Publier - flux One Page Order (freemium → payant) */}
           <Link href={`/edit/${token}/publish`}>
             <Button size="sm">
@@ -683,6 +803,12 @@ export default function EditorPage() {
             onUpdate={handleSectionUpdate}
             currentPage={currentPage}
           />
+        )}
+
+        {/* Modale Enregistrer un brouillon – Connexion OVHcloud */}
+        {draftLoginModalOpen && createPortal(
+          <DraftLoginModal onClose={() => setDraftLoginModalOpen(false)} />,
+          document.body
         )}
 
         {/* Editor area - pas de décalage quand la modale section s'ouvre (overlay) */}

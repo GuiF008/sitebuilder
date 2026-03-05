@@ -53,10 +53,10 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
   const sectionBgStyle: React.CSSProperties = {
     ...(isGradient
       ? {
-          background: `linear-gradient(${sectionStyles.gradientAngle ?? 135}deg, ${sectionStyles.gradientColor1 || '#3385b5'}, ${sectionStyles.gradientColor2 || '#7b2d8e'})`,
+          background: `linear-gradient(${sectionStyles.gradientAngle ?? 135}deg, ${sectionStyles.gradientColor1 || theme.colors.primary}, ${sectionStyles.gradientColor2 || theme.colors.secondary})`,
         }
       : {
-          backgroundColor: sectionStyles.backgroundColor ?? (section.type === 'hero' ? branding.heroBg : rhythmBg),
+          backgroundColor: sectionStyles.backgroundColor ?? (section.type === 'hero' ? branding.heroBg : theme.colors.background),
         }),
     ...(hasBgImage
       ? {

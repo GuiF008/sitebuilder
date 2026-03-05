@@ -114,7 +114,7 @@ export function MediaPanel({
           >
             <span>{f.label}</span>
             {f.id === 'audio' && (
-              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-ovh-gray-200 text-ovh-gray-700">
+              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-ovh-gray-200 text-ovh-gray-700 font-medium shrink-0">
                 Soon
               </span>
             )}

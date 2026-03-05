@@ -147,6 +147,8 @@ export interface ContentBlock {
     buttonTextColor?: string
     /** Forme du bouton (bloc button) */
     buttonStyle?: 'square' | 'rounded' | 'pill'
+    /** Taille du bouton de 1 (petit) à 20 (très grand), défaut 10 */
+    buttonSize?: number
   }
 }
 
@@ -170,8 +172,8 @@ export interface SectionStyles {
   headingColor?: string
   textColor?: string
   buttonStyle?: 'square' | 'rounded' | 'pill'
-  /** Espacement entre les blocs (titre, sous-titre, bouton, etc.) */
-  contentGap?: 'tight' | 'normal' | 'relaxed'
+  /** Espacement entre les blocs (1 = serré, 20 = très aéré), défaut 4 */
+  contentGap?: number
 }
 
 // Section avec blocs de contenu

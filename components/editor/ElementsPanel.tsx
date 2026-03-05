@@ -50,7 +50,12 @@ export function ElementsPanel({ selectedSectionId, onAddElement }: ElementsPanel
             <div className="w-8 h-8 flex-shrink-0 rounded border border-ovh-gray-200 flex items-center justify-center overflow-hidden bg-white">
               <PictoIcon src={el.iconSrc} alt="" width={20} height={20} className="object-contain" />
             </div>
-            <span className="text-sm font-medium text-ovh-gray-800 truncate">{el.label}</span>
+            <span className="text-sm font-medium text-ovh-gray-800 truncate flex-1">{el.label}</span>
+            {el.blockType === 'audio' && (
+              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-ovh-gray-200 text-ovh-gray-700 shrink-0 font-medium">
+                Soon
+              </span>
+            )}
           </button>
         ))}
       </div>

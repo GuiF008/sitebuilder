@@ -79,13 +79,16 @@ body {
   -ms-user-select: text;
 }
 
-/* Lisibilité titre/sous-titre sur fond image ou vidéo */
+/* Lisibilité titre/sous-titre sur fond image ou vidéo (sans ombre sur les boutons CTA) */
 .section-content-over-bg h1,
 .section-content-over-bg h2,
 .section-content-over-bg h3,
 .section-content-over-bg p,
-.section-content-over-bg a {
+.section-content-over-bg a:not(.block-cta-link) {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 0, 0, 0.4);
+}
+.section-content-over-bg a.block-cta-link {
+  text-shadow: none;
 }
 
 /* ContentEditable styles */
