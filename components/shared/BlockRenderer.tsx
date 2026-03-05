@@ -86,6 +86,13 @@ export function BlockRenderer({
         let rendered: React.ReactNode = null
         switch (block.type) {
           case 'title':
+            {
+              const fontFamily = (block.settings?.textFont as string) || headingFont
+              const fontSize = typeof block.settings?.textSize === 'number' ? `${block.settings.textSize}px` : undefined
+              const color = (block.settings?.textColor as string) || headingColor
+              const fontWeight = block.settings?.textBold ? 700 : 700
+              const fontStyle = block.settings?.textItalic ? 'italic' : 'normal'
+              const textDecoration = block.settings?.textUnderline ? 'underline' : 'none'
             rendered = (
               <h2
                 key={block.id}
@@ -96,13 +103,21 @@ export function BlockRenderer({
                       ? 'text-right'
                       : 'text-left'
                 }`}
-                style={{ fontFamily: headingFont, color: headingColor }}
+                style={{ fontFamily, color, fontWeight, fontStyle, textDecoration, fontSize }}
               >
                 {block.content}
               </h2>
             )
             break
+            }
           case 'subtitle':
+            {
+              const fontFamily = (block.settings?.textFont as string) || headingFont
+              const fontSize = typeof block.settings?.textSize === 'number' ? `${block.settings.textSize}px` : undefined
+              const color = (block.settings?.textColor as string) || headingColor
+              const fontWeight = block.settings?.textBold ? 600 : 600
+              const fontStyle = block.settings?.textItalic ? 'italic' : 'normal'
+              const textDecoration = block.settings?.textUnderline ? 'underline' : 'none'
             rendered = (
               <h3
                 key={block.id}
@@ -113,23 +128,32 @@ export function BlockRenderer({
                       ? 'text-right'
                       : 'text-left'
                 }`}
-                style={{ fontFamily: headingFont, color: headingColor }}
+                style={{ fontFamily, color, fontWeight, fontStyle, textDecoration, fontSize }}
               >
                 {block.content}
               </h3>
             )
             break
+            }
           case 'text':
+            {
+              const fontFamily = (block.settings?.textFont as string) || bodyFont
+              const fontSize = typeof block.settings?.textSize === 'number' ? `${block.settings.textSize}px` : undefined
+              const color = (block.settings?.textColor as string) || textColor
+              const fontWeight = block.settings?.textBold ? 600 : 400
+              const fontStyle = block.settings?.textItalic ? 'italic' : 'normal'
+              const textDecoration = block.settings?.textUnderline ? 'underline' : 'none'
             rendered = (
               <p
                 key={block.id}
                 className="text-base leading-relaxed whitespace-pre-wrap"
-                style={{ fontFamily: bodyFont, color: textColor }}
+                style={{ fontFamily, color, fontWeight, fontStyle, textDecoration, fontSize }}
               >
                 {block.content}
               </p>
             )
             break
+            }
           case 'image': {
             const imgSize = (block.settings?.imageSize as string) || 'full'
             const sizeClasses: Record<string, string> = {

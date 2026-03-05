@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -985,6 +985,15 @@ function SectionPreview({
   const data = safeJsonParse<Record<string, unknown>>(section.dataJson, {}) || {}
   const [showMediaPicker, setShowMediaPicker] = useState(false)
   const [selectedBlockForSettings, setSelectedBlockForSettings] = useState<BlockData | null>(null)
+  const sectionRef = useRef<HTMLElement | null>(null)
+  const [localHeight, setLocalHeight] = useState<number | undefined>(
+    typeof data.sectionHeight === 'number' ? (data.sectionHeight as number) : undefined
+  )
+  const resizingRef = useRef<{
+    origin: 'top' | 'bottom'
+    startY: number
+    startHeight: number
+  } | null>(null)
 
   const handleImageClick = () => {
     setShowMediaPicker(true)
@@ -1014,6 +1023,40 @@ function SectionPreview({
     const updated = blocks.filter((b) => b.id !== blockId)
     onSectionUpdate(section.id, { blocks: updated })
     setSelectedBlockForSettings(null)
+  }
+
+  const startResize = (origin: 'top' | 'bottom', e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const el = sectionRef.current
+    const rect = el?.getBoundingClientRect()
+    const baseHeight = localHeight ?? rect?.height ?? 0
+    if (!baseHeight) return
+    resizingRef.current = {
+      origin,
+      startY: e.clientY,
+      startHeight: baseHeight,
+    }
+    const onMove = (ev: MouseEvent) => {
+      if (!resizingRef.current) return
+      const { origin, startY, startHeight } = resizingRef.current
+      const delta = ev.clientY - startY
+      let next = origin === 'top' ? startHeight - delta : startHeight + delta
+      next = Math.max(200, Math.min(1400, next))
+      setLocalHeight(next)
+    }
+    const onUp = () => {
+      if (resizingRef.current && localHeight) {
+        onSectionUpdate(section.id, { sectionHeight: localHeight })
+      }
+      resizingRef.current = null
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    document.body.style.cursor = 'ns-resize'
   }
 
   // Helper pour accéder aux propriétés de data de manière sécurisée
@@ -1077,9 +1120,109 @@ function SectionPreview({
   if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0 && section.type !== 'services' && section.type !== 'gallery') {
     const pageList = currentPage?.id ? (site.pages || []).map((p) => ({ id: p.id, title: p.title, slug: p.slug || '' })) : []
     const sectionList = (currentPage?.sections || []).map((s) => ({ id: s.id, type: s.type }))
+    const sectionLayout = (data.sectionLayout as 'stacked' | 'media-left' | 'media-right' | 'title-top') || 'stacked'
 
+    const allBlocks = blocks
+
+    let contentNode: React.ReactNode
+
+    if ((sectionLayout === 'media-left' || sectionLayout === 'media-right')) {
+      const mediaBlocks = allBlocks.filter((b) => b.type === 'image' || b.type === 'video')
+      const otherBlocks = allBlocks.filter((b) => b.type !== 'image' && b.type !== 'video')
+      const hasBoth = mediaBlocks.length > 0 && otherBlocks.length > 0
+
+      if (!hasBoth) {
+        contentNode = (
+          <BlockRenderer
+            blocks={allBlocks}
+            sectionStyles={sectionStyles}
+            theme={theme}
+            isPublic={false}
+            onBlockClick={handleBlockClick}
+          />
+        )
+      } else {
+        const mediaColumn = (
+          <BlockRenderer
+            blocks={mediaBlocks}
+            sectionStyles={sectionStyles}
+            theme={theme}
+            isPublic={false}
+            onBlockClick={handleBlockClick}
+          />
+        )
+        const textColumn = (
+          <BlockRenderer
+            blocks={otherBlocks}
+            sectionStyles={sectionStyles}
+            theme={theme}
+            isPublic={false}
+            onBlockClick={handleBlockClick}
+          />
+        )
+        contentNode = (
+          <div className="grid gap-8 md:grid-cols-2 items-center">
+            {sectionLayout === 'media-left' ? (
+              <>
+                {mediaColumn}
+                {textColumn}
+              </>
+            ) : (
+              <>
+                {textColumn}
+                {mediaColumn}
+              </>
+            )}
+          </div>
+        )
+      }
+    } else if (sectionLayout === 'title-top') {
+      const titleBlocks = allBlocks.filter((b) => b.type === 'title' || b.type === 'subtitle')
+      const restBlocks = allBlocks.filter((b) => b.type !== 'title' && b.type !== 'subtitle')
+
+      contentNode = (
+        <>
+          {titleBlocks.length > 0 && (
+            <BlockRenderer
+              blocks={titleBlocks}
+              sectionStyles={sectionStyles}
+              theme={theme}
+              isPublic={false}
+              onBlockClick={handleBlockClick}
+            />
+          )}
+          {restBlocks.length > 0 && (
+            <div className="mt-4">
+              <BlockRenderer
+                blocks={restBlocks}
+                sectionStyles={sectionStyles}
+                theme={theme}
+                isPublic={false}
+                onBlockClick={handleBlockClick}
+              />
+            </div>
+          )}
+        </>
+      )
+    } else {
+      contentNode = (
+        <BlockRenderer
+          blocks={allBlocks}
+          sectionStyles={sectionStyles}
+          theme={theme}
+          isPublic={false}
+          onBlockClick={handleBlockClick}
+        />
+      )
+    }
+
+    const sectionHeight = localHeight ?? (typeof data.sectionHeight === 'number' ? (data.sectionHeight as number) : undefined)
     return (
-      <section className={`py-8 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+      <section
+        ref={sectionRef as React.RefObject<HTMLElement>}
+        className={`py-8 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''} relative`}
+        style={{ ...sectionBgStyle, minHeight: sectionHeight }}
+      >
         {BgVideo}
         {BgOverlay}
         <div className={hasBgMedia ? 'relative z-10' : ''}>
@@ -1090,13 +1233,7 @@ function SectionPreview({
             ))}
           </div>
         )}
-        <BlockRenderer 
-          blocks={blocks} 
-          sectionStyles={sectionStyles} 
-          theme={theme}
-          isPublic={false}
-          onBlockClick={handleBlockClick}
-        />
+        {contentNode}
         {selectedBlockForSettings && (
           <BlockSettingsModal
             block={selectedBlockForSettings}
@@ -1109,6 +1246,27 @@ function SectionPreview({
           />
         )}
         </div>
+        {/* Poignées de redimensionnement haut / bas (drag & drop) */}
+        <button
+          type="button"
+          onMouseDown={(e) => startResize('top', e)}
+          className="absolute left-1/2 -top-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+          title="Redimensionner la hauteur de la section"
+        >
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => startResize('bottom', e)}
+          className="absolute left-1/2 -bottom-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+          title="Redimensionner la hauteur de la section"
+        >
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+          </svg>
+        </button>
       </section>
     )
   }
@@ -1128,7 +1286,7 @@ function SectionPreview({
           {BgOverlay}
           <div className={hasBgMedia ? 'relative z-10' : ''}>
           <h1 
-            className="text-4xl font-bold mb-4 text-white"
+            className="font-bold mb-4 text-white"
             style={{ fontFamily: sectionStyles.headingFont }}
             contentEditable
             suppressContentEditableWarning
@@ -1136,7 +1294,7 @@ function SectionPreview({
             {getDataValue('title')}
           </h1>
           <p 
-            className="text-xl text-white/80 mb-8"
+            className="text-white/80 mb-8 text-xl"
             style={{ fontFamily: sectionStyles.bodyFont }}
             contentEditable
             suppressContentEditableWarning
@@ -1168,7 +1326,7 @@ function SectionPreview({
           {BgOverlay}
           <div className={hasBgMedia ? 'relative z-10' : ''}>
           <h2 
-            className="text-3xl font-bold mb-6"
+            className="font-bold mb-6 text-3xl"
             style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
             contentEditable
             suppressContentEditableWarning

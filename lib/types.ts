@@ -129,6 +129,12 @@ export interface ContentBlock {
     size?: 'small' | 'medium' | 'large'
     imageSize?: 'small' | 'medium' | 'large' | 'full' // Pour blocs image
     videoSize?: 'small' | 'medium' | 'large' | 'full' // Pour blocs vidéo
+    textFont?: string // Police spécifique au bloc
+    textSize?: number // Taille de police (px) pour le bloc
+    textColor?: string // Couleur du texte pour le bloc
+    textBold?: boolean
+    textItalic?: boolean
+    textUnderline?: boolean
     link?: string // URL pour linkMode === 'url'
     linkMode?: 'url' | 'page' | 'section'
     pageId?: string
@@ -153,6 +159,8 @@ export interface SectionStyles {
   bgPosition?: number
   headingFont?: string
   bodyFont?: string
+  headingSize?: number // taille en px pour les titres
+  bodySize?: number // taille en px pour le texte
   headingColor?: string
   textColor?: string
   buttonStyle?: 'square' | 'rounded' | 'pill'

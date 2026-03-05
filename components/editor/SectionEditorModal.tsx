@@ -8,7 +8,7 @@ import { PICTOS } from '@/lib/pictos'
 import { PictoIcon } from '@/components/shared/PictoIcon'
 import { ColorPicker } from '@/components/ui'
 
-type EditorTab = 'content' | 'style'
+type EditorTab = 'content' | 'style' | 'layout'
 
 const FONTS = [
   { value: 'Source Sans Pro', label: 'Source Sans Pro' },
@@ -68,6 +68,7 @@ export function SectionEditorModal({
   const [sectionImages, setSectionImages] = useState<string[]>([])
   const [showMediaPickerForImages, setShowMediaPickerForImages] = useState(false)
   const [mediaPickerImageIndex, setMediaPickerImageIndex] = useState(0)
+  const [sectionLayout, setSectionLayout] = useState<'stacked' | 'media-left' | 'media-right' | 'title-top'>('stacked')
 
   useEffect(() => {
     if (section) {
@@ -108,6 +109,8 @@ export function SectionEditorModal({
           backgroundColor: data.sectionStyles.backgroundColor || theme.colors.background,
           headingFont: data.sectionStyles.headingFont || theme.fonts.heading,
           bodyFont: data.sectionStyles.bodyFont || theme.fonts.body,
+          headingSize: data.sectionStyles.headingSize,
+          bodySize: data.sectionStyles.bodySize,
           headingColor: data.sectionStyles.headingColor || theme.colors.text,
           textColor: data.sectionStyles.textColor || theme.colors.text,
           buttonStyle: data.sectionStyles.buttonStyle || theme.buttonStyle,
@@ -115,6 +118,7 @@ export function SectionEditorModal({
       }
       setContentAlignment((data.contentAlignment as 'left' | 'center' | 'right') || 'left')
       setSectionImages(Array.isArray(data.sectionImages) ? data.sectionImages : [])
+      setSectionLayout((data.sectionLayout as 'stacked' | 'media-left' | 'media-right' | 'title-top') || 'stacked')
     }
   }, [section, theme])
 
@@ -317,6 +321,18 @@ export function SectionEditorModal({
               </svg>
               <span className="text-sm">Style</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('layout')}
+              className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors mb-1 ${
+                activeTab === 'layout' ? 'bg-ovh-gray-100 font-semibold text-ovh-gray-900' : 'text-ovh-gray-700 hover:bg-ovh-gray-50'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h7v7H4zM13 6h7v5h-7zM13 13h7v5h-7zM4 15h7v3H4z" />
+              </svg>
+              <span className="text-sm">Maquette</span>
+            </button>
           </div>
 
           {/* Right column: content */}
@@ -459,6 +475,98 @@ export function SectionEditorModal({
                 ))}
               </select>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Taille des titres</label>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min={16}
+                    max={72}
+                    step={1}
+                    value={sectionStyles.headingSize || 32}
+                    onChange={(e) => {
+                      const v = Number(e.target.value) || 0
+                      const clamped = Math.min(72, Math.max(16, v))
+                      saveSectionStyles({ ...sectionStyles, headingSize: clamped as any })
+                    }}
+                    className="w-16 px-2 py-1 border border-ovh-gray-300 rounded-ovh text-xs"
+                  />
+                  <span className="text-xs text-ovh-gray-500">pt</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      saveSectionStyles({
+                        ...sectionStyles,
+                        headingSize: Math.min(72, (Number(sectionStyles.headingSize) || 32) + 2) as any,
+                      })
+                    }
+                    className="px-2 py-1 text-xs border border-ovh-gray-300 rounded-ovh hover:bg-ovh-gray-100"
+                    title="Augmenter"
+                  >
+                    A↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      saveSectionStyles({
+                        ...sectionStyles,
+                        headingSize: Math.max(16, (Number(sectionStyles.headingSize) || 32) - 2) as any,
+                      })
+                    }
+                    className="px-2 py-1 text-xs border border-ovh-gray-300 rounded-ovh hover:bg-ovh-gray-100"
+                    title="Réduire"
+                  >
+                    A↓
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Taille du texte</label>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min={10}
+                    max={32}
+                    step={1}
+                    value={sectionStyles.bodySize || 16}
+                    onChange={(e) => {
+                      const v = Number(e.target.value) || 0
+                      const clamped = Math.min(32, Math.max(10, v))
+                      saveSectionStyles({ ...sectionStyles, bodySize: clamped as any })
+                    }}
+                    className="w-16 px-2 py-1 border border-ovh-gray-300 rounded-ovh text-xs"
+                  />
+                  <span className="text-xs text-ovh-gray-500">pt</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      saveSectionStyles({
+                        ...sectionStyles,
+                        bodySize: Math.min(32, (Number(sectionStyles.bodySize) || 16) + 1) as any,
+                      })
+                    }
+                    className="px-2 py-1 text-xs border border-ovh-gray-300 rounded-ovh hover:bg-ovh-gray-100"
+                    title="Augmenter"
+                  >
+                    A↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      saveSectionStyles({
+                        ...sectionStyles,
+                        bodySize: Math.max(10, (Number(sectionStyles.bodySize) || 16) - 1) as any,
+                      })
+                    }
+                    className="px-2 py-1 text-xs border border-ovh-gray-300 rounded-ovh hover:bg-ovh-gray-100"
+                    title="Réduire"
+                  >
+                    A↓
+                  </button>
+                </div>
+              </div>
+            </div>
             <ColorPicker
               label="Couleur des titres"
               value={sectionStyles.headingColor}
@@ -486,6 +594,83 @@ export function SectionEditorModal({
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Panneau Maquette */}
+        {activeTab === 'layout' && (
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
+            <div>
+              <h3 className="text-sm font-semibold text-ovh-gray-900 mb-1.5">Maquette de la section</h3>
+              <p className="text-xs text-ovh-gray-500 mb-3">
+                Choisissez une organisation globale du contenu. Le système détecte les blocs média (image/vidéo) et texte de la section.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              {[
+                {
+                  id: 'stacked' as const,
+                  title: 'Empilé',
+                  desc: 'Tous les éléments les uns sous les autres',
+                  icon: 'Média + texte + boutons en colonne',
+                },
+                {
+                  id: 'media-left' as const,
+                  title: 'Média à gauche, texte à droite',
+                  desc: 'Image / vidéo à gauche, textes et boutons à droite',
+                  icon: '⧉ ⫷',
+                },
+                {
+                  id: 'media-right' as const,
+                  title: 'Texte à gauche, média à droite',
+                  desc: 'Titres et textes à gauche, image / vidéo à droite',
+                  icon: '⫷ ⧉',
+                },
+                {
+                  id: 'title-top' as const,
+                  title: 'Titres en haut',
+                  desc: 'Titre et sous-titre en haut, reste du contenu en dessous',
+                  icon: 'Titre ↑, contenu ↓',
+                },
+              ].map((opt) => {
+                const hasMedia = blocks.some((b) => b.type === 'image' || b.type === 'video')
+                const hasText = blocks.some((b) => b.type === 'title' || b.type === 'subtitle' || b.type === 'text')
+                const needsMedia = opt.id === 'media-left' || opt.id === 'media-right'
+                const disabled = needsMedia && (!hasMedia || !hasText)
+                const isActive = sectionLayout === opt.id
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => {
+                      setSectionLayout(opt.id)
+                      saveSectionData({ sectionLayout: opt.id })
+                    }}
+                    className={`
+                      w-full text-left rounded-ovh border px-3 py-3 transition-colors
+                      ${isActive ? 'border-ovh-primary bg-ovh-primary/5' : 'border-ovh-gray-200 hover:border-ovh-primary'}
+                      ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                    `}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <div className="text-sm font-semibold text-ovh-gray-900">{opt.title}</div>
+                        <div className="text-xs text-ovh-gray-500">{opt.desc}</div>
+                      </div>
+                      <div className="text-[10px] text-ovh-gray-400 text-right whitespace-pre leading-tight">
+                        {opt.icon}
+                      </div>
+                    </div>
+                    {disabled && (
+                      <p className="mt-1 text-[11px] text-ovh-gray-400">
+                        Ajoutez au moins un bloc média et un bloc texte pour utiliser cette maquette.
+                      </p>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
@@ -581,64 +766,158 @@ export function SectionEditorModal({
                 </div>
 
                 {/* Contenu du bloc */}
-                <div className="p-3">
-                  {/* Titre */}
-                  {block.type === 'title' && (
-                    <div className="space-y-2">
+                <div className="p-3 space-y-2">
+                  {/* Barre d'outils texte commune */}
+                  {['title', 'subtitle', 'text'].includes(block.type) && (
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      {/* Police */}
+                      <select
+                        value={(block.settings?.textFont as string) || (block.type === 'text' ? sectionStyles.bodyFont : sectionStyles.headingFont)}
+                        onChange={(e) =>
+                          updateBlock(block.id, {
+                            settings: { ...block.settings, textFont: e.target.value },
+                          })
+                        }
+                        className="px-2 py-1 border border-ovh-gray-300 rounded-ovh text-xs"
+                      >
+                        {FONTS.map((font) => (
+                          <option key={font.value} value={font.value}>
+                            {font.label}
+                          </option>
+                        ))}
+                      </select>
+                      {/* Taille */}
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min={10}
+                          max={72}
+                          step={1}
+                          value={
+                            (block.settings?.textSize as number) ||
+                            (block.type === 'title' ? 32 : block.type === 'subtitle' ? 20 : 14)
+                          }
+                          onChange={(e) => {
+                            const v = Number(e.target.value) || 0
+                            const clamped = Math.min(72, Math.max(10, v))
+                            updateBlock(block.id, {
+                              settings: { ...block.settings, textSize: clamped },
+                            })
+                          }}
+                          className="w-14 px-2 py-1 border border-ovh-gray-300 rounded-ovh text-xs"
+                        />
+                        <span className="text-[10px] text-ovh-gray-500">pt</span>
+                      </div>
+                      {/* Couleur */}
                       <input
-                        type="text"
-                        value={block.content}
-                        onChange={(e) => updateBlock(block.id, { content: e.target.value })}
-                        className="w-full px-3 py-2 text-lg font-bold border border-ovh-gray-300 rounded-ovh focus:outline-none focus:ring-2 focus:ring-ovh-primary"
-                        placeholder="Titre"
+                        type="color"
+                        value={
+                          (block.settings?.textColor as string) ||
+                          (block.type === 'text'
+                            ? sectionStyles.textColor || '#111827'
+                            : sectionStyles.headingColor || '#111827')
+                        }
+                        onChange={(e) =>
+                          updateBlock(block.id, {
+                            settings: { ...block.settings, textColor: e.target.value },
+                          })
+                        }
+                        className="w-8 h-6 border border-ovh-gray-300 rounded cursor-pointer"
                       />
-                      {/* Contrôles d'alignement */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-ovh-gray-500">Alignement :</span>
-                        <div className="flex gap-1 border border-ovh-gray-300 rounded-ovh p-1">
+                      {/* Gras / Italique / Souligné */}
+                      <div className="flex border border-ovh-gray-300 rounded-ovh overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateBlock(block.id, {
+                              settings: { ...block.settings, textBold: !block.settings?.textBold },
+                            })
+                          }
+                          className={`px-2 py-1 text-xs font-bold ${
+                            block.settings?.textBold ? 'bg-ovh-primary text-white' : 'text-ovh-gray-700'
+                          }`}
+                        >
+                          G
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateBlock(block.id, {
+                              settings: { ...block.settings, textItalic: !block.settings?.textItalic },
+                            })
+                          }
+                          className={`px-2 py-1 text-xs italic ${
+                            block.settings?.textItalic ? 'bg-ovh-primary text-white' : 'text-ovh-gray-700'
+                          }`}
+                        >
+                          I
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateBlock(block.id, {
+                              settings: { ...block.settings, textUnderline: !block.settings?.textUnderline },
+                            })
+                          }
+                          className={`px-2 py-1 text-xs underline ${
+                            block.settings?.textUnderline ? 'bg-ovh-primary text-white' : 'text-ovh-gray-700'
+                          }`}
+                        >
+                          S
+                        </button>
+                      </div>
+                      {/* Alignement */}
+                      <div className="flex items-center gap-1 ml-auto">
+                        <div className="flex gap-1 border border-ovh-gray-300 rounded-ovh p-0.5">
                           <button
-                            onClick={() => updateBlock(block.id, { 
-                              settings: { ...block.settings, alignment: 'left' } 
-                            })}
-                            className={`p-1.5 rounded transition-colors ${
+                            type="button"
+                            onClick={() =>
+                              updateBlock(block.id, {
+                                settings: { ...block.settings, alignment: 'left' },
+                              })
+                            }
+                            className={`p-1 rounded ${
                               (block.settings?.alignment || 'left') === 'left'
                                 ? 'bg-ovh-primary text-white'
                                 : 'text-ovh-gray-600 hover:bg-ovh-gray-100'
                             }`}
-                            title="Aligner à gauche"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h10" />
                             </svg>
                           </button>
                           <button
-                            onClick={() => updateBlock(block.id, { 
-                              settings: { ...block.settings, alignment: 'center' } 
-                            })}
-                            className={`p-1.5 rounded transition-colors ${
+                            type="button"
+                            onClick={() =>
+                              updateBlock(block.id, {
+                                settings: { ...block.settings, alignment: 'center' },
+                              })
+                            }
+                            className={`p-1 rounded ${
                               block.settings?.alignment === 'center'
                                 ? 'bg-ovh-primary text-white'
                                 : 'text-ovh-gray-600 hover:bg-ovh-gray-100'
                             }`}
-                            title="Centrer"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M8 12h8M4 18h16" />
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6h12M4 12h16M6 18h12" />
                             </svg>
                           </button>
                           <button
-                            onClick={() => updateBlock(block.id, { 
-                              settings: { ...block.settings, alignment: 'right' } 
-                            })}
-                            className={`p-1.5 rounded transition-colors ${
+                            type="button"
+                            onClick={() =>
+                              updateBlock(block.id, {
+                                settings: { ...block.settings, alignment: 'right' },
+                              })
+                            }
+                            className={`p-1 rounded ${
                               block.settings?.alignment === 'right'
                                 ? 'bg-ovh-primary text-white'
                                 : 'text-ovh-gray-600 hover:bg-ovh-gray-100'
                             }`}
-                            title="Aligner à droite"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 6h-16M20 12h-16M20 18h-16" />
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M10 18h10" />
                             </svg>
                           </button>
                         </div>
@@ -646,68 +925,26 @@ export function SectionEditorModal({
                     </div>
                   )}
 
+                  {/* Titre */}
+                  {block.type === 'title' && (
+                    <input
+                      type="text"
+                      value={block.content}
+                      onChange={(e) => updateBlock(block.id, { content: e.target.value })}
+                      className="w-full px-3 py-2 border border-ovh-gray-300 rounded-ovh focus:outline-none focus:ring-2 focus:ring-ovh-primary"
+                      placeholder="Titre"
+                    />
+                  )}
+
                   {/* Sous-titre */}
                   {block.type === 'subtitle' && (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={block.content}
-                        onChange={(e) => updateBlock(block.id, { content: e.target.value })}
-                        className="w-full px-3 py-2 text-base border border-ovh-gray-300 rounded-ovh focus:outline-none focus:ring-2 focus:ring-ovh-primary"
-                        placeholder="Sous-titre"
-                      />
-                      {/* Contrôles d'alignement */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-ovh-gray-500">Alignement :</span>
-                        <div className="flex gap-1 border border-ovh-gray-300 rounded-ovh p-1">
-                          <button
-                            onClick={() => updateBlock(block.id, { 
-                              settings: { ...block.settings, alignment: 'left' } 
-                            })}
-                            className={`p-1.5 rounded transition-colors ${
-                              (block.settings?.alignment || 'left') === 'left'
-                                ? 'bg-ovh-primary text-white'
-                                : 'text-ovh-gray-600 hover:bg-ovh-gray-100'
-                            }`}
-                            title="Aligner à gauche"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => updateBlock(block.id, { 
-                              settings: { ...block.settings, alignment: 'center' } 
-                            })}
-                            className={`p-1.5 rounded transition-colors ${
-                              block.settings?.alignment === 'center'
-                                ? 'bg-ovh-primary text-white'
-                                : 'text-ovh-gray-600 hover:bg-ovh-gray-100'
-                            }`}
-                            title="Centrer"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M8 12h8M4 18h16" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => updateBlock(block.id, { 
-                              settings: { ...block.settings, alignment: 'right' } 
-                            })}
-                            className={`p-1.5 rounded transition-colors ${
-                              block.settings?.alignment === 'right'
-                                ? 'bg-ovh-primary text-white'
-                                : 'text-ovh-gray-600 hover:bg-ovh-gray-100'
-                            }`}
-                            title="Aligner à droite"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 6h-16M20 12h-16M20 18h-16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                    <input
+                      type="text"
+                      value={block.content}
+                      onChange={(e) => updateBlock(block.id, { content: e.target.value })}
+                      className="w-full px-3 py-2 border border-ovh-gray-300 rounded-ovh focus:outline-none focus:ring-2 focus:ring-ovh-primary"
+                      placeholder="Sous-titre"
+                    />
                   )}
 
                   {/* Texte */}

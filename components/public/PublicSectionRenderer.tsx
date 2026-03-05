@@ -83,6 +83,101 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
     ) : null
 
   if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0 && section.type !== 'services' && section.type !== 'gallery') {
+    const layout = (data.sectionLayout as 'stacked' | 'media-left' | 'media-right' | 'title-top') || 'stacked'
+    const allBlocks = data.blocks as Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>
+
+    let contentNode: React.ReactNode
+
+    if (layout === 'media-left' || layout === 'media-right') {
+      const mediaBlocks = allBlocks.filter((b) => b.type === 'image' || b.type === 'video')
+      const otherBlocks = allBlocks.filter((b) => b.type !== 'image' && b.type !== 'video')
+      const hasBoth = mediaBlocks.length > 0 && otherBlocks.length > 0
+
+      if (!hasBoth) {
+        contentNode = (
+          <BlockRenderer
+            blocks={allBlocks}
+            sectionStyles={sectionStyles}
+            theme={theme}
+            isPublic={true}
+            publicBasePath={publicBasePath}
+          />
+        )
+      } else {
+        const mediaColumn = (
+          <BlockRenderer
+            blocks={mediaBlocks}
+            sectionStyles={sectionStyles}
+            theme={theme}
+            isPublic={true}
+            publicBasePath={publicBasePath}
+          />
+        )
+        const textColumn = (
+          <BlockRenderer
+            blocks={otherBlocks}
+            sectionStyles={sectionStyles}
+            theme={theme}
+            isPublic={true}
+            publicBasePath={publicBasePath}
+          />
+        )
+        contentNode = (
+          <div className="grid gap-8 md:grid-cols-2 items-center">
+            {layout === 'media-left' ? (
+              <>
+                {mediaColumn}
+                {textColumn}
+              </>
+            ) : (
+              <>
+                {textColumn}
+                {mediaColumn}
+              </>
+            )}
+          </div>
+        )
+      }
+    } else if (layout === 'title-top') {
+      const titleBlocks = allBlocks.filter((b) => b.type === 'title' || b.type === 'subtitle')
+      const restBlocks = allBlocks.filter((b) => b.type !== 'title' && b.type !== 'subtitle')
+
+      contentNode = (
+        <>
+          {titleBlocks.length > 0 && (
+            <BlockRenderer
+              blocks={titleBlocks}
+              sectionStyles={sectionStyles}
+              theme={theme}
+              isPublic={true}
+              publicBasePath={publicBasePath}
+            />
+          )}
+          {restBlocks.length > 0 && (
+            <div className="mt-4">
+              <BlockRenderer
+                blocks={restBlocks}
+                sectionStyles={sectionStyles}
+                theme={theme}
+                isPublic={true}
+                publicBasePath={publicBasePath}
+              />
+            </div>
+          )}
+        </>
+      )
+    } else {
+      contentNode = (
+        <BlockRenderer
+          blocks={allBlocks}
+          sectionStyles={sectionStyles}
+          theme={theme}
+          isPublic={true}
+          publicBasePath={publicBasePath}
+        />
+      )
+    }
+
     return (
       <section id={sectionId} className={`py-8 mb-4 px-4 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
         {BgVideo}
@@ -95,13 +190,7 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
           </div>
         )}
         <div className={alignmentClass}>
-          <BlockRenderer
-            blocks={data.blocks as Array<{ id: string; type: string; order: number; content: string; settings?: Record<string, unknown> }>}
-            sectionStyles={sectionStyles}
-            theme={theme}
-            isPublic={true}
-            publicBasePath={publicBasePath}
-          />
+          {contentNode}
         </div>
       </section>
     )
@@ -120,10 +209,28 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
           {BgVideo}
           {BgOverlay}
           <div className={hasBgMedia ? 'relative z-10' : ''}>
-            <h1 className="text-4xl font-bold mb-4 text-white" style={{ fontFamily: sectionStyles.headingFont }}>
+            <h1
+              className={`font-bold mb-4 text-white ${
+                (sectionStyles.headingSize || 'large') === 'small'
+                  ? 'text-3xl'
+                  : (sectionStyles.headingSize || 'large') === 'medium'
+                    ? 'text-4xl'
+                    : 'text-5xl'
+              }`}
+              style={{ fontFamily: sectionStyles.headingFont }}
+            >
               {getDataValue('title')}
             </h1>
-            <p className="text-xl text-white/80 mb-8" style={{ fontFamily: sectionStyles.bodyFont }}>
+            <p
+              className={`text-white/80 mb-8 ${
+                (sectionStyles.bodySize || 'medium') === 'small'
+                  ? 'text-base'
+                  : (sectionStyles.bodySize || 'medium') === 'large'
+                    ? 'text-2xl'
+                    : 'text-xl'
+              }`}
+              style={{ fontFamily: sectionStyles.bodyFont }}
+            >
               {getDataValue('subtitle')}
             </p>
             {getDataValue('ctaText') && (
@@ -152,10 +259,28 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
           {BgVideo}
           {BgOverlay}
           <div className={hasBgMedia ? 'relative z-10' : ''}>
-            <h2 className="text-3xl font-bold mb-6" style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}>
+            <h2
+              className={`font-bold mb-6 ${
+                (sectionStyles.headingSize || 'medium') === 'small'
+                  ? 'text-2xl'
+                  : (sectionStyles.headingSize || 'medium') === 'large'
+                    ? 'text-4xl'
+                    : 'text-3xl'
+              }`}
+              style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}
+            >
               {getDataValue('title')}
             </h2>
-            <p className="text-lg leading-relaxed" style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}>
+            <p
+              className={`leading-relaxed ${
+                (sectionStyles.bodySize || 'medium') === 'small'
+                  ? 'text-sm'
+                  : (sectionStyles.bodySize || 'medium') === 'large'
+                    ? 'text-xl'
+                    : 'text-lg'
+              }`}
+              style={{ fontFamily: sectionStyles.bodyFont, color: sectionStyles.textColor }}
+            >
               {getDataValue('content')}
             </p>
           </div>

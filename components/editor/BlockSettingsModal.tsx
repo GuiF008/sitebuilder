@@ -58,6 +58,7 @@ export function BlockSettingsModal({
 
   const renderTextConfig = () => {
     const textType = block.type as 'title' | 'subtitle' | 'text'
+    const currentTextSize = (settings.textSize as string) || 'medium'
     return (
       <div className="space-y-4">
         <div>
@@ -120,6 +121,33 @@ export function BlockSettingsModal({
                 }`}
               >
                 {align === 'left' ? 'Gauche' : align === 'center' ? 'Centre' : 'Droite'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Taille du texte</label>
+          <div className="flex gap-2">
+            {[
+              { value: 'small', label: 'Petite' },
+              { value: 'medium', label: 'Moyenne' },
+              { value: 'large', label: 'Grande' },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  const s = { ...settings, textSize: opt.value }
+                  setSettings(s)
+                  save(undefined, s)
+                }}
+                className={`flex-1 py-2 text-xs font-medium rounded-lg border-2 transition-colors ${
+                  currentTextSize === opt.value
+                    ? 'border-ovh-primary bg-ovh-primary/10 text-ovh-primary'
+                    : 'border-ovh-gray-200 text-ovh-gray-700 hover:border-ovh-gray-300'
+                }`}
+              >
+                {opt.label}
               </button>
             ))}
           </div>
