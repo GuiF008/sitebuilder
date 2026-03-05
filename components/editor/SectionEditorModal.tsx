@@ -834,7 +834,7 @@ export function SectionEditorModal({
 
                   {/* Vidéo */}
                   {block.type === 'video' && (
-                    <div>
+                    <div className="space-y-4">
                       {block.content ? (
                         <div className="relative group">
                           <video
@@ -866,6 +866,44 @@ export function SectionEditorModal({
                           <span className="text-sm text-ovh-gray-500">Ajouter une vidéo</span>
                         </button>
                       )}
+                      {/* Taille du lecteur vidéo */}
+                      <div>
+                        <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">
+                          Taille du lecteur vidéo
+                        </label>
+                        <div className="grid grid-cols-4 gap-2">
+                          {[
+                            { value: 'small', label: 'Petite', desc: '200px' },
+                            { value: 'medium', label: 'Moyenne', desc: '400px' },
+                            { value: 'large', label: 'Grande', desc: '600px' },
+                            { value: 'full', label: 'Pleine', desc: '100%' },
+                          ].map((opt) => {
+                            const currentSize = (block.settings?.videoSize as string) || 'full'
+                            const videoSize = opt.value as 'small' | 'medium' | 'large' | 'full'
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() =>
+                                  updateBlock(block.id, {
+                                    settings: { ...block.settings, videoSize },
+                                  })
+                                }
+                                className={`py-2 px-1 text-center rounded-lg border-2 transition-colors ${
+                                  currentSize === opt.value
+                                    ? 'border-ovh-primary bg-ovh-primary/10 text-ovh-primary'
+                                    : 'border-ovh-gray-200 text-ovh-gray-600 hover:border-ovh-gray-300'
+                                }`}
+                              >
+                                <span className="block text-xs font-medium">{opt.label}</span>
+                                <span className="block text-[10px] text-ovh-gray-400 mt-0.5">
+                                  {opt.desc}
+                                </span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
                     </div>
                   )}
 

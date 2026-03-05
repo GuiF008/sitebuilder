@@ -8,13 +8,14 @@ import { apiHandler, ApiError } from '@/lib/api-helpers'
 import { sanitizeFilename } from '@/lib/utils'
 
 // Types MIME autorisés avec extensions correspondantes
-const ALLOWED_MIME_TYPES = {
+const ALLOWED_MIME_TYPES: Record<string, string[]> = {
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
   'image/gif': ['.gif'],
   'image/webp': ['.webp'],
   'video/mp4': ['.mp4'],
   'video/webm': ['.webm'],
+  'video/quicktime': ['.mov', '.mp4'],
   'audio/mpeg': ['.mp3'],
   'audio/wav': ['.wav'],
   'audio/ogg': ['.ogg'],
@@ -22,7 +23,7 @@ const ALLOWED_MIME_TYPES = {
 
 const MAX_FILE_SIZES = {
   image: 10 * 1024 * 1024, // 10MB
-  video: 50 * 1024 * 1024, // 50MB
+  video: 250 * 1024 * 1024, // 250MB
   audio: 20 * 1024 * 1024, // 20MB
 }
 
@@ -30,15 +31,21 @@ const MAX_FILE_SIZES = {
  * Valide le type MIME réel d'un fichier en vérifiant les magic bytes
  */
 async function validateFileType(file: File): Promise<{ isValid: boolean; type: 'image' | 'video' | 'audio' | null }> {
-  // Vérification basique du MIME type déclaré
   const declaredMime = file.type
-  if (!ALLOWED_MIME_TYPES[declaredMime as keyof typeof ALLOWED_MIME_TYPES]) {
+  const ext = '.' + (file.name.split('.').pop() || '').toLowerCase()
+
+  // Accepter si MIME connu
+  const mimeAllowed = declaredMime && ALLOWED_MIME_TYPES[declaredMime]
+  // Ou si extension vidéo/image/audio connue (certains navigateurs envoient un MIME vide)
+  const extVideo = ['.mp4', '.webm', '.mov'].includes(ext)
+  const extImage = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)
+  const extAudio = ['.mp3', '.wav', '.ogg'].includes(ext)
+  if (!mimeAllowed && !extVideo && !extImage && !extAudio) {
     return { isValid: false, type: null }
   }
 
-  // Vérification des magic bytes (premiers octets du fichier)
   const buffer = Buffer.from(await file.arrayBuffer())
-  const header = buffer.slice(0, 12)
+  const header = buffer.slice(0, 32)
 
   // Images
   if (
@@ -62,16 +69,15 @@ async function validateFileType(file: File): Promise<{ isValid: boolean; type: '
     return { isValid: declaredMime.startsWith('image/'), type: 'image' }
   }
 
-  // Vidéos
+  // Vidéos (MP4: ftyp à offset 4 ou 8 selon variante)
   if (
-    header[4] === 0x66 && header[5] === 0x74 && header[6] === 0x79 && header[7] === 0x70 // MP4
+    (header[4] === 0x66 && header[5] === 0x74 && header[6] === 0x79 && header[7] === 0x70) ||
+    (header[8] === 0x66 && header[9] === 0x74 && header[10] === 0x79 && header[11] === 0x70)
   ) {
-    return { isValid: declaredMime.startsWith('video/'), type: 'video' }
+    return { isValid: !declaredMime || declaredMime.startsWith('video/'), type: 'video' }
   }
-  if (
-    header[0] === 0x1a && header[1] === 0x45 && header[2] === 0xdf && header[3] === 0xa3 // WebM
-  ) {
-    return { isValid: declaredMime.startsWith('video/'), type: 'video' }
+  if (header[0] === 0x1a && header[1] === 0x45 && header[2] === 0xdf && header[3] === 0xa3) {
+    return { isValid: !declaredMime || declaredMime.startsWith('video/'), type: 'video' }
   }
 
   // Audio
@@ -91,10 +97,10 @@ async function validateFileType(file: File): Promise<{ isValid: boolean; type: '
     return { isValid: declaredMime.startsWith('audio/'), type: 'audio' }
   }
 
-  // Si on ne reconnaît pas le format, on accepte basé sur le MIME déclaré (fallback)
-  if (declaredMime.startsWith('image/')) return { isValid: true, type: 'image' }
-  if (declaredMime.startsWith('video/')) return { isValid: true, type: 'video' }
-  if (declaredMime.startsWith('audio/')) return { isValid: true, type: 'audio' }
+  // Fallback : MIME déclaré ou extension
+  if (declaredMime?.startsWith('image/') || extImage) return { isValid: true, type: 'image' }
+  if (declaredMime?.startsWith('video/') || extVideo) return { isValid: true, type: 'video' }
+  if (declaredMime?.startsWith('audio/') || extAudio) return { isValid: true, type: 'audio' }
 
   return { isValid: false, type: null }
 }

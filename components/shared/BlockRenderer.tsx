@@ -166,20 +166,33 @@ export function BlockRenderer({
             rendered = block.content ? imageWithOverlay : imagePlaceholder
             break
           }
-          case 'video':
+          case 'video': {
+            const videoSize = (block.settings?.videoSize as string) || 'full'
+            const sizeClasses: Record<string, string> = {
+              small: 'max-w-[200px]',
+              medium: 'max-w-[400px]',
+              large: 'max-w-[600px]',
+              full: 'w-full',
+            }
+            const sizeClass = sizeClasses[videoSize] || 'w-full'
+            const alignVideo = block.settings?.alignment as string
+            const alignWrap = alignVideo === 'center' ? 'mx-auto' : alignVideo === 'right' ? 'ml-auto' : ''
+
             rendered = block.content ? (
-              <video
-                key={block.id}
-                src={block.content}
-                controls
-                className={`w-full ${roundedClass}`}
-              />
+              <div key={block.id} className={`${sizeClass} ${alignWrap}`}>
+                <video
+                  src={block.content}
+                  controls
+                  className={`w-full h-auto ${roundedClass}`}
+                />
+              </div>
             ) : (
               <div key={block.id} className={`w-full h-40 bg-ovh-gray-100 ${roundedClass} flex items-center justify-center border-2 border-dashed border-ovh-gray-300`}>
                 <span className="text-sm text-ovh-gray-400">Cliquez pour choisir une vidéo</span>
               </div>
             )
             break
+          }
           case 'audio':
             rendered = block.content ? (
               <audio key={block.id} src={block.content} controls className="w-full" />
@@ -245,17 +258,54 @@ export function BlockRenderer({
           case 'social-icons': {
             const icons = (() => {
               try { return JSON.parse(block.content || '[]') } catch { return [] }
-            })() as Array<{ platform: string; url: string }>
-            const defaultIcons = ['facebook', 'instagram', 'tiktok', 'twitter']
-            const platforms = icons.length > 0 ? icons.map(i => i.platform) : defaultIcons
+            })() as Array<{ platform: string; url?: string }>
+            const fallbackPlatforms = ['facebook', 'instagram', 'tiktok', 'twitter']
+            const items =
+              icons.length > 0
+                ? icons
+                : fallbackPlatforms.map((p) => ({ platform: p, url: '' }))
+
             const iconColor = textColor
             rendered = (
               <div key={block.id} className="flex gap-3 py-2">
-                {platforms.map((p, i) => (
-                  <span key={i} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.08)', color: iconColor }}>
-                    <SocialIconLogo platform={p} color={iconColor} size={18} />
-                  </span>
-                ))}
+                {items.map((icon, i) => {
+                  const pill = (
+                    <span
+                      className="w-9 h-9 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: 'rgba(0,0,0,0.08)', color: iconColor }}
+                    >
+                      <SocialIconLogo platform={icon.platform} color={iconColor} size={18} />
+                    </span>
+                  )
+
+                  if (!icon.url) {
+                    return <span key={i}>{pill}</span>
+                  }
+
+                  if (!isPublic) {
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={(e) => e.preventDefault()}
+                        className="cursor-pointer"
+                      >
+                        {pill}
+                      </button>
+                    )
+                  }
+
+                  return (
+                    <a
+                      key={i}
+                      href={icon.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {pill}
+                    </a>
+                  )
+                })}
               </div>
             )
             break

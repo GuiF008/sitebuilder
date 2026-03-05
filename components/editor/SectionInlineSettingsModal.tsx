@@ -646,7 +646,7 @@ export function SectionInlineSettingsModal({
                 </div>
               ))}
             </div>
-            <p className="text-xs text-ovh-gray-500 mb-2">Ajoutez des images depuis la bibliothèque (onglet Bibliothèque)</p>
+            <p className="text-xs text-ovh-gray-500 mb-2">Ajoutez des images ou vidéos depuis la bibliothèque (onglet Bibliothèque)</p>
             <div className="grid grid-cols-3 gap-2">
               {siteMedia.filter(m => m.type === 'image' || !m.type).map((m) => {
                 const images = (data.images as Array<{ url: string }>) || []
@@ -673,7 +673,7 @@ export function SectionInlineSettingsModal({
               })}
             </div>
             {siteMedia.filter(m => m.type === 'image' || !m.type).length === 0 && (
-              <p className="text-xs text-ovh-gray-500">Aucune image. Uploadez des fichiers dans l&apos;onglet Bibliothèque.</p>
+              <p className="text-xs text-ovh-gray-500">Aucune image. Uploadez images ou vidéos dans l&apos;onglet Bibliothèque.</p>
             )}
           </div>
         </div>

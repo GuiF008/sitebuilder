@@ -144,7 +144,7 @@ export function SettingsModal({
           <div className="space-y-4">
             <div>
               <h2 className="text-lg font-bold text-ovh-gray-900">Bibliothèque</h2>
-              <p className="text-sm text-ovh-gray-600 mt-1">Photos et vidéos de votre site</p>
+              <p className="text-sm text-ovh-gray-600 mt-1">Images, vidéos et sons — téléversez puis réutilisez dans les sections</p>
             </div>
             <MediaPanel
               media={site.media}

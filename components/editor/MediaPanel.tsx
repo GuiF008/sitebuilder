@@ -77,7 +77,7 @@ export function MediaPanel({
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/*,video/*,audio/*"
+          accept="image/*,video/mp4,video/webm,video/quicktime,audio/*"
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -93,7 +93,7 @@ export function MediaPanel({
               {isUploading ? 'Upload en cours...' : 'Cliquez ou glissez-déposez'}
             </p>
             <p className="text-xs text-ovh-gray-500">
-              Images, vidéos ou fichiers audio
+              Images, vidéos (MP4, WebM, MOV — max 250 Mo) ou audio
             </p>
           </div>
         </div>
@@ -106,13 +106,18 @@ export function MediaPanel({
             key={f.id}
             onClick={() => setFilter(f.id)}
             className={`
-              px-3 py-1.5 text-sm font-medium rounded-ovh transition-colors
+              px-3 py-1.5 text-sm font-medium rounded-ovh transition-colors inline-flex items-center gap-1.5
               ${filter === f.id
                 ? 'bg-ovh-primary text-white'
                 : 'text-ovh-gray-600 hover:bg-ovh-gray-100'}
             `}
           >
-            {f.label}
+            <span>{f.label}</span>
+            {f.id === 'audio' && (
+              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-ovh-gray-200 text-ovh-gray-700">
+                Soon
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -138,11 +143,13 @@ export function MediaPanel({
                   className="w-full h-full object-cover"
                 />
               ) : m.type === 'video' ? (
-                <div className="w-full h-full flex items-center justify-center bg-ovh-gray-200">
-                  <svg className="w-8 h-8 text-ovh-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
+                <video
+                  src={m.url}
+                  className="w-full h-full object-cover"
+                  muted
+                  playsInline
+                  preload="metadata"
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-ovh-gray-200">
                   <svg className="w-8 h-8 text-ovh-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

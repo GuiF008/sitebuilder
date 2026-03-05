@@ -731,7 +731,8 @@ export default function EditorPage() {
                         className="relative group transition-all"
                         onClick={(e) => {
                           e.stopPropagation()
-                          setSelectedSectionId(prev => prev === section.id ? null : section.id)
+                          setSelectedSectionId(section.id)
+                          setEditingSectionId(section.id)
                         }}
                         onDragOver={(e) => {
                           e.preventDefault()

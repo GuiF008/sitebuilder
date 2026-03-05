@@ -130,7 +130,8 @@ export function BlockSettingsModal({
 
   const renderMediaPicker = (type: 'image' | 'video' | 'audio') => {
     const items = type === 'image' ? images : type === 'video' ? videos : audios
-    const currentSize = (settings.imageSize as string) || 'full'
+    const currentImageSize = (settings.imageSize as string) || 'full'
+    const currentVideoSize = (settings.videoSize as string) || 'full'
     const currentAlign = (settings.alignment as string) || 'left'
     return (
       <div className="space-y-4">
@@ -184,10 +185,12 @@ export function BlockSettingsModal({
           )}
         </div>
 
-        {type === 'image' && (
+        {(type === 'image' || type === 'video') && (
           <>
             <div>
-              <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">Taille de l&apos;image</label>
+              <label className="block text-sm font-medium text-ovh-gray-700 mb-1.5">
+                {type === 'image' ? "Taille de l'image" : 'Taille du lecteur vidéo'}
+              </label>
               <div className="grid grid-cols-4 gap-2">
                 {[
                   { value: 'small', label: 'Petite', desc: '200px' },
@@ -198,9 +201,16 @@ export function BlockSettingsModal({
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => { const s = { ...settings, imageSize: opt.value }; setSettings(s); save(undefined, s) }}
+                    onClick={() => {
+                      const s =
+                        type === 'image'
+                          ? { ...settings, imageSize: opt.value }
+                          : { ...settings, videoSize: opt.value }
+                      setSettings(s)
+                      save(undefined, s)
+                    }}
                     className={`py-2 px-1 text-center rounded-lg border-2 transition-colors ${
-                      currentSize === opt.value
+                      (type === 'image' ? currentImageSize : currentVideoSize) === opt.value
                         ? 'border-ovh-primary bg-ovh-primary/10 text-ovh-primary'
                         : 'border-ovh-gray-200 text-ovh-gray-600 hover:border-ovh-gray-300'
                     }`}
@@ -214,12 +224,34 @@ export function BlockSettingsModal({
                 <div className="mt-2 border border-ovh-gray-200 rounded-lg p-3 bg-ovh-gray-50">
                   <p className="text-[10px] text-ovh-gray-400 mb-1.5">Aperçu</p>
                   <div className={`${currentAlign === 'center' ? 'flex justify-center' : currentAlign === 'right' ? 'flex justify-end' : ''}`}>
-                    <img
-                      src={content}
-                      alt=""
-                      className="h-auto rounded object-cover"
-                      style={{ maxWidth: currentSize === 'small' ? '80px' : currentSize === 'medium' ? '140px' : currentSize === 'large' ? '200px' : '100%' }}
-                    />
+                    {type === 'image' ? (
+                      <img
+                        src={content}
+                        alt=""
+                        className="h-auto rounded object-cover"
+                        style={{
+                          maxWidth:
+                            (currentImageSize === 'small' && '80px') ||
+                            (currentImageSize === 'medium' && '140px') ||
+                            (currentImageSize === 'large' && '200px') ||
+                            '100%',
+                        }}
+                      />
+                    ) : (
+                      <video
+                        src={content}
+                        className="h-auto rounded"
+                        style={{
+                          maxWidth:
+                            (currentVideoSize === 'small' && '80px') ||
+                            (currentVideoSize === 'medium' && '140px') ||
+                            (currentVideoSize === 'large' && '200px') ||
+                            '100%',
+                        }}
+                        muted
+                        playsInline
+                      />
+                    )}
                   </div>
                 </div>
               )}
