@@ -38,6 +38,8 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
   const rhythmBg = getRhythmBackground(sectionIndex, theme)
   const contentAlignment = (data.contentAlignment as 'left' | 'center' | 'right') || 'left'
   const sectionImages: string[] = Array.isArray(data.sectionImages) ? (data.sectionImages as string[]) : []
+  const sectionHeight =
+    typeof data.sectionHeight === 'number' ? (data.sectionHeight as number) : undefined
   const alignmentClass = contentAlignment === 'center' ? 'text-center' : contentAlignment === 'right' ? 'text-right' : 'text-left'
 
   const hasBgImage = !!sectionStyles.backgroundImage
@@ -181,8 +183,8 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
     return (
       <section
         id={sectionId}
-        className={`py-8 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
-        style={sectionBgStyle}
+        className={`py-8 px-6 md:px-8 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+        style={{ ...sectionBgStyle, minHeight: sectionHeight }}
       >
         {BgVideo}
         {BgOverlay}
@@ -207,8 +209,12 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
       return (
         <section
           id={sectionId}
-          className={`py-20 text-center scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
-          style={{ ...sectionBgStyle, backgroundColor: sectionStyles.backgroundColor || branding.heroBg }}
+          className={`py-20 px-6 md:px-8 text-center scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={{
+            ...sectionBgStyle,
+            backgroundColor: sectionStyles.backgroundColor || branding.heroBg,
+            minHeight: sectionHeight,
+          }}
         >
           {BgVideo}
           {BgOverlay}
@@ -249,8 +255,8 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
       return (
         <section
           id={sectionId}
-          className={`py-12 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
-          style={sectionBgStyle}
+          className={`py-12 px-6 md:px-8 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={{ ...sectionBgStyle, minHeight: sectionHeight }}
         >
           {BgVideo}
           {BgOverlay}
@@ -275,8 +281,8 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
       return (
         <section
           id={sectionId}
-          className={`py-12 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
-          style={sectionBgStyle}
+          className={`py-12 px-6 md:px-8 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={{ ...sectionBgStyle, minHeight: sectionHeight }}
         >
           {BgVideo}
           {BgOverlay}
@@ -316,8 +322,8 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
       return (
         <section
           id={sectionId}
-          className={`py-12 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
-          style={sectionBgStyle}
+          className={`py-12 px-6 md:px-8 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={{ ...sectionBgStyle, minHeight: sectionHeight }}
         >
           {BgVideo}
           {BgOverlay}
@@ -342,8 +348,8 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
       return (
         <section
           id={sectionId}
-          className={`py-12 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
-          style={sectionBgStyle}
+          className={`py-12 px-6 md:px-8 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={{ ...sectionBgStyle, minHeight: sectionHeight }}
         >
           {BgVideo}
           {BgOverlay}
@@ -376,8 +382,8 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
       return (
         <section
           id={sectionId}
-          className={`py-12 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
-          style={sectionBgStyle}
+          className={`py-12 px-6 md:px-8 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={{ ...sectionBgStyle, minHeight: sectionHeight }}
         >
           {BgVideo}
           {BgOverlay}
@@ -418,8 +424,8 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
       return (
         <footer
           id={sectionId}
-          className="py-12 scroll-mt-16"
-          style={{ backgroundColor: branding.footerBg }}
+          className="py-12 px-6 md:px-8 scroll-mt-16"
+          style={{ backgroundColor: branding.footerBg, minHeight: sectionHeight }}
         >
           <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             {/* Contact + réseaux sociaux */}

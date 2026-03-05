@@ -228,27 +228,31 @@ export function BlockRenderer({
             break
           case 'button': {
             const { href, isExternal } = getButtonHref(block, isPublic ? publicBasePath : undefined)
+            const align = (block.settings?.alignment as string) || 'left'
+            const alignClass =
+              align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
             rendered = (
-              <a
-                key={block.id}
-                href={isPublic ? href : undefined}
-                className={`inline-block px-6 py-3 font-semibold text-white ${
-                  isPublic ? 'transition-transform hover:scale-105' : ''
-                }`}
-                style={{
-                  backgroundColor: theme.colors.primary,
-                  borderRadius:
-                    buttonStyle === 'pill'
-                      ? '9999px'
-                      : buttonStyle === 'square'
-                        ? '0'
-                        : borderRadius,
-                }}
-                {...(isPublic && isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                onClick={isPublic ? undefined : (e) => e.preventDefault()}
-              >
-                {block.content}
-              </a>
+              <div key={block.id} className={alignClass}>
+                <a
+                  href={isPublic ? href : undefined}
+                  className={`inline-block px-6 py-3 font-semibold text-white ${
+                    isPublic ? 'transition-transform hover:scale-105' : ''
+                  }`}
+                  style={{
+                    backgroundColor: theme.colors.primary,
+                    borderRadius:
+                      buttonStyle === 'pill'
+                        ? '9999px'
+                        : buttonStyle === 'square'
+                          ? '0'
+                          : borderRadius,
+                  }}
+                  {...(isPublic && isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  onClick={isPublic ? undefined : (e) => e.preventDefault()}
+                >
+                  {block.content}
+                </a>
+              </div>
             )
             break
           }
@@ -256,29 +260,38 @@ export function BlockRenderer({
             let galleryImages: string[] = []
             try { galleryImages = JSON.parse(block.content || '[]') } catch { galleryImages = [] }
             const cols = (block.settings?.columns as number) || 3
+            const galAlign = (block.settings?.alignment as string) || 'left'
+            const galWrapClass = galAlign === 'center' ? 'flex justify-center' : galAlign === 'right' ? 'flex justify-end' : ''
             rendered = (
-              <div key={block.id} className={`grid gap-2 py-4`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-                {galleryImages.length > 0 ? galleryImages.map((url, gi) => (
-                  <img key={gi} src={url} alt="" className={`w-full aspect-square object-cover ${roundedClass}`} />
-                )) : (
-                  Array.from({ length: cols }).map((_, i) => (
-                    <div key={i} className={`aspect-square bg-ovh-gray-200 ${roundedClass} flex items-center justify-center text-ovh-gray-400 text-xs`}>Image</div>
-                  ))
-                )}
+              <div key={block.id} className={`py-4 ${galWrapClass}`}>
+                <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+                  {galleryImages.length > 0 ? galleryImages.map((url, gi) => (
+                    <img key={gi} src={url} alt="" className={`w-full aspect-square object-cover ${roundedClass}`} />
+                  )) : (
+                    Array.from({ length: cols }).map((_, i) => (
+                      <div key={i} className={`aspect-square bg-ovh-gray-200 ${roundedClass} flex items-center justify-center text-ovh-gray-400 text-xs`}>Image</div>
+                    ))
+                  )}
+                </div>
               </div>
             )
             break
           }
-          case 'contact-form':
+          case 'contact-form': {
+            const cfAlign = (block.settings?.alignment as string) || 'left'
+            const cfWrapClass = cfAlign === 'center' ? 'flex justify-center' : cfAlign === 'right' ? 'flex justify-end' : ''
             rendered = (
-              <div key={block.id} className="py-4 space-y-2 max-w-md">
-                <input type="text" placeholder="Nom" className="w-full px-3 py-2 border border-ovh-gray-300 rounded-ovh" readOnly />
-                <input type="email" placeholder="Email" className="w-full px-3 py-2 border border-ovh-gray-300 rounded-ovh" readOnly />
-                <textarea placeholder="Message" className="w-full px-3 py-2 border border-ovh-gray-300 rounded-ovh" rows={3} readOnly />
-                <button type="button" className="px-4 py-2 bg-ovh-primary text-white rounded-ovh text-sm">Envoyer</button>
+              <div key={block.id} className={`py-4 space-y-2 ${cfWrapClass}`}>
+                <div className="max-w-md w-full space-y-2">
+                  <input type="text" placeholder="Nom" className="w-full px-3 py-2 border border-ovh-gray-300 rounded-ovh" readOnly />
+                  <input type="email" placeholder="Email" className="w-full px-3 py-2 border border-ovh-gray-300 rounded-ovh" readOnly />
+                  <textarea placeholder="Message" className="w-full px-3 py-2 border border-ovh-gray-300 rounded-ovh" rows={3} readOnly />
+                  <button type="button" className="px-4 py-2 bg-ovh-primary text-white rounded-ovh text-sm">Envoyer</button>
+                </div>
               </div>
             )
             break
+          }
           case 'social-icons': {
             const icons = (() => {
               try { return JSON.parse(block.content || '[]') } catch { return [] }
@@ -290,8 +303,10 @@ export function BlockRenderer({
                 : fallbackPlatforms.map((p) => ({ platform: p, url: '' }))
 
             const iconColor = textColor
+            const siAlign = (block.settings?.alignment as string) || 'left'
+            const siAlignClass = siAlign === 'center' ? 'justify-center' : siAlign === 'right' ? 'justify-end' : 'justify-start'
             rendered = (
-              <div key={block.id} className="flex gap-3 py-2">
+              <div key={block.id} className={`flex gap-3 py-2 ${siAlignClass}`}>
                 {items.map((icon, i) => {
                   const pill = (
                     <span

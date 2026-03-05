@@ -103,18 +103,22 @@ export function SectionEditorModal({
         setBlocks(convertedBlocks)
       }
       
-      // Charger les styles de section s'ils existent
+      // Charger les styles de section s'ils existent, sans perdre les props (image/vidéo de fond, overlay, etc.)
+      const defaultStyles: SectionStyles = {
+        backgroundColor: theme.colors.background,
+        headingFont: theme.fonts.heading,
+        bodyFont: theme.fonts.body,
+        headingColor: theme.colors.text,
+        textColor: theme.colors.text,
+        buttonStyle: theme.buttonStyle,
+      }
       if (data.sectionStyles) {
         setSectionStyles({
-          backgroundColor: data.sectionStyles.backgroundColor || theme.colors.background,
-          headingFont: data.sectionStyles.headingFont || theme.fonts.heading,
-          bodyFont: data.sectionStyles.bodyFont || theme.fonts.body,
-          headingSize: data.sectionStyles.headingSize,
-          bodySize: data.sectionStyles.bodySize,
-          headingColor: data.sectionStyles.headingColor || theme.colors.text,
-          textColor: data.sectionStyles.textColor || theme.colors.text,
-          buttonStyle: data.sectionStyles.buttonStyle || theme.buttonStyle,
+          ...defaultStyles,
+          ...(data.sectionStyles as SectionStyles),
         })
+      } else {
+        setSectionStyles(defaultStyles)
       }
       setContentAlignment((data.contentAlignment as 'left' | 'center' | 'right') || 'left')
       setSectionImages(Array.isArray(data.sectionImages) ? data.sectionImages : [])
@@ -985,6 +989,25 @@ export function SectionEditorModal({
                           ))}
                         </select>
                       )}
+                      <div>
+                        <label className="block text-xs font-medium text-ovh-gray-600 mb-1">Alignement du bouton</label>
+                        <div className="flex gap-1">
+                          {(['left', 'center', 'right'] as const).map((align) => (
+                            <button
+                              key={align}
+                              type="button"
+                              onClick={() => updateBlock(block.id, { settings: { ...block.settings, alignment: align } })}
+                              className={`flex-1 py-2 text-xs font-medium rounded-lg border ${
+                                (block.settings?.alignment || 'left') === align
+                                  ? 'border-ovh-primary bg-ovh-primary text-white'
+                                  : 'border-ovh-gray-200 text-ovh-gray-700 hover:border-ovh-gray-300'
+                              }`}
+                            >
+                              {align === 'left' ? 'Gauche' : align === 'center' ? 'Centre' : 'Droite'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
                   {/* Galerie */}
@@ -993,6 +1016,25 @@ export function SectionEditorModal({
                     try { galleryImages = JSON.parse(block.content || '[]') } catch { galleryImages = [] }
                     return (
                       <div className="space-y-2">
+                        <div>
+                          <label className="block text-xs font-medium text-ovh-gray-600 mb-1">Alignement</label>
+                          <div className="flex gap-1">
+                            {(['left', 'center', 'right'] as const).map((align) => (
+                              <button
+                                key={align}
+                                type="button"
+                                onClick={() => updateBlock(block.id, { settings: { ...block.settings, alignment: align } })}
+                                className={`flex-1 py-2 text-xs font-medium rounded-lg border ${
+                                  (block.settings?.alignment || 'left') === align
+                                    ? 'border-ovh-primary bg-ovh-primary text-white'
+                                    : 'border-ovh-gray-200 text-ovh-gray-700 hover:border-ovh-gray-300'
+                                }`}
+                              >
+                                {align === 'left' ? 'Gauche' : align === 'center' ? 'Centre' : 'Droite'}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                         <p className="text-xs text-ovh-gray-500">Images de la galerie</p>
                         <div className="grid grid-cols-3 gap-2">
                           {galleryImages.map((url, gi) => (
@@ -1030,6 +1072,25 @@ export function SectionEditorModal({
                   {/* Formulaire contact, Icônes sociales */}
                   {['contact-form', 'social-icons'].includes(block.type) && (
                     <div className="space-y-2">
+                      <div>
+                        <label className="block text-xs font-medium text-ovh-gray-600 mb-1">Alignement</label>
+                        <div className="flex gap-1">
+                          {(['left', 'center', 'right'] as const).map((align) => (
+                            <button
+                              key={align}
+                              type="button"
+                              onClick={() => updateBlock(block.id, { settings: { ...block.settings, alignment: align } })}
+                              className={`flex-1 py-2 text-xs font-medium rounded-lg border ${
+                                (block.settings?.alignment || 'left') === align
+                                  ? 'border-ovh-primary bg-ovh-primary text-white'
+                                  : 'border-ovh-gray-200 text-ovh-gray-700 hover:border-ovh-gray-300'
+                              }`}
+                            >
+                              {align === 'left' ? 'Gauche' : align === 'center' ? 'Centre' : 'Droite'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                       <p className="text-xs text-ovh-gray-500">Élément {block.type}</p>
                       <input
                         type="text"
