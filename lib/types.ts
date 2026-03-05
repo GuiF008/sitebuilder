@@ -128,6 +128,7 @@ export interface ContentBlock {
     alignment?: 'left' | 'center' | 'right'
     size?: 'small' | 'medium' | 'large'
     imageSize?: 'small' | 'medium' | 'large' | 'full' // Pour blocs image
+    videoSize?: 'small' | 'medium' | 'large' | 'full' // Pour blocs vidéo
     link?: string // URL pour linkMode === 'url'
     linkMode?: 'url' | 'page' | 'section'
     pageId?: string
