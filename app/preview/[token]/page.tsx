@@ -142,7 +142,7 @@ export default function PreviewPage() {
 
       <main style={{ backgroundColor: theme.colors.background }}>
         {currentPage && (
-          <div className="w-full px-4 py-8">
+          <div className="w-full py-8">
             {currentPage.sections
               .sort((a, b) => a.order - b.order)
               .map((section, index) => (

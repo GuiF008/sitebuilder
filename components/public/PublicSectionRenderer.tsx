@@ -179,7 +179,11 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
     }
 
     return (
-      <section id={sectionId} className={`py-8 mb-4 px-4 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+      <section
+        id={sectionId}
+        className={`py-8 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+        style={sectionBgStyle}
+      >
         {BgVideo}
         {BgOverlay}
         {sectionImages.length > 0 && (
@@ -203,7 +207,7 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
       return (
         <section
           id={sectionId}
-          className={`py-20 text-center mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          className={`py-20 text-center scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
           style={{ ...sectionBgStyle, backgroundColor: sectionStyles.backgroundColor || branding.heroBg }}
         >
           {BgVideo}
@@ -243,7 +247,11 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
 
     case 'about':
       return (
-        <section id={sectionId} className={`py-12 mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+        <section
+          id={sectionId}
+          className={`py-12 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={sectionBgStyle}
+        >
           {BgVideo}
           {BgOverlay}
           <div className={hasBgMedia ? 'relative z-10' : ''}>
@@ -265,7 +273,11 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
 
     case 'services':
       return (
-        <section id={sectionId} className={`py-12 mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+        <section
+          id={sectionId}
+          className={`py-12 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={sectionBgStyle}
+        >
           {BgVideo}
           {BgOverlay}
           <h2 className="text-3xl font-bold text-center" style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}>
@@ -302,7 +314,11 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
 
     case 'gallery':
       return (
-        <section id={sectionId} className={`py-12 mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+        <section
+          id={sectionId}
+          className={`py-12 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={sectionBgStyle}
+        >
           {BgVideo}
           {BgOverlay}
           <h2 className="text-3xl font-bold mb-8 text-center" style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}>
@@ -324,7 +340,11 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
 
     case 'testimonials':
       return (
-        <section id={sectionId} className={`py-12 mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+        <section
+          id={sectionId}
+          className={`py-12 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={sectionBgStyle}
+        >
           {BgVideo}
           {BgOverlay}
           <h2 className="text-3xl font-bold mb-8 text-center" style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}>
@@ -354,7 +374,11 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
 
     case 'contact':
       return (
-        <section id={sectionId} className={`py-12 mb-8 rounded-lg scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+        <section
+          id={sectionId}
+          className={`py-12 scroll-mt-16 ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
+          style={sectionBgStyle}
+        >
           {BgVideo}
           {BgOverlay}
           <h2 className="text-3xl font-bold mb-8 text-center" style={{ fontFamily: sectionStyles.headingFont, color: sectionStyles.headingColor }}>
@@ -392,7 +416,11 @@ export function PublicSection({ section, sectionIndex, theme, themeFamily, publi
         }
       })()
       return (
-        <footer id={sectionId} className="py-12 mt-8 rounded-lg scroll-mt-16" style={{ backgroundColor: branding.footerBg }}>
+        <footer
+          id={sectionId}
+          className="py-12 scroll-mt-16"
+          style={{ backgroundColor: branding.footerBg }}
+        >
           <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             {/* Contact + réseaux sociaux */}
             <div>

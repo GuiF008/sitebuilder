@@ -732,7 +732,6 @@ export default function EditorPage() {
                         onClick={(e) => {
                           e.stopPropagation()
                           setSelectedSectionId(section.id)
-                          setEditingSectionId(section.id)
                         }}
                         onDragOver={(e) => {
                           e.preventDefault()
@@ -779,6 +778,10 @@ export default function EditorPage() {
                             onSectionUpdate={handleSectionUpdate}
                             onMediaSelect={(mediaUrl) => {
                               handleSectionUpdate(section.id, { image: mediaUrl })
+                            }}
+                            isSelected={selectedSectionId === section.id}
+                            onElementClick={(sectionId) => {
+                              setEditingSectionId(sectionId)
                             }}
                           />
                         </div>
@@ -974,6 +977,8 @@ function SectionPreview({
   currentPage,
   onSectionUpdate,
   onMediaSelect,
+  isSelected,
+  onElementClick,
 }: { 
   section: { id: string; type: string; dataJson: string }
   theme: ComputedTheme
@@ -981,12 +986,17 @@ function SectionPreview({
   currentPage: PageWithSections | null
   onSectionUpdate: (sectionId: string, updates: Record<string, unknown>) => void
   onMediaSelect: (url: string) => void
+  isSelected?: boolean
+  onElementClick?: (sectionId: string, block: BlockData) => void
 }) {
   const data = safeJsonParse<Record<string, unknown>>(section.dataJson, {}) || {}
   const [showMediaPicker, setShowMediaPicker] = useState(false)
   const [selectedBlockForSettings, setSelectedBlockForSettings] = useState<BlockData | null>(null)
   const sectionRef = useRef<HTMLElement | null>(null)
   const [localHeight, setLocalHeight] = useState<number | undefined>(
+    typeof data.sectionHeight === 'number' ? (data.sectionHeight as number) : undefined
+  )
+  const latestHeightRef = useRef<number | undefined>(
     typeof data.sectionHeight === 'number' ? (data.sectionHeight as number) : undefined
   )
   const resizingRef = useRef<{
@@ -1010,6 +1020,9 @@ function SectionPreview({
     if (block.type === 'image' || block.type === 'video' || block.type === 'audio') {
       setSelectedBlockForSettings(block)
     }
+    if (onElementClick) {
+      onElementClick(section.id, block)
+    }
   }
 
   const handleBlockUpdate = (blockId: string, updates: Partial<BlockData>) => {
@@ -1030,13 +1043,14 @@ function SectionPreview({
     e.stopPropagation()
     const el = sectionRef.current
     const rect = el?.getBoundingClientRect()
-    const baseHeight = localHeight ?? rect?.height ?? 0
+    const baseHeight = (typeof localHeight === 'number' ? localHeight : rect?.height) ?? 0
     if (!baseHeight) return
     resizingRef.current = {
       origin,
       startY: e.clientY,
       startHeight: baseHeight,
     }
+    latestHeightRef.current = baseHeight
     const onMove = (ev: MouseEvent) => {
       if (!resizingRef.current) return
       const { origin, startY, startHeight } = resizingRef.current
@@ -1044,10 +1058,12 @@ function SectionPreview({
       let next = origin === 'top' ? startHeight - delta : startHeight + delta
       next = Math.max(200, Math.min(1400, next))
       setLocalHeight(next)
+      latestHeightRef.current = next
     }
     const onUp = () => {
-      if (resizingRef.current && localHeight) {
-        onSectionUpdate(section.id, { sectionHeight: localHeight })
+      const finalHeight = latestHeightRef.current
+      if (resizingRef.current && typeof finalHeight === 'number') {
+        onSectionUpdate(section.id, { sectionHeight: finalHeight })
       }
       resizingRef.current = null
       window.removeEventListener('mousemove', onMove)
@@ -1115,6 +1131,8 @@ function SectionPreview({
       style={{ objectPosition: `center ${bgPosition}%` }}
     />
   ) : null
+
+  const sectionHeight = localHeight ?? (typeof data.sectionHeight === 'number' ? (data.sectionHeight as number) : undefined)
 
   // Si la section a des blocs de contenu (hors services/galerie qui utilisent data direct)
   if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0 && section.type !== 'services' && section.type !== 'gallery') {
@@ -1216,7 +1234,6 @@ function SectionPreview({
       )
     }
 
-    const sectionHeight = localHeight ?? (typeof data.sectionHeight === 'number' ? (data.sectionHeight as number) : undefined)
     return (
       <section
         ref={sectionRef as React.RefObject<HTMLElement>}
@@ -1247,26 +1264,30 @@ function SectionPreview({
         )}
         </div>
         {/* Poignées de redimensionnement haut / bas (drag & drop) */}
-        <button
-          type="button"
-          onMouseDown={(e) => startResize('top', e)}
-          className="absolute left-1/2 -top-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
-          title="Redimensionner la hauteur de la section"
-        >
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          onMouseDown={(e) => startResize('bottom', e)}
-          className="absolute left-1/2 -bottom-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
-          title="Redimensionner la hauteur de la section"
-        >
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
-          </svg>
-        </button>
+        {isSelected && (
+          <>
+            <button
+              type="button"
+              onMouseDown={(e) => startResize('top', e)}
+              className="absolute left-1/2 -top-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+              title="Redimensionner la hauteur de la section"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => startResize('bottom', e)}
+              className="absolute left-1/2 -bottom-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+              title="Redimensionner la hauteur de la section"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+          </>
+        )}
       </section>
     )
   }
@@ -1279,8 +1300,9 @@ function SectionPreview({
         : { ...sectionBgStyle, backgroundColor: sectionStyles.backgroundColor || branding.heroBg }
       return (
         <section 
-          className={`py-20 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
-          style={heroBgStyle}
+          ref={sectionRef as React.RefObject<HTMLElement>}
+          className={`py-20 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''} relative`}
+          style={{ ...heroBgStyle, minHeight: sectionHeight }}
         >
           {BgVideo}
           {BgOverlay}
@@ -1312,6 +1334,31 @@ function SectionPreview({
             {getDataValue('ctaText')}
           </button>
         </div>
+        {/* Poignées de redimensionnement haut / bas (drag & drop) */}
+        {isSelected && (
+          <>
+            <button
+              type="button"
+              onMouseDown={(e) => startResize('top', e)}
+              className="absolute left-1/2 -top-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+              title="Redimensionner la hauteur de la section"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => startResize('bottom', e)}
+              className="absolute left-1/2 -bottom-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+              title="Redimensionner la hauteur de la section"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+          </>
+        )}
         </section>
       )
     }
@@ -1319,8 +1366,9 @@ function SectionPreview({
     case 'about':
       return (
         <section 
-          className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
-          style={sectionBgStyle}
+          ref={sectionRef as React.RefObject<HTMLElement>}
+          className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''} relative`}
+          style={{ ...sectionBgStyle, minHeight: sectionHeight }}
         >
           {BgVideo}
           {BgOverlay}
@@ -1374,14 +1422,40 @@ function SectionPreview({
               onClose={() => setShowMediaPicker(false)}
             />
           )}
+        {/* Poignées de redimensionnement haut / bas (drag & drop) */}
+        {isSelected && (
+          <>
+            <button
+              type="button"
+              onMouseDown={(e) => startResize('top', e)}
+              className="absolute left-1/2 -top-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+              title="Redimensionner la hauteur de la section"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => startResize('bottom', e)}
+              className="absolute left-1/2 -bottom-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+              title="Redimensionner la hauteur de la section"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+          </>
+        )}
         </section>
       )
 
     case 'services':
       return (
         <section 
-          className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`}
-          style={sectionBgStyle}
+          ref={sectionRef as React.RefObject<HTMLElement>}
+          className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''} relative`}
+          style={{ ...sectionBgStyle, minHeight: sectionHeight }}
         >
           {BgVideo}
           {BgOverlay}
@@ -1456,12 +1530,41 @@ function SectionPreview({
               )}
           </div>
           </div>
+        {/* Poignées de redimensionnement haut / bas (drag & drop) */}
+        {isSelected && (
+          <>
+            <button
+              type="button"
+              onMouseDown={(e) => startResize('top', e)}
+              className="absolute left-1/2 -top-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+              title="Redimensionner la hauteur de la section"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => startResize('bottom', e)}
+              className="absolute left-1/2 -bottom-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+              title="Redimensionner la hauteur de la section"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+          </>
+        )}
         </section>
       )
 
     case 'gallery':
       return (
-        <section className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+        <section 
+          ref={sectionRef as React.RefObject<HTMLElement>}
+          className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''} relative`}
+          style={{ ...sectionBgStyle, minHeight: sectionHeight }}
+        >
           {BgVideo}
           {BgOverlay}
           <div className={hasBgMedia ? 'relative z-10' : ''}>
@@ -1498,12 +1601,41 @@ function SectionPreview({
             </div>
           )}
           </div>
+        {/* Poignées de redimensionnement haut / bas (drag & drop) */}
+        {isSelected && (
+          <>
+            <button
+              type="button"
+              onMouseDown={(e) => startResize('top', e)}
+              className="absolute left-1/2 -top-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+              title="Redimensionner la hauteur de la section"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => startResize('bottom', e)}
+              className="absolute left-1/2 -bottom-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+              title="Redimensionner la hauteur de la section"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+          </>
+        )}
         </section>
       )
 
     case 'contact':
       return (
-        <section className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+        <section 
+          ref={sectionRef as React.RefObject<HTMLElement>}
+          className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''} relative`}
+          style={{ ...sectionBgStyle, minHeight: sectionHeight }}
+        >
           {BgVideo}
           {BgOverlay}
           <div className={hasBgMedia ? 'relative z-10' : ''}>
@@ -1521,6 +1653,31 @@ function SectionPreview({
             </p>
           </div>
           </div>
+        {/* Poignées de redimensionnement haut / bas (drag & drop) */}
+        {isSelected && (
+          <>
+            <button
+              type="button"
+              onMouseDown={(e) => startResize('top', e)}
+              className="absolute left-1/2 -top-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+              title="Redimensionner la hauteur de la section"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => startResize('bottom', e)}
+              className="absolute left-1/2 -bottom-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+              title="Redimensionner la hauteur de la section"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+          </>
+        )}
         </section>
       )
 
@@ -1534,7 +1691,11 @@ function SectionPreview({
         } catch { return [] }
       })()
       return (
-        <footer className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={footerBgStyle}>
+        <footer 
+          ref={sectionRef as React.RefObject<HTMLElement>}
+          className={`py-12 px-8 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''} relative`}
+          style={{ ...footerBgStyle, minHeight: sectionHeight }}
+        >
           {BgVideo}
           {BgOverlay}
           <div className={`max-w-6xl mx-auto ${hasBgMedia ? 'relative z-10' : ''}`}>
@@ -1589,10 +1750,39 @@ function SectionPreview({
 
     default:
       return (
-        <section className={`py-8 px-8 text-ovh-gray-400 border border-dashed border-ovh-gray-300 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''}`} style={sectionBgStyle}>
+        <section 
+          ref={sectionRef as React.RefObject<HTMLElement>}
+          className={`py-8 px-8 text-ovh-gray-400 border border-dashed border-ovh-gray-300 ${alignmentClass} ${hasBgMedia ? 'relative overflow-hidden' : ''} relative`} 
+          style={{ ...sectionBgStyle, minHeight: sectionHeight }}
+        >
           {BgVideo}
           {BgOverlay}
           <div className={hasBgMedia ? 'relative z-10' : ''}>Section : {section.type}</div>
+          {/* Poignées de redimensionnement haut / bas (drag & drop) */}
+          {isSelected && (
+            <>
+              <button
+                type="button"
+                onMouseDown={(e) => startResize('top', e)}
+                className="absolute left-1/2 -top-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+                title="Redimensionner la hauteur de la section"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => startResize('bottom', e)}
+                className="absolute left-1/2 -bottom-5 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-ovh-primary text-white text-xs shadow flex items-center justify-center cursor-row-resize"
+                title="Redimensionner la hauteur de la section"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5l-3 3m3-3l3 3M12 19l-3-3m3 3l3-3" />
+                </svg>
+              </button>
+            </>
+          )}
         </section>
       )
   }
