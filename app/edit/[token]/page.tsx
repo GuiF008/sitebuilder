@@ -40,7 +40,14 @@ function DraftLoginModal({ onClose }: { onClose: () => void }) {
           <h2 className="text-xl font-bold text-center text-ovh-primary mb-1">Connectez-vous</h2>
           <p className="text-center text-sm text-ovh-gray-500 mb-6">
             Vous n&apos;avez pas de compte ?{' '}
-            <button type="button" className="text-ovh-primary font-medium hover:underline">Créer un compte</button>
+            <a
+              href="https://manager.eu.ovhcloud.com/account-creation/#/settings?login=https%3A%2F%2Fauth.eu.ovhcloud.com%2Fsignin%2F%3Faction%3Ddisconnect%26onsuccess%3Dhttps%253A%252F%252Fwww.ovh.com%252Fmanager%252Fweb%252F%2523%252Fconfiguration&signup=https%3A%2F%2Fauth.eu.ovhcloud.com%2Fsignup%2F%3Faction%3Ddisconnect%26onsuccess%3Dhttps%253A%252F%252Fwww.ovh.com%252Fmanager%252Fweb%252F%2523%252Fconfiguration"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-ovh-primary font-medium hover:underline"
+            >
+              Créer un compte
+            </a>
           </p>
 
           <div className="space-y-4">

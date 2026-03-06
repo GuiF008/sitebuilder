@@ -22,12 +22,12 @@ export async function POST(request: NextRequest) {
     
     const { 
       name, 
-      contactEmail, 
       goal, 
       themeFamily, 
       sections = [], 
       needs = [] 
     } = validated
+    const contactEmail = validated.contactEmail ?? 'contact@site.local'
 
     // Generate unique slug and token
     const slug = generateSlug(name)

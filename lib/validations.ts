@@ -4,10 +4,10 @@ import { z } from 'zod'
  * Schémas de validation Zod pour les API
  */
 
-// Création de site
+// Création de site (contactEmail optionnel pour le flow onboarding sans email)
 export const createSiteSchema = z.object({
   name: z.string().min(1, 'Le nom est requis').max(100, 'Le nom est trop long'),
-  contactEmail: z.string().email('Email invalide'),
+  contactEmail: z.string().email('Email invalide').optional(),
   goal: z.enum(['vitrine', 'portfolio', 'blog', 'ecommerce'], {
     message: 'Objectif invalide',
   }),
